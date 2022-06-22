@@ -1,0 +1,73 @@
+# LaTeX files
+# ========
+*\.aux
+*\.log
+*\.nav
+*\.out
+*\.snm
+*\.synctex.gz
+*\.toc
+
+# Microsoft temp files
+# ===============
+~$*
+
+# Unity caches and generated files
+# ================================
+**/Library
+**/Temp
+**/obj
+**/UserSettings
+
+# Visual Studio / MonoDevelop generated
+# =====================================
+ExportedObj/
+*\.svd
+*\.userprefs
+*\.csproj
+*\.pidb
+*\.suo
+*\.sln
+*\.user
+*\.unityproj
+*\.booproj
+*\.orig
+*\.*_data
+
+# G4BL generated files
+# ====================
+g4bl.out
+*\.g4bl
+
+# COSY generated files
+# ====================
+*\.fox
+*\.lis
+*\.fox.meta
+.vs/
+
+# BLA save files
+# ====================
+*\.bla
+*\.blac
+*\.blag
+*\.blac.meta
+*\.blag.meta
+*\.bla.meta
+
+# Documentation sources
+# =====================
+**/PDF_source
+**/Video_source
+
+# Builds
+# ====
+**/Builds
+
+# Mac generated files
+# ===================
+*\.DS_Store
+
+# Other annoying files
+# ====================
+*\.swp
