@@ -1,0 +1,2 @@
+ - No looking stuff up, except to see if it has been completed.
+	= Example: in Skyward Sword, the number of bird statues can be looked up, but not where they are.
