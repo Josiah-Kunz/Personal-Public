@@ -1,4 +1,3 @@
-game => {
   let targetNames = ["vignette_medium_overlay"];
   let cutoutNames = ["spotlight_1", "spotlight_2", "spotlight_3", "spotlight_4", "spotlight_5", "spotlight_6", "spotlight_7", "spotlight_8", "pc_light_front", "pc_window_l", "pc_window_r", "pc_window_r_bleed","pc_window_l_bleed", "mart_window", "mart_light_front","mart_window_bleed","house_entrance_1", "house_entrance_2", "house_entrance_3"];
   
@@ -72,4 +71,3 @@ game => {
   }
   
   loopTryApplyBlend();
-}
