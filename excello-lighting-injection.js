@@ -1,4 +1,4 @@
-let targetPatterns=["vignette", "_overlay"];
+let targetPatterns=["vignette", "overlay_"];
 let cutoutPatterns=["lm_", "-cutout"];
  
 function findSpritesWithPattern(patterns) {
