@@ -54,22 +54,18 @@ if (!window.__excelloInjected) {
 		if (originalParent) {
 			originalParent.addChild(container);
 		}
-		
-		const cooldownMs = 5000;
-		const now = Date.now();
-		if (window.__excelloLastLoaded && (now - window.__excelloLastLoaded < cooldownMs)) {
-			const deltaTime = now - window.__excelloLastLoaded;
-			console.log(`Tried to reload script after ${deltaTime} ms but the cooldown has expired!`);
-			return;
-		} else {
-			const deltaTime = now - window.__excelloLastLoaded;
-			console.log(`Loaded script for the last time after ${deltaTime} ms.`)
-			window.__excelloInjected = true;
-		}
-		window.__excelloLastLoaded = now;
-		console.log("Excello lighting successfully injected")
-
 	}
-
-	applyBlend();
+	
+	const cooldownMs = 5000;
+	const now = Date.now();
+	if (!window.__excelloLastLoaded) window.__excelloLastLoaded = now;
+	const deltaTime = now - window.__excelloLastLoaded;
+	
+	if (deltaTime < cooldownMs){
+		console.log(`Loaded script after ${deltaTime} ms.`)
+		applyBlend();
+	} else {
+		console.log(`Tried to reload script after ${deltaTime} ms but the cooldown has expired!`);
+		window.__excelloInjected = true;
+	}
 }
