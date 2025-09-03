@@ -1,4 +1,4 @@
-let targetPatterns=["vignette"];
+let targetPatterns=["vignette", "_overlay"];
 let cutoutPatterns=["lm_", "-cutout"];
  
 function findSpritesWithPattern(patterns) {
@@ -36,22 +36,22 @@ function addCutout(index){
 }
 
 function applyBlend(){
-if (targetSprites.length==0) return;
-if (cutoutSprites.length==0) return;
+	if (targetSprites.length==0) return;
+	if (cutoutSprites.length==0) return;
 
-const originalParent = targetSprites[0].parent;
+	const originalParent = targetSprites[0].parent;
 
-for (let i = 0; i < targetSprites.length; i++){
-	addTarget(i);
-}
+	for (let i = 0; i < targetSprites.length; i++){
+		addTarget(i);
+	}
 
-for (let i = 0; i < cutoutSprites.length; i++){
-	addCutout(i);
-}
+	for (let i = 0; i < cutoutSprites.length; i++){
+		addCutout(i);
+	}
 
-if (originalParent) {
-	originalParent.addChild(container);
-}
+	if (originalParent) {
+		originalParent.addChild(container);
+	}
 
 }
 
