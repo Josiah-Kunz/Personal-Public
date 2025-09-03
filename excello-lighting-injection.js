@@ -58,10 +58,12 @@ if (!window.__excelloInjected) {
 		const cooldownMs = 5000;
 		const now = Date.now();
 		if (window.__excelloLastLoaded && (now - window.__excelloLastLoaded < cooldownMs)) {
-			console.log("Tried to reload script but the cooldown has expired!");
+			const deltaTime = now - window.__excelloLastLoaded;
+			console.log(`Tried to reload script after ${deltaTime} ms but the cooldown has expired!`);
 			return;
 		} else {
-			console.log("Loaded script for the last time.")
+			const deltaTime = now - window.__excelloLastLoaded;
+			console.log(`Loaded script for the last time after ${deltaTime} ms.`)
 			window.__excelloInjected = true;
 		}
 		window.__excelloLastLoaded = now;
