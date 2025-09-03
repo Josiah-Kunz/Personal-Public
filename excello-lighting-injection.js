@@ -1,5 +1,5 @@
 let targetPatterns=["vignette"];
-let cutoutPatterns=["lm_circle", "night_light_excello", "-cutout"];
+let cutoutPatterns=["lm_", "-cutout"];
  
 function findSpritesWithPattern(patterns) {
   let matches = [];
@@ -9,7 +9,6 @@ function findSpritesWithPattern(patterns) {
 		if (!gameObject || !gameObject.skin) continue;
 		for(let pattern of patterns){
 			if (gameObject.skin.includes(pattern)){
-				console.log(gameObject);
 				matches.push(gameObject.sprite);
 				break;
 			}
