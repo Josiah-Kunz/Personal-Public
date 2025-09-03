@@ -27,7 +27,7 @@ function findSpritesWithPattern(pattern) {
   }
   
   function addCutout(index){
-	let cutout = game.objects.get(cutoutSprites[index]).sprite;  
+	let cutout = game.objects.get(cutoutSprites[index]);  
 	cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
 	container.addChild(cutout);
   }
