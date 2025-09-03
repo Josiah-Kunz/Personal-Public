@@ -7,7 +7,6 @@ function findSpritesWithPattern(pattern) {
   
   for(let objName in game.objects["ids"]) {
 		if (objName.includes(pattern)){
-			console.log(game.objects["ids"][objName]);
 			matches.push(game.objects["ids"][objName].sprite);
 		}
 	}
@@ -27,7 +26,7 @@ function findSpritesWithPattern(pattern) {
   }
   
   function addCutout(index){
-	let cutout = game.objects.get(cutoutSprites[index]);  
+	let cutout = cutoutSprites[index];
 	cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
 	container.addChild(cutout);
   }
