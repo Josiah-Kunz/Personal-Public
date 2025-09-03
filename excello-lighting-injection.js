@@ -1,3 +1,9 @@
+if (window.__excelloInjected) {
+	console.log(`Excello injected script already loaded!`);
+	return;
+}
+
+
 let targetPatterns=["vignette", "overlay_"];
 let cutoutPatterns=["lm_", "-cutout"];
  
@@ -52,6 +58,8 @@ function applyBlend(){
 	if (originalParent) {
 		originalParent.addChild(container);
 	}
+	
+	window.__excelloInjected = true;
 
 }
 
