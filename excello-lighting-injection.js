@@ -55,7 +55,14 @@ if (!window.__excelloInjected) {
 			originalParent.addChild(container);
 		}
 		
-		window.__excelloInjected = true;
+		const cooldownMs = 1000;
+		const now = Date.now();
+		if (window.__excelloLastLoaded && (now - window.__excelloLastLoaded < cooldownMs)) {
+			return;
+		} else {
+			window.__excelloInjected = true;
+		}
+		window.__excelloLastLoaded = now;
 		console.log("Excello lighting successfully injected")
 
 	}
