@@ -1,7 +1,7 @@
 
 let targetPattern="LMT";
 let cutoutPattern="LMC";
-
+ 
 function findSpritesWithPattern(pattern) {
   let matches = [];
   
