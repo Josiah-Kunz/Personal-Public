@@ -6,6 +6,7 @@ function findSpritesWithPattern(patterns) {
   
   for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
+		if (!gameObject || !gameObject.skin) continue;
 		for(let pattern of patterns){
 			if (gameObject.skin.includes(pattern)){
 				console.log(gameObject);
