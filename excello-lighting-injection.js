@@ -7,6 +7,8 @@ function findSpritesWithPattern(pattern) {
   
   for(let objName in game.objects["ids"]) {
 		if (objName.includes(pattern)){
+			console.log(objName);
+			console.log(game.objects["ids"][objName].uid);
 			matches.push(game.objects["ids"][objName].sprite);
 		}
 	}
