@@ -56,6 +56,7 @@ if (!window.__excelloInjected) {
 		}
 		
 		window.__excelloInjected = true;
+		console.log("Excello lighting successfully injected")
 
 	}
 
