@@ -5,9 +5,12 @@ let cutoutPattern="LTC";
 function findSpritesWithPattern(pattern) {
   let matches = [];
   
+  console.log("=====================")
   for(let objName in game.objects["ids"]) {
 		if (objName.includes(pattern)){
 			matches.push(game.objects["ids"][objName]);
+			console.log(objName);
+			console.log(game.objects["ids"][objName]);
 		}
 	}
   return matches;
