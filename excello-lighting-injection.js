@@ -1,22 +1,25 @@
 
-let targetPattern="LMT";
-let cutoutPattern="LMC";
+let targetPatterns=["vignette"];
+let cutoutPatterns=["lm_circle", "night_light_excello"];
  
-function findSpritesWithPattern(pattern) {
+function findSpritesWithPattern(patterns) {
   let matches = [];
   
   for(let objName in game.objects["ids"]) {
-		if (objName.includes(pattern)){
-			console.log(objName);
-			console.log(game.objects["ids"][objName].uid);
-			matches.push(game.objects["ids"][objName].sprite);
+		let gameObject = game.objects["ids"][objName];
+		for(let pattern of patterns){
+			if (gameObject.skin.includes(pattern)){
+				console.log(gameObject);
+				matches.push(gameObject.sprite);
+				break;
+			}
 		}
 	}
   return matches;
 }
 
-  let targetSprites = findSpritesWithPattern(targetPattern);
-  let cutoutSprites = findSpritesWithPattern(cutoutPattern);
+  let targetSprites = findSpritesWithPattern(targetPatterns);
+  let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
   
   const container = new PIXI.Container();
   container.filters = [new PIXI.Filter()];
