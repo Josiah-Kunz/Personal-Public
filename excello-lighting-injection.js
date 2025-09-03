@@ -1,6 +1,6 @@
 
-let targetPattern="LTT";
-let cutoutPattern="LTC";
+let targetPattern="LMT";
+let cutoutPattern="LMC";
 
 function findSpritesWithPattern(pattern) {
   let matches = [];
