@@ -55,7 +55,7 @@ if (!window.__excelloInjected) {
 			originalParent.addChild(container);
 		}
 		
-		const cooldownMs = 1000;
+		const cooldownMs = 5000;
 		const now = Date.now();
 		if (window.__excelloLastLoaded && (now - window.__excelloLastLoaded < cooldownMs)) {
 			console.log("Tried to reload script but the cooldown has expired!");
