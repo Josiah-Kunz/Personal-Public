@@ -18,7 +18,6 @@ function findSpritesWithPattern(pattern) {
   
   const container = new PIXI.Container();
   container.filters = [new PIXI.Filter()];
-  let applied = false;
   
   function addTarget(index){
     let targetSprite = targetSprites[index];
@@ -27,7 +26,7 @@ function findSpritesWithPattern(pattern) {
   }
   
   function addCutout(index){
-	let cutout = game.objects.get(cutoutNames[index]).sprite;  
+	let cutout = game.objects.get(cutoutSprites[index]).sprite;  
 	cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
 	container.addChild(cutout);
   }
