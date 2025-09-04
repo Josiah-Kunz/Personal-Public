@@ -52,7 +52,7 @@ function applyBlend(){
 		addCutout(i);
 	}
 	if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
-        game.excelloOriginalParent.addChild(game.excelloContainer);
+        game.excelloOriginalParent.addChildAt(game.excelloContainer, 0);
     }
 }
 
@@ -71,7 +71,6 @@ function hookRemoveFromMapForSprites(sprites) {
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
                     }
-					gameObject.depth=3200;
                     applyBlend();
                     return result;
                 };
