@@ -21,6 +21,7 @@ let targetSprites = findSpritesWithPattern(targetPatterns);
 let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 
 if (!game.excelloContainer || game.excelloContainer.destroyed) {
+	console.log("Creating container");
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
 }
