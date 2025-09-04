@@ -58,12 +58,6 @@ function applyBlend(){
 
 applyBlend();
 
-
-
-
-
-
-
 function hookRemoveFromMapForSprites(sprites) {
     for (let sprite of sprites) {
         for (let objName in game.objects["ids"]) {
@@ -78,9 +72,7 @@ function hookRemoveFromMapForSprites(sprites) {
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
                     }
-                    if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
-						game.excelloOriginalParent.addChild(game.excelloContainer);
-					}
+                    applyBlend();
                     return result;
                 };
                 break;
