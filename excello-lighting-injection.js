@@ -1,4 +1,4 @@
-if (!window.__excelloInjected || window.__excelloInjected) {
+
     let targetPatterns = ["vignette", "overlay_"];
     let cutoutPatterns = ["lm_", "-cutout"];
      
@@ -58,16 +58,4 @@ if (!window.__excelloInjected || window.__excelloInjected) {
         }
     }
     
-    const cooldownMs = 5000;
-    const now = Date.now();
-    if (!window.__excelloLastLoaded) window.__excelloLastLoaded = now;
-    const deltaTime = now - window.__excelloLastLoaded;
-    
-    if (deltaTime < cooldownMs){
-        console.log(`Loaded script after ${deltaTime} ms.`)
-        applyBlend();
-    } else {
-        console.log(`Tried to reload script after ${deltaTime} ms but the cooldown has expired!`);
-        window.__excelloInjected = true;
-    }
-}
+    applyBlend();
