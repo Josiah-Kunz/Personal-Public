@@ -67,27 +67,23 @@ function applyBlend(){
 
 
 
-function wrapResetFunctions() {
-   for (let objName in game.objects["ids"]) {
-       let gameObject = game.objects["ids"][objName];
-       if (gameObject && gameObject.reset && !gameObject._resetWrapped) {
-           gameObject._resetWrapped = true;
-           const originalReset = gameObject.reset;
-           
-           gameObject.reset = function(...args) {
-               const result = originalReset.apply(this, args);
-               
-               setTimeout(() => {
-                   if (game.excelloContainer && !game.excelloContainer.destroyed) {
-                       applyBlend();
-                   }
-               }, 0);
-               
-               return result;
-           };
-       }
-   }
+for (let objName in game.objects["ids"]) {
+    let gameObject = game.objects["ids"][objName];
+    if (gameObject && gameObject.reset && !gameObject._resetAliased) {
+        gameObject._resetAliased = true;
+        gameObject._originalReset = gameObject.reset;
+        gameObject.reset = function(...args) {
+            const result = gameObject._originalReset.apply(this, args);
+            setTimeout(() => {
+                targetSprites = findSpritesWithPattern(targetPatterns);
+                cutoutSprites = findSpritesWithPattern(cutoutPatterns);
+                applyBlend();
+            }, 0);
+            return result;
+        };
+    }
 }
+
 
 applyBlend();
 wrapResetFunctions();
