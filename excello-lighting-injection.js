@@ -72,15 +72,15 @@ function hookRemoveFromMapForSprites(sprites) {
                 gameObject._removeFromMapHooked = true;
                 gameObject._originalRemoveFromMap = gameObject.removeFromMap;
                 gameObject.removeFromMap = function() {
-					console.log(gameObject);
                     const ogParent = this.sprite.parent;
                     const result = gameObject._originalRemoveFromMap.apply(this);
                     
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
                     }
-                    applyBlend();
-					console.log("Applying blend");
+                    if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
+						game.excelloOriginalParent.addChild(game.excelloContainer);
+					}
                     return result;
                 };
                 break;
