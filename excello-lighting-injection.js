@@ -31,6 +31,7 @@ function addTarget(index){
 	if (!game.excelloContainer.children.includes(targetSprite)) {
 		targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
 		game.excelloContainer.addChild(targetSprite);
+		game.excelloContainerIndex = game.excelloOriginalParent.getChildIndex(targetSprites[0]);
 	}
 }
 
@@ -53,6 +54,9 @@ function applyBlend(){
 	}
 	if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
         game.excelloOriginalParent.addChild(game.excelloContainer);
+		if (game.excelloContainerIndex !== undefined) {
+            game.excelloOriginalParent.setChildIndex(game.excelloContainer, game.excelloContainerIndex);
+        }
     }
 }
 
