@@ -23,6 +23,8 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer.filters = [new PIXI.Filter()];
 	if (targetSprites.length > 0) {
         game.excelloOriginalParent = targetSprites[0].parent;
+		game.excelloContainerIndex = game.excelloOriginalParent.getChildIndex(targetSprites[0]);
+		game.excelloOriginalParent.addChildAt(game.excelloContainer, game.excelloContainerIndex);
     }
 }
 
@@ -52,7 +54,7 @@ function applyBlend(){
 		addCutout(i);
 	}
 	if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
-        game.excelloOriginalParent.addChildAt(game.excelloContainer, 0);
+        game.excelloOriginalParent.addChildAt(game.excelloContainer, game.excelloContainerIndex);
     }
 }
 
