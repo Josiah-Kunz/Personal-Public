@@ -63,28 +63,29 @@ applyBlend();
 
 
 
-if (cutoutSprites.length > 0) {
-    for (let objName in game.objects["ids"]) {
-        let gameObject = game.objects["ids"][objName];
-        if (gameObject && gameObject.sprite === cutoutSprites[0]) {
-            if (!gameObject._removeFromMapTraced) {
-                gameObject._removeFromMapTraced = true;
+function hookRemoveFromMapForSprites(sprites) {
+    for (let sprite of sprites) {
+        for (let objName in game.objects["ids"]) {
+            let gameObject = game.objects["ids"][objName];
+            if (gameObject && gameObject.sprite === sprite && !gameObject._removeFromMapHooked) {
+                gameObject._removeFromMapHooked = true;
                 gameObject._originalRemoveFromMap = gameObject.removeFromMap;
                 gameObject.removeFromMap = function() {
-                    console.log("removeFromMap called on cutout object:", objName, this);
-                    console.log("Object skin:", this.skin);
-                    console.log("Sprite parent before removal:", this.sprite?.parent);
-					
-					const ogParent = this.sprite.parent;
-                    
+                    const ogParent = this.sprite.parent;
                     const result = gameObject._originalRemoveFromMap.apply(this);
                     
-					this.sprite.parent = ogParent;
-                    console.log("Sprite parent after removal:", this.sprite?.parent);
+                    // Only restore parent if it was our container
+                    if (ogParent === game.excelloContainer) {
+                        this.sprite.parent = ogParent;
+                    }
+                    
                     return result;
                 };
+                break;
             }
-            break;
         }
     }
 }
+
+// Apply to all your sprites
+hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
