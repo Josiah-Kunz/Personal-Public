@@ -22,9 +22,6 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
 	game.stage.addChild(game.excelloContainer);
-	if (targetSprites.length > 0) {
-        game.excelloOriginalParent = targetSprites[0].parent;
-    }
 }
 
 function addTarget(index){
