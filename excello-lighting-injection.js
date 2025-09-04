@@ -49,8 +49,6 @@ function applyBlend(){
 	for (let i = 0; i < cutoutSprites.length; i++){
 		addCutout(i);
 	}
-	if (originalParent && game.excelloContainer.parent !== originalParent) {
-		originalParent.addChild(game.excelloContainer);
-	}
+	
 }
 applyBlend();
