@@ -50,10 +50,6 @@ function addTarget(index){
 function addCutout(index){
 	let cutout = cutoutSprites[index];
 	if (!game.excelloContainer.children.includes(cutout)) {
-		console.log("Cutout's old parent:");
-		console.log(cutout.parent);
-		console.log("Container is");
-		console.log(game.excelloContainer);
 		cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
 		game.excelloContainer.addChild(cutout);
 	}
