@@ -74,9 +74,12 @@ if (cutoutSprites.length > 0) {
                     console.log("removeFromMap called on cutout object:", objName, this);
                     console.log("Object skin:", this.skin);
                     console.log("Sprite parent before removal:", this.sprite?.parent);
+					
+					const ogParent = this.sprite.parent;
                     
                     const result = gameObject._originalRemoveFromMap.apply(this);
                     
+					this.sprite.parent = ogParent;
                     console.log("Sprite parent after removal:", this.sprite?.parent);
                     return result;
                 };
