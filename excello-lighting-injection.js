@@ -67,42 +67,28 @@ function applyBlend(){
 
 
 
-
-
-function wrapRemoveFromMap() {
-    for (let objName in game.objects["ids"]) {
-        let gameObject = game.objects["ids"][objName];
-        if (gameObject && gameObject.removeFromMap && !gameObject._removeFromMapWrapped) {
-            gameObject._removeFromMapWrapped = true;
-            const originalRemoveFromMap = gameObject.removeFromMap;
-            
-            gameObject.removeFromMap = function() {
-                const result = originalRemoveFromMap.call(this);
-                
-                setTimeout(() => {
-                    if (this.sprite && this.skin) {
-                        let shouldBeInContainer = false;
-                        
-                        for (let pattern of [...targetPatterns, ...cutoutPatterns]) {
-                            if (this.skin.includes(pattern)) {
-                                shouldBeInContainer = true;
-                                break;
-                            }
-                        }
-                        
-                        if (shouldBeInContainer && game.excelloContainer) {
-                            applyBlend();
-                        }
-                    }
-                }, 0);
-                
-                return result;
-            };
-        }
-    }
+function wrapResetFunctions() {
+   for (let objName in game.objects["ids"]) {
+       let gameObject = game.objects["ids"][objName];
+       if (gameObject && gameObject.reset && !gameObject._resetWrapped) {
+           gameObject._resetWrapped = true;
+           const originalReset = gameObject.reset;
+           
+           gameObject.reset = function(...args) {
+               const result = originalReset.apply(this, args);
+               
+               setTimeout(() => {
+                   if (game.excelloContainer && !game.excelloContainer.destroyed) {
+                       applyBlend();
+                   }
+               }, 0);
+               
+               return result;
+           };
+       }
+   }
 }
 
 applyBlend();
-wrapRemoveFromMap();
-
-setInterval(wrapRemoveFromMap, 5000);
+wrapResetFunctions();
+setInterval(wrapResetFunctions, 5000);
