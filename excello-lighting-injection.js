@@ -25,6 +25,21 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
         game.excelloOriginalParent = targetSprites[0].parent;
     }
 }
+
+if (game.excelloContainer) {
+    if (!game.excelloContainer._originalRemoveChild) {
+        game.excelloContainer._originalRemoveChild = game.excelloContainer.removeChild;
+        game.excelloContainer.removeChild = function(child) {
+            console.log("Something is removing child from excelloContainer:", child);
+            console.trace();
+            return this._originalRemoveChild(child);
+        };
+    }
+}
+
+
+
+
 function addTarget(index){
 	let targetSprite = targetSprites[index];
 	if (!game.excelloContainer.children.includes(targetSprite)) {
