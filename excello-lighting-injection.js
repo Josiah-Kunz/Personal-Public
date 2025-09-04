@@ -10,8 +10,6 @@ function findSpritesWithPattern(patterns) {
 		for(let pattern of patterns){
 			if (gameObject.skin.includes(pattern)){
 				matches.push(gameObject.sprite);
-				if (gameObject.depth<0) console.log(gameObject.uid);
-				gameObject.depth=3200;
 				break;
 			}
 		}
@@ -73,6 +71,7 @@ function hookRemoveFromMapForSprites(sprites) {
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
                     }
+					gameObject.depth=3200;
                     applyBlend();
                     return result;
                 };
