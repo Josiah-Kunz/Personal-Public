@@ -54,17 +54,55 @@ function applyBlend(){
         game.excelloOriginalParent.addChild(game.excelloContainer);
     }
 }
-applyBlend();
 
-if (!game._originalUpdater) {
-    game._originalUpdater = game.updater;
-    game.updater = function(...args) {
-        const result = game._originalUpdater.apply(this, args);
-        
-        if (game.excelloContainer && !game.excelloContainer.destroyed) {
-            applyBlend();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function wrapRemoveFromMap() {
+    for (let objName in game.objects["ids"]) {
+        let gameObject = game.objects["ids"][objName];
+        if (gameObject && gameObject.removeFromMap && !gameObject._removeFromMapWrapped) {
+            gameObject._removeFromMapWrapped = true;
+            const originalRemoveFromMap = gameObject.removeFromMap;
+            
+            gameObject.removeFromMap = function() {
+                const result = originalRemoveFromMap.call(this);
+                
+                setTimeout(() => {
+                    if (this.sprite && this.skin) {
+                        let shouldBeInContainer = false;
+                        
+                        for (let pattern of [...targetPatterns, ...cutoutPatterns]) {
+                            if (this.skin.includes(pattern)) {
+                                shouldBeInContainer = true;
+                                break;
+                            }
+                        }
+                        
+                        if (shouldBeInContainer && game.excelloContainer) {
+                            applyBlend();
+                        }
+                    }
+                }, 0);
+                
+                return result;
+            };
         }
-        
-        return result;
-    };
+    }
 }
+
+applyBlend();
+wrapRemoveFromMap();
+
+setInterval(wrapRemoveFromMap, 5000);
