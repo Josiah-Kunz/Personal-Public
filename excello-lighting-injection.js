@@ -26,15 +26,22 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
     }
 }
 
-if (game.excelloContainer) {
-    if (!game.excelloContainer._originalRemoveChild) {
-        game.excelloContainer._originalRemoveChild = game.excelloContainer.removeChild;
-        game.excelloContainer.removeChild = function(child) {
-            console.log("Something is removing child from excelloContainer:", child);
-            console.trace();
-            return this._originalRemoveChild(child);
-        };
-    }
+
+
+
+
+
+if (!game._originalUpdater) {
+    game._originalUpdater = Game.updater;
+    Game.updater = function(...args) {
+        const result = game._originalUpdater.apply(this, args);
+        
+        if (game.excelloContainer && !game.excelloContainer.destroyed) {
+            applyBlend();
+        }
+        
+        return result;
+    };
 }
 
 
