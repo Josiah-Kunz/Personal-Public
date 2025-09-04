@@ -63,15 +63,25 @@ applyBlend();
 
 
 
-
-
-if (game.excelloContainer) {
-   if (!game.excelloContainer._originalRemoveChild) {
-       game.excelloContainer._originalRemoveChild = game.excelloContainer.removeChild;
-       game.excelloContainer.removeChild = function(child) {
-           console.log("Something is removing child from excelloContainer:", child);
-           console.trace();
-           return this._originalRemoveChild(child);
-       };
-   }
+if (cutoutSprites.length > 0) {
+    for (let objName in game.objects["ids"]) {
+        let gameObject = game.objects["ids"][objName];
+        if (gameObject && gameObject.sprite === cutoutSprites[0]) {
+            if (!gameObject._removeFromMapTraced) {
+                gameObject._removeFromMapTraced = true;
+                gameObject._originalRemoveFromMap = gameObject.removeFromMap;
+                gameObject.removeFromMap = function() {
+                    console.log("removeFromMap called on cutout object:", objName, this);
+                    console.log("Object skin:", this.skin);
+                    console.log("Sprite parent before removal:", this.sprite?.parent);
+                    
+                    const result = gameObject._originalRemoveFromMap.apply(this);
+                    
+                    console.log("Sprite parent after removal:", this.sprite?.parent);
+                    return result;
+                };
+            }
+            break;
+        }
+    }
 }
