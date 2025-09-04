@@ -87,4 +87,4 @@ function hookRemoveFromMapForSprites(sprites) {
     }
 }
 
-hookRemoveFromMapForSprites([...cutoutSprites]);
+hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
