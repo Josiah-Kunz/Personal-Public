@@ -33,15 +33,13 @@ function setupExcelloContainer() {
        let targetSprite = targetSprites[index];
        if (!game.excelloContainer.children.includes(targetSprite)) {
            targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-           game.excelloContainer.addChild(targetSprite);
        }
    }
    
    function addCutout(index){
        let cutout = cutoutSprites[index];
        if (!game.excelloContainer.children.includes(cutout)) {
-           cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
-           game.excelloContainer.addChild(cutout);
+           cutout.blendMode = PIXI.BLEND_MODES.SRC_IN;
        }
    }
    
