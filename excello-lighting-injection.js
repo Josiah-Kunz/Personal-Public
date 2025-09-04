@@ -25,7 +25,7 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 }
 function addTarget(index){
 	let targetSprite = targetSprites[index];
-	if (targetSprite.parent !== game.excelloContainer) {
+	if (!game.excelloContainer.children.includes(targetSprite)) {
 		console.log("Adding target to container");
 		targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
 		game.excelloContainer.addChild(targetSprite);
@@ -33,7 +33,7 @@ function addTarget(index){
 }
 function addCutout(index){
 	let cutout = cutoutSprites[index];
-	if (cutout.parent !== game.excelloContainer) {
+	if (!game.excelloContainer.children.includes(cutout)) {
 		console.log("Adding cutout to container");
 		cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
 		game.excelloContainer.addChild(cutout);
