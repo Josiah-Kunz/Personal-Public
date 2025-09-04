@@ -33,6 +33,7 @@ function addTarget(index){
 		game.excelloContainer.addChild(targetSprite);
 	}
 }
+
 function addCutout(index){
 	let cutout = cutoutSprites[index];
 	if (!game.excelloContainer.children.includes(cutout)) {
@@ -74,7 +75,6 @@ function hookRemoveFromMapForSprites(sprites) {
                     const ogParent = this.sprite.parent;
                     const result = gameObject._originalRemoveFromMap.apply(this);
                     
-                    // Only restore parent if it was our container
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
                     }
@@ -87,5 +87,4 @@ function hookRemoveFromMapForSprites(sprites) {
     }
 }
 
-// Apply to all your sprites
-hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
+hookRemoveFromMapForSprites([...cutoutSprites]);
