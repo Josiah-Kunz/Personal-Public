@@ -55,34 +55,23 @@ function applyBlend(){
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-for (let objName in game.objects["ids"]) {
-    let gameObject = game.objects["ids"][objName];
-    if (gameObject && gameObject.reset && !gameObject._resetAliased) {
-        gameObject._resetAliased = true;
-        gameObject._originalReset = gameObject.reset;
-        gameObject.reset = function(...args) {
-            const result = gameObject._originalReset.apply(this, args);
-            setTimeout(() => {
-                targetSprites = findSpritesWithPattern(targetPatterns);
-                cutoutSprites = findSpritesWithPattern(cutoutPatterns);
-                applyBlend();
-            }, 0);
-            return result;
-        };
-    }
-}
-
-
 applyBlend();
+
+
+
+
+
+
+
+
+
+if (game.excelloContainer) {
+   if (!game.excelloContainer._originalRemoveChild) {
+       game.excelloContainer._originalRemoveChild = game.excelloContainer.removeChild;
+       game.excelloContainer.removeChild = function(child) {
+           console.log("Something is removing child from excelloContainer:", child);
+           console.trace();
+           return this._originalRemoveChild(child);
+       };
+   }
+}
