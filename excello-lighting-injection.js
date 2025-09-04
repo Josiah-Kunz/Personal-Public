@@ -1,4 +1,4 @@
-if (!window.__excelloInjected) {
+if (!window.__excelloInjected || window.__excelloInjected) {
     let targetPatterns = ["vignette", "overlay_"];
     let cutoutPatterns = ["lm_", "-cutout"];
      
