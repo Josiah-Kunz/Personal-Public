@@ -69,6 +69,7 @@ function hookRemoveFromMapForSprites(sprites) {
                     const ogParent = this.sprite.parent;
                     const result = gameObject._originalRemoveFromMap.apply(this);
                     console.log(`${gameObject.skin} | ${gameObject.uid}`);
+					console.log(`${gameObject.x}, ${gameObject.y}`);
 					console.log(gameObject);
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
