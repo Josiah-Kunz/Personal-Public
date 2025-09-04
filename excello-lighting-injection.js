@@ -26,27 +26,6 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
     }
 }
 
-
-
-
-
-
-if (!game._originalUpdater) {
-    game._originalUpdater = game.updater;
-    game.updater = function(...args) {
-        const result = game._originalUpdater.apply(this, args);
-        
-        if (game.excelloContainer && !game.excelloContainer.destroyed) {
-            applyBlend();
-        }
-        
-        return result;
-    };
-}
-
-
-
-
 function addTarget(index){
 	let targetSprite = targetSprites[index];
 	if (!game.excelloContainer.children.includes(targetSprite)) {
@@ -76,3 +55,16 @@ function applyBlend(){
     }
 }
 applyBlend();
+
+if (!game._originalUpdater) {
+    game._originalUpdater = game.updater;
+    game.updater = function(...args) {
+        const result = game._originalUpdater.apply(this, args);
+        
+        if (game.excelloContainer && !game.excelloContainer.destroyed) {
+            applyBlend();
+        }
+        
+        return result;
+    };
+}
