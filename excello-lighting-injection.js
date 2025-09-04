@@ -80,6 +80,7 @@ function hookRemoveFromMapForSprites(sprites) {
                         this.sprite.parent = ogParent;
                     }
                     applyBlend();
+					console.log("Applying blend");
                     return result;
                 };
                 break;
