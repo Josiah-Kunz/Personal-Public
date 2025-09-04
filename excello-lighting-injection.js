@@ -22,6 +22,9 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	console.log("Creating container");
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
+	if (targetSprites.length > 0) {
+        game.excelloOriginalParent = targetSprites[0].parent;
+    }
 }
 function addTarget(index){
 	let targetSprite = targetSprites[index];
@@ -49,6 +52,8 @@ function applyBlend(){
 	for (let i = 0; i < cutoutSprites.length; i++){
 		addCutout(i);
 	}
-	
+	if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
+        game.excelloOriginalParent.addChild(game.excelloContainer);
+    }
 }
 applyBlend();
