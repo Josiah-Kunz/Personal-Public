@@ -58,21 +58,24 @@ function applyBlend(){
 
 applyBlend();
 
-function hookRemoveFromMapForSprites(sprites) {
+function hookResetForSprites(sprites) {
     for (let sprite of sprites) {
         for (let objName in game.objects["ids"]) {
             let gameObject = game.objects["ids"][objName];
-            if (gameObject && gameObject.sprite === sprite && !gameObject._removeFromMapHooked) {
-                gameObject._removeFromMapHooked = true;
-                gameObject._originalRemoveFromMap = gameObject.removeFromMap;
-                gameObject.removeFromMap = function() {
-                    const ogParent = this.sprite.parent;
-                    const result = gameObject._originalRemoveFromMap.apply(this);
+            if (gameObject && gameObject.sprite === sprite && !gameObject._resetHooked) {
+                gameObject._resetHooked = true;
+                gameObject._originalReset = gameObject.reset;
+                gameObject.reset = function(...args) {
+                    const result = gameObject._originalReset.apply(this, args);
                     
-                    if (ogParent === game.excelloContainer) {
-                        this.sprite.parent = ogParent;
+                    if (!applyBlendScheduled) {
+                        applyBlendScheduled = true;
+                        setTimeout(() => {
+                            applyBlend();
+                            applyBlendScheduled = false;
+                        }, 0);
                     }
-                    applyBlend();
+                    
                     return result;
                 };
                 break;
@@ -81,4 +84,5 @@ function hookRemoveFromMapForSprites(sprites) {
     }
 }
 
-hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
+let applyBlendScheduled = false;
+hookResetForSprites([...targetSprites, ...cutoutSprites]);
