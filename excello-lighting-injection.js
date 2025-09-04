@@ -20,21 +20,19 @@ function findSpritesWithPattern(patterns) {
 let targetSprites = findSpritesWithPattern(targetPatterns);
 let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 
-if (!game.excelloContainer || game.excelloContainer.destroyed) {
-        game.excelloContainer = new PIXI.Container();
-        game.excelloContainer.filters = [new PIXI.Filter()];
-    }
+const container = new PIXI.Container();
+container.filters = [new PIXI.Filter()];
 
 function addTarget(index){
 	let targetSprite = targetSprites[index];
 	targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-	game.container.addChild(targetSprite);
+	container.addChild(targetSprite);
 }
 
 function addCutout(index){
 	let cutout = cutoutSprites[index];
 	cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
-	game.container.addChild(cutout);
+	container.addChild(cutout);
 }
 
 function applyBlend(){
@@ -52,7 +50,7 @@ function applyBlend(){
 	}
 
 	if (originalParent) {
-		originalParent.addChild(game.container);
+		originalParent.addChild(container);
 	}
 
 }
