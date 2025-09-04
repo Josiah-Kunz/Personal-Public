@@ -58,23 +58,27 @@ function applyBlend(){
 
 applyBlend();
 
-let applyBlendScheduled = false;
-
-gameObject.removeFromMap = function() {
-    const ogParent = this.sprite.parent;
-    const result = gameObject._originalRemoveFromMap.apply(this);
-    
-    if (ogParent === game.excelloContainer) {
-        this.sprite.parent = ogParent;
-        
-        if (!applyBlendScheduled) {
-            applyBlendScheduled = true;
-            setTimeout(() => {
-                applyBlend();
-                applyBlendScheduled = false;
-            }, 0);
+function hookRemoveFromMapForSprites(sprites) {
+    for (let sprite of sprites) {
+        for (let objName in game.objects["ids"]) {
+            let gameObject = game.objects["ids"][objName];
+            if (gameObject && gameObject.sprite === sprite && !gameObject._removeFromMapHooked) {
+                gameObject._removeFromMapHooked = true;
+                gameObject._originalRemoveFromMap = gameObject.removeFromMap;
+                gameObject.removeFromMap = function() {
+                    const ogParent = this.sprite.parent;
+                    const result = gameObject._originalRemoveFromMap.apply(this);
+                    
+                    if (ogParent === game.excelloContainer) {
+                        this.sprite.parent = ogParent;
+                    }
+                    applyBlend();
+                    return result;
+                };
+                break;
+            }
         }
     }
-    
-    return result;
-};
+}
+
+hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
