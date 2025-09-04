@@ -86,5 +86,3 @@ for (let objName in game.objects["ids"]) {
 
 
 applyBlend();
-wrapResetFunctions();
-setInterval(wrapResetFunctions, 5000);
