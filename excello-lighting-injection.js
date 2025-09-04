@@ -38,6 +38,7 @@ function addCutout(index){
 	let cutout = cutoutSprites[index];
 	if (!game.excelloContainer.children.includes(cutout)) {
 		cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
+		cutout.isCutout = true;
 		game.excelloContainer.addChild(cutout);
 	}
 }
