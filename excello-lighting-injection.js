@@ -19,7 +19,6 @@ function findSpritesWithPattern(patterns) {
 let targetSprites = findSpritesWithPattern(targetPatterns);
 let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 if (!game.excelloContainer || game.excelloContainer.destroyed) {
-	console.log("Creating container");
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
 	if (targetSprites.length > 0) {
@@ -29,7 +28,6 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 function addTarget(index){
 	let targetSprite = targetSprites[index];
 	if (!game.excelloContainer.children.includes(targetSprite)) {
-		console.log("Adding target to container");
 		targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
 		game.excelloContainer.addChild(targetSprite);
 	}
@@ -37,7 +35,10 @@ function addTarget(index){
 function addCutout(index){
 	let cutout = cutoutSprites[index];
 	if (!game.excelloContainer.children.includes(cutout)) {
-		console.log("Adding cutout to container");
+		console.log("Cutout's old parent:");
+		console.log(cutout.parent);
+		console.log("Container is");
+		console.log(game.excelloContainer);
 		cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
 		game.excelloContainer.addChild(cutout);
 	}
