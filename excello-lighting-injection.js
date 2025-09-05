@@ -24,9 +24,9 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer.filters = [new PIXI.Filter()];
 }
 
-const overlayContainer = game.stage.children.find(child => child.name === "overlay");
-if (overlayContainer && game.excelloContainer.parent !== overlayContainer) {
-    overlayContainer.addChild(game.excelloContainer);
+const parentContainer = game.stage.children.find(child => child.name === "topSprites");
+if (parentContainer && game.excelloContainer.parent !== parentContainer) {
+    parentContainer.addChild(game.excelloContainer);
 }
 
 function addTarget(index){
