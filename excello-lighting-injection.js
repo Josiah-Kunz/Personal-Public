@@ -1,10 +1,40 @@
-let targetPatterns=["vignette", "overlay_"];
+// ============================================================================
+// Custom lighting overlay and cutout script.
+//
+// Usage: 
+//	- Define a sprite in jCoad like normal 
+//		= If the sprite's filename contains one of the key strings in 
+//			targetPatterns, it will overlay the game and have cutouts.
+//			-- Example: overlay_1_woods.png
+//		= If the sprite's filename contains a cutout key string, it will do
+//			the cutting. Its color will be invisible, but the cut is 
+//			proportional to the sprite's alpha.
+//			-- Example: lm_circle_large.png
+//		= If the sprite's filename contains a plusPattern key string, it will 
+//			render above the overlay and not get cut.
+//			-- Example: lm+_town_banner.png
+// 
+// Author: J. Kunz
+// Direction: Gav
+// AI consultant: Claude
+// ============================================================================
+
+// Settings
+// =========
+
+// The things we're cutting out of
+let targetPatterns=["overlay_", "vignette"];
+
+// The things doing the cutting
 let cutoutPatterns=["lm_", "-cutout"];
+
+// These are above the cutouts, so they neither get cut nor get overlaid
+let plusPatterns=["lm+_", "banner_"];
  
+// Gets all sprites whose filenames match the given array of patterns
 function findSpritesWithPattern(patterns) {
-  let matches = [];
-  
-  for(let objName in game.objects["ids"]) {
+	let matches = [];
+	for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
 		if (!gameObject || !gameObject.skin) continue;
 		for(let pattern of patterns){
@@ -14,8 +44,9 @@ function findSpritesWithPattern(patterns) {
 			}
 		}
 	}
-  return matches;
+	return matches;
 }
+
 
 if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer = new PIXI.Container();
@@ -102,10 +133,14 @@ function getCategory(gameObject) {
     return 999; // Shouldn't happen, but just in case
 }
 
-
-
-
-
+function updateLoop() {
+  if (blendDirty) {
+    applyBlend();
+	blendDirty = false;
+  }
+  requestAnimationFrame(updateLoop);
+}
+updateLoop();
 
 
 function applyBlend(){
@@ -135,7 +170,7 @@ function hookRemoveFromMapForSprites(sprites) {
                     if (ogParent === game.excelloContainer) {
                         this.sprite.parent = ogParent;
                     }
-                    applyBlend();
+                    blendDirty = true;
                     return result;
                 };
                 break;
@@ -145,56 +180,3 @@ function hookRemoveFromMapForSprites(sprites) {
 }
 
 hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
-
-
-
-
-
-
-
-
-
-
-
-
-
-function detailedHierarchy(container, prefix = '', isLast = true) {
-    const connector = isLast ? '└── ' : '├── ';
-    const name = container.constructor.name;
-    
-    // Add useful identifying info
-    let info = '';
-    if (container.name) info += ` "${container.name}"`;
-    if (container.label) info += ` label:"${container.label}"`;
-    if (container.id) info += ` id:${container.id}`;
-    if (container === game.excelloContainer) info += ' ⭐ YOUR CONTAINER';
-    if (container.texture && container.texture.baseTexture && container.texture.baseTexture.resource && container.texture.baseTexture.resource.url) {
-        const url = container.texture.baseTexture.resource.url;
-        const filename = url.split('/').pop();
-        info += ` img:"${filename}"`;
-    }
-    if (container.blendMode && container.blendMode !== 0) info += ` blend:${container.blendMode}`;
-    if (container.children && container.children.length > 0) info += ` (${container.children.length})`;
-    if (container.x !== 0 || container.y !== 0) info += ` pos:(${container.x.toFixed(0)},${container.y.toFixed(0)})`;
-    
-    for (let objName in game.objects["ids"]) {
-        let gameObject = game.objects["ids"][objName];
-        if (gameObject && gameObject.sprite === container) {
-            info += ` 🎮 "${objName}"`;
-            if (gameObject.skin) info += ` skin:"${gameObject.skin}"`;
-            break;
-        }
-    }
-    
-    console.log(prefix + connector + name + info);
-    
-    if (container.children) {
-        container.children.forEach((child, index) => {
-            const isLastChild = index === container.children.length - 1;
-            const newPrefix = prefix + (isLast ? '    ' : '│   ');
-            detailedHierarchy(child, newPrefix, isLastChild);
-        });
-    }
-}
-
-detailedHierarchy(game.stage);
