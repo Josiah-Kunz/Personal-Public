@@ -154,10 +154,7 @@ if (!game._updaterHooked) {
     game.updater = function(...args) {
         const result = originalUpdater.apply(this, args);
         
-        // After all game updates are done, fix our container
-        setTimeout(() => {
-            applyBlend();
-        }, 0);
+        applyBlend();
         
         return result;
     };
