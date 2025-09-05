@@ -148,14 +148,14 @@ function applyBlend(){
 
 applyBlend();
 
-if (!game._updaterHooked) {
-    game._updaterHooked = true;
-    const originalUpdater = game.updater;
-    game.updater = function(...args) {
-        const result = originalUpdater.apply(this, args);
-        
+if (!game._renderHooked) {
+    game._renderHooked = true;
+    const originalRender = game.renderer.render;
+    game.renderer.render = function(...args) {
+        // Fix container right before rendering
         applyBlend();
         
+        const result = originalRender.apply(this, args);
         return result;
     };
 }
