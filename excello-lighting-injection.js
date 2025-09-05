@@ -90,20 +90,18 @@ hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
 
 
 
-
-function printHierarchy(container, depth = 0) {
-    const indent = '  '.repeat(depth);
-    console.log(`${indent}${container.constructor.name} (${container.children.length} children)`);
+function visualHierarchy(container, prefix = '', isLast = true) {
+    const connector = isLast ? '└── ' : '├── ';
+    const name = container.constructor.name;
+    const details = container.children.length > 0 ? ` (${container.children.length} children)` : '';
     
-    container.children.forEach(child => {
-        if (child.children && child.children.length > 0) {
-            printHierarchy(child, depth + 1);
-        } else {
-            const childIndent = '  '.repeat(depth + 1);
-            console.log(`${childIndent}${child.constructor.name}`);
-        }
+    console.log(prefix + connector + name + details);
+    
+    container.children.forEach((child, index) => {
+        const isLastChild = index === container.children.length - 1;
+        const newPrefix = prefix + (isLast ? '    ' : '│   ');
+        visualHierarchy(child, newPrefix, isLastChild);
     });
 }
 
-printHierarchy(game.stage);
-printHierarchy(game.excelloContainer);
+visualHierarchy(game.stage);
