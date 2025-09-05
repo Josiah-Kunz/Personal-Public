@@ -112,12 +112,18 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
     if (container.children && container.children.length > 0) info += ` (${container.children.length})`;
     if (container.x !== 0 || container.y !== 0) info += ` pos:(${container.x.toFixed(0)},${container.y.toFixed(0)})`;
     
-    // For sprites, try to find their game object
+    // Add depth info
+    if (container.depth !== undefined) info += ` depth:${container.depth}`;
+    
+    // For sprites, try to find their game object and show its depth too
     for (let objName in game.objects["ids"]) {
         let gameObject = game.objects["ids"][objName];
         if (gameObject && gameObject.sprite === container) {
             info += ` 🎮 "${objName}"`;
             if (gameObject.skin) info += ` skin:"${gameObject.skin}"`;
+            if (gameObject.depth !== undefined && gameObject.depth !== container.depth) {
+                info += ` gameObj.depth:${gameObject.depth}`;
+            }
             break;
         }
     }
