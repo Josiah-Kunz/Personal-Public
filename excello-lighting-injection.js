@@ -16,11 +16,15 @@ function findSpritesWithPattern(patterns) {
 	}
   return matches;
 }
+
+const weatherCanvas = document.getElementById('game-weather');
+const weatherApp = weatherCanvas._pixiApp;
 let targetSprites = findSpritesWithPattern(targetPatterns);
 let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
+	weatherApp.stage.addChild(game.excelloContainer);
 }
 
 function addTarget(index){
