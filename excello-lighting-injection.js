@@ -21,13 +21,6 @@ let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
-	if (targetSprites.length > 0) {
-        game.excelloOriginalParent = targetSprites[0].parent;
-		if (game.excelloOriginalParent){
-			game.excelloContainerIndex = game.excelloOriginalParent.getChildIndex(targetSprites[0]);
-			game.excelloOriginalParent.addChildAt(game.excelloContainer, game.excelloContainerIndex);
-		}
-    }
 }
 
 function addTarget(index){
@@ -48,16 +41,12 @@ function addCutout(index){
 function applyBlend(){
 	if (targetSprites.length==0) return;
 	if (cutoutSprites.length==0) return;
-	const originalParent = targetSprites[0].parent;
 	for (let i = 0; i < targetSprites.length; i++){
 		addTarget(i);
 	}
 	for (let i = 0; i < cutoutSprites.length; i++){
 		addCutout(i);
 	}
-	if (game.excelloOriginalParent && game.excelloContainer.parent !== game.excelloOriginalParent) {
-        game.excelloOriginalParent.addChildAt(game.excelloContainer, game.excelloContainerIndex);
-    }
 }
 
 applyBlend();
