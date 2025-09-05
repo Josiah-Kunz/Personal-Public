@@ -146,37 +146,19 @@ function applyBlend(){
 	sortContainerChildren();
 }
 
-function hookRemoveFromMapForSprites(sprites) {
-    for (let sprite of sprites) {
-        for (let objName in game.objects["ids"]) {
-            let gameObject = game.objects["ids"][objName];
-            if (gameObject && gameObject.sprite === sprite && !gameObject._removeFromMapHooked) {
-                gameObject._removeFromMapHooked = true;
-                gameObject._originalRemoveFromMap = gameObject.removeFromMap;
-                gameObject.removeFromMap = function() {
-                    const ogParent = this.sprite.parent;
-                    const result = gameObject._originalRemoveFromMap.apply(this);
-                    if (ogParent === game.excelloContainer) {
-                        this.sprite.parent = ogParent;
-                    }
-                    blendDirty = true;
-                    return result;
-                };
-                break;
-            }
-        }
-    }
+applyBlend();
+
+if (!game._updaterHooked) {
+    game._updaterHooked = true;
+    const originalUpdater = game.updater;
+    game.updater = function(...args) {
+        const result = originalUpdater.apply(this, args);
+        
+        // After all game updates are done, fix our container
+        setTimeout(() => {
+            applyBlend();
+        }, 0);
+        
+        return result;
+    };
 }
-
-hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
-
-function updateLoop() {
-  if (blendDirty) {
-    applyBlend();
-	blendDirty = false;
-  }
-  requestAnimationFrame(updateLoop);
-}
-
-blendDirty = true;
-updateLoop();
