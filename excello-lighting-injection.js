@@ -133,15 +133,6 @@ function getCategory(gameObject) {
     return 999; // Shouldn't happen, but just in case
 }
 
-function updateLoop() {
-  if (blendDirty) {
-    applyBlend();
-	blendDirty = false;
-  }
-  requestAnimationFrame(updateLoop);
-}
-updateLoop();
-
 
 function applyBlend(){
 	if (targetSprites.length==0) return;
@@ -154,8 +145,6 @@ function applyBlend(){
 	}
 	sortContainerChildren();
 }
-
-applyBlend();
 
 function hookRemoveFromMapForSprites(sprites) {
     for (let sprite of sprites) {
@@ -180,3 +169,14 @@ function hookRemoveFromMapForSprites(sprites) {
 }
 
 hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
+
+function updateLoop() {
+  if (blendDirty) {
+    applyBlend();
+	blendDirty = false;
+  }
+  requestAnimationFrame(updateLoop);
+}
+
+blendDirty = true;
+updateLoop();
