@@ -75,3 +75,35 @@ function hookRemoveFromMapForSprites(sprites) {
 }
 
 hookRemoveFromMapForSprites([...targetSprites, ...cutoutSprites]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function printHierarchy(container, depth = 0) {
+    const indent = '  '.repeat(depth);
+    console.log(`${indent}${container.constructor.name} (${container.children.length} children)`);
+    
+    container.children.forEach(child => {
+        if (child.children && child.children.length > 0) {
+            printHierarchy(child, depth + 1);
+        } else {
+            const childIndent = '  '.repeat(depth + 1);
+            console.log(`${childIndent}${child.constructor.name}`);
+        }
+    });
+}
+
+printHierarchy(game.stage);
+printHierarchy(game.excelloContainer);
