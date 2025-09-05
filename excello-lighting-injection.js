@@ -17,8 +17,6 @@ function findSpritesWithPattern(patterns) {
   return matches;
 }
 
-let targetSprites = findSpritesWithPattern(targetPatterns);
-let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer = new PIXI.Container();
 	game.excelloContainer.filters = [new PIXI.Filter()];
@@ -28,6 +26,9 @@ const parentContainer = game.stage.children.find(child => child.name === "overla
 if (parentContainer && game.excelloContainer.parent !== parentContainer) {
     parentContainer.addChild(game.excelloContainer);
 }
+
+let targetSprites = findSpritesWithPattern(targetPatterns);
+let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 
 function addTarget(index){
 	let targetSprite = targetSprites[index];
@@ -44,6 +45,69 @@ function addCutout(index){
 		game.excelloContainer.addChild(cutout);
 	}
 }
+
+
+
+function sortContainerChildren() {
+    if (!game.excelloContainer || game.excelloContainer.children.length === 0) return;
+    
+    const children = [...game.excelloContainer.children];
+    
+    // Sort function: lower numbers render first (bottom)
+    children.sort((a, b) => {
+        const aGameObj = findGameObjectForSprite(a);
+        const bGameObj = findGameObjectForSprite(b);
+        
+        const aCategory = getCategory(aGameObj);
+        const bCategory = getCategory(bGameObj);
+        
+        return aCategory - bCategory;
+    });
+    
+    // Re-add children in sorted order
+    game.excelloContainer.removeChildren();
+    children.forEach(child => game.excelloContainer.addChild(child));
+}
+
+function findGameObjectForSprite(sprite) {
+    for (let objName in game.objects["ids"]) {
+        let gameObject = game.objects["ids"][objName];
+        if (gameObject && gameObject.sprite === sprite) {
+            return gameObject;
+        }
+    }
+    return null;
+}
+
+function getCategory(gameObject) {
+    if (!gameObject || !gameObject.skin) return 999; // Unknown, put at end
+    
+    const skin = gameObject.skin.toLowerCase();
+    
+    // Category 1: overlay + vignette (bottom layer)
+    if (skin.includes('overlay') && skin.includes('vignette')) {
+        return 1;
+    }
+    
+    // Category 2: other targets (overlay OR vignette, but not both)
+    if (skin.includes('overlay') || skin.includes('vignette')) {
+        return 2;
+    }
+    
+    // Category 3: cutouts (top layer)
+    if (skin.includes('lm_') || skin.includes('-cutout')) {
+        return 3;
+    }
+    
+    return 999; // Shouldn't happen, but just in case
+}
+
+
+
+
+
+
+
 function applyBlend(){
 	if (targetSprites.length==0) return;
 	if (cutoutSprites.length==0) return;
@@ -53,6 +117,7 @@ function applyBlend(){
 	for (let i = 0; i < cutoutSprites.length; i++){
 		addCutout(i);
 	}
+	sortContainerChildren();
 }
 
 applyBlend();
