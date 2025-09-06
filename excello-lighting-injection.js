@@ -62,19 +62,25 @@ let targetSprites = findSpritesWithPattern(targetPatterns);
 let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 
 function addTarget(index){
-	let targetSprite = targetSprites[index];
-	if (!game.excelloContainer.children.includes(targetSprite)) {
-		targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-		game.excelloContainer.addChild(targetSprite);
-	}
+    let targetSprite = targetSprites[index];
+    if (!targetSprite || !targetSprite.parent || targetSprite.parent !== game.excelloContainer) {
+        if (targetSprite.parent && targetSprite.parent !== game.excelloContainer) {
+            targetSprite.parent.removeChild(targetSprite);
+        }
+        targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
+        game.excelloContainer.addChild(targetSprite);
+    }
 }
 
 function addCutout(index){
-	let cutout = cutoutSprites[index];
-	if (!game.excelloContainer.children.includes(cutout)) {
-		cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
-		game.excelloContainer.addChild(cutout);
-	}
+    let cutout = cutoutSprites[index];
+    if (!cutout || !cutout.parent || cutout.parent !== game.excelloContainer) {
+        if (cutout.parent && cutout.parent !== game.excelloContainer) {
+            cutout.parent.removeChild(cutout);
+        }
+        cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
+        game.excelloContainer.addChild(cutout);
+    }
 }
 
 
@@ -147,9 +153,15 @@ function applyBlend(){
 }
 
 applyBlend();
-if (!game.addedBlendToTicker){
-	game.addedBlendToTicker = true;
-	game.stage.parent.ticker.add(() => {
-		applyBlend();
-	});
+
+if (!game._renderHooked) {
+    game._renderHooked = true;
+    const originalRender = game.renderer.render;
+    game.renderer.render = function(...args) {
+        // Fix container right before rendering
+        applyBlend();
+        
+        const result = originalRender.apply(this, args);
+        return result;
+    };
 }
