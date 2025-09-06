@@ -10,9 +10,9 @@
 //			the cutting. Its color will be invisible, but the cut is 
 //			proportional to the sprite's alpha.
 //			-- Example: lm_circle_large.png
-//		= If the sprite's filename contains a plusPattern key string, it will 
+//		= If the sprite's filename contains a forePattern key string, it will 
 //			render above the overlay and not get cut.
-//			-- Example: lm+_town_banner.png
+//			-- Example: fore+_town_banner.png
 // 
 // Author: J. Kunz
 // Direction: Gav
@@ -22,14 +22,18 @@
 // Settings
 // =========
 
-// The things we're cutting out of
+// The things we're cutting out of (targets - bottom layer)
 let targetPatterns=["overlay_", "vignette"];
 
-// The things doing the cutting
+// The things doing the cutting (middle layer)
 let cutoutPatterns=["lm_", "-cutout"];
 
-// These are above the cutouts, so they neither get cut nor get overlaid
-let plusPatterns=["lm+_", "banner_"];
+// These are above the cutouts, so they neither get cut nor get overlaid (fore layer)
+let forePatterns=["fore+_", "banner_"];
+
+// The layer to store the container in. 
+// This layer should already be defined within the game.
+let gameLayer = "overlay";
  
 // Gets all sprites whose filenames match the given array of patterns
 function findSpritesWithPattern(patterns) {
@@ -53,51 +57,34 @@ if (!game.excelloContainer || game.excelloContainer.destroyed) {
 	game.excelloContainer.filters = [new PIXI.Filter()];
 }
 
-const parentContainer = game.stage.children.find(child => child.name === "overlay");
+const parentContainer = game.stage.children.find(child => child.name === gameLayer);
 if (parentContainer && game.excelloContainer.parent !== parentContainer) {
     parentContainer.addChild(game.excelloContainer);
 }
 
 let targetSprites = findSpritesWithPattern(targetPatterns);
 let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
+let foreSprites = findSpritesWithPattern(forePatterns);
 
-function addTarget(index){
-	let targetSprite = targetSprites[index];
-	if (!game.excelloContainer.children.includes(targetSprite)) {
-		targetSprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-		game.excelloContainer.addChild(targetSprite);
+function addTarget(sprite){
+	if (!game.excelloContainer.children.includes(sprite)) {
+		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
+		game.excelloContainer.addChild(sprite);
 	}
 }
 
-function addCutout(index){
-	let cutout = cutoutSprites[index];
-	if (!game.excelloContainer.children.includes(cutout)) {
-		cutout.blendMode = PIXI.BLEND_MODES.DST_OUT;
-		game.excelloContainer.addChild(cutout);
+function addCutout(sprite){
+	if (!game.excelloContainer.children.includes(sprite)) {
+		sprite.blendMode = PIXI.BLEND_MODES.DST_OUT;
+		game.excelloContainer.addChild(sprite);
 	}
 }
 
-
-
-function sortContainerChildren() {
-    if (!game.excelloContainer || game.excelloContainer.children.length === 0) return;
-    
-    const children = [...game.excelloContainer.children];
-    
-    // Sort function: lower numbers render first (bottom)
-    children.sort((a, b) => {
-        const aGameObj = findGameObjectForSprite(a);
-        const bGameObj = findGameObjectForSprite(b);
-        
-        const aCategory = getCategory(aGameObj);
-        const bCategory = getCategory(bGameObj);
-        
-        return aCategory - bCategory;
-    });
-    
-    // Re-add children in sorted order
-    game.excelloContainer.removeChildren();
-    children.forEach(child => game.excelloContainer.addChild(child));
+function addFore(sprite){
+	if (!game.excelloContainer.children.includes(sprite)) {
+		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
+		game.excelloContainer.addChild(sprite);
+	}
 }
 
 function findGameObjectForSprite(sprite) {
@@ -110,58 +97,77 @@ function findGameObjectForSprite(sprite) {
     return null;
 }
 
-function getCategory(gameObject) {
-    if (!gameObject || !gameObject.skin) return 999; // Unknown, put at end
-    
+function getPriorityFromPool(gameObject, patternPool, startingPriority) {
+    if (!gameObject || !gameObject.skin) return -1;
+	let priority = startingPriority;
     const skin = gameObject.skin.toLowerCase();
     
-    // Category 1: overlay + vignette (bottom layer)
-    if (skin.includes('overlay') && skin.includes('vignette')) {
-        return 1;
-    }
+	for (let i = 0; i < patternPool.length; i++){
+		if (skin.includes(patternPool[i])){
+			return priority;
+		}
+		priority++;
+	}
     
-    // Category 2: other targets (overlay OR vignette, but not both)
-    if (skin.includes('overlay') || skin.includes('vignette')) {
-        return 2;
-    }
-    
-    // Category 3: cutouts (top layer)
-    if (skin.includes('lm_') || skin.includes('-cutout')) {
-        return 3;
-    }
-    
-    return 999; // Shouldn't happen, but just in case
+    return -1;
 }
 
+function getPriority(gameObject){
+	// Initialize
+	let priority = 1;
+	let allPools = [targetPatterns, cutoutPatterns, forePatterns];
+	
+	for (let i = 0; i < allPools.length; i++){
+		let pool = allPools[i];
+		let result = getPriorityFromPool(gameObject, pool, priority);
+		
+		// Failed search; try next pool
+		if (result < 0){
+			priority += pool.length;
+		} else {
+			// Success!
+			return result;
+		}
+	}
+	
+	// Total failure
+	return -1;
+}
 
 function applyBlend(){
-    if (targetSprites.length==0) return;
-    if (cutoutSprites.length==0) return;
+    if (targetSprites.length === 0 && cutoutSprites.length === 0) return;
     
-    // Collect all sprites with their categories
-    let spritesToAdd = [];
+    // Collect all sprites with their priorities
+    let allSprites = [];
     
-    for (let i = 0; i < targetSprites.length; i++){
-        let sprite = targetSprites[i];
+    targetSprites.forEach(sprite => {
         let gameObj = findGameObjectForSprite(sprite);
-        spritesToAdd.push({sprite, category: getCategory(gameObj), type: 'target', index: i});
-    }
+        allSprites.push({sprite, priority: getPriority(gameObj), type: 'target'});
+    });
     
-    for (let i = 0; i < cutoutSprites.length; i++){
-        let sprite = cutoutSprites[i];
+    cutoutSprites.forEach(sprite => {
         let gameObj = findGameObjectForSprite(sprite);
-        spritesToAdd.push({sprite, category: getCategory(gameObj), type: 'cutout', index: i});
-    }
+        allSprites.push({sprite, priority: getPriority(gameObj), type: 'cutout'});
+    });
     
-    // Sort by category first
-    spritesToAdd.sort((a, b) => a.category - b.category);
+    foreSprites.forEach(sprite => {
+        let gameObj = findGameObjectForSprite(sprite);
+        allSprites.push({sprite, priority: getPriority(gameObj), type: 'fore'});
+    });
     
-    // Add in correct order
-    spritesToAdd.forEach(item => {
+    // Sort by priority
+    allSprites.sort((a, b) => a.priority - b.priority);
+    
+    // Clear container and add sprites in order
+    game.excelloContainer.removeChildren();
+    
+    allSprites.forEach(item => {
         if (item.type === 'target') {
-            addTarget(item.index);
-        } else {
-            addCutout(item.index);
+            addTarget(item.sprite);
+        } else if (item.type === 'cutout') {
+            addCutout(item.sprite);
+        } else if (item.type === 'fore') {
+            addFore(item.sprite);
         }
     });
 }
@@ -172,53 +178,13 @@ if (!game._renderHooked) {
     game._renderHooked = true;
     const originalRender = game.renderer.render;
     game.renderer.render = function(...args) {
-        // Fix container right before rendering
+        // Refresh sprite lists and reapply
+        targetSprites = findSpritesWithPattern(targetPatterns);
+        cutoutSprites = findSpritesWithPattern(cutoutPatterns);
+        foreSprites = findSpritesWithPattern(forePatterns);
         applyBlend();
         
         const result = originalRender.apply(this, args);
         return result;
     };
 }
-
-
-
-function detailedHierarchy(container, prefix = '', isLast = true) {
-    const connector = isLast ? '└── ' : '├── ';
-    const name = container.constructor.name;
-    
-    // Add useful identifying info
-    let info = '';
-    if (container.name) info += ` "${container.name}"`;
-    if (container.label) info += ` label:"${container.label}"`;
-    if (container.id) info += ` id:${container.id}`;
-    if (container === game.excelloContainer) info += ' ⭐ YOUR CONTAINER';
-    if (container.texture && container.texture.baseTexture && container.texture.baseTexture.resource && container.texture.baseTexture.resource.url) {
-        const url = container.texture.baseTexture.resource.url;
-        const filename = url.split('/').pop();
-        info += ` img:"${filename}"`;
-    }
-    if (container.blendMode && container.blendMode !== 0) info += ` blend:${container.blendMode}`;
-    if (container.children && container.children.length > 0) info += ` (${container.children.length})`;
-    if (container.x !== 0 || container.y !== 0) info += ` pos:(${container.x.toFixed(0)},${container.y.toFixed(0)})`;
-    
-    for (let objName in game.objects["ids"]) {
-        let gameObject = game.objects["ids"][objName];
-        if (gameObject && gameObject.sprite === container) {
-            info += ` 🎮 "${objName}"`;
-            if (gameObject.skin) info += ` skin:"${gameObject.skin}"`;
-            break;
-        }
-    }
-    
-    console.log(prefix + connector + name + info);
-    
-    if (container.children) {
-        container.children.forEach((child, index) => {
-            const isLastChild = index === container.children.length - 1;
-            const newPrefix = prefix + (isLast ? '    ' : '│   ');
-            detailedHierarchy(child, newPrefix, isLastChild);
-        });
-    }
-}
-
-detailedHierarchy(game.stage);
