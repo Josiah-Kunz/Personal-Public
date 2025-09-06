@@ -135,54 +135,47 @@ function getCategory(gameObject) {
 
 
 function applyBlend(){
-	if (targetSprites.length==0) return;
-	if (cutoutSprites.length==0) return;
-	for (let i = 0; i < targetSprites.length; i++){
-		addTarget(i);
-	}
-	for (let i = 0; i < cutoutSprites.length; i++){
-		addCutout(i);
-	}
-	sortContainerChildren();
+    if (targetSprites.length==0) return;
+    if (cutoutSprites.length==0) return;
+    
+    // Collect all sprites with their categories
+    let spritesToAdd = [];
+    
+    for (let i = 0; i < targetSprites.length; i++){
+        let sprite = targetSprites[i];
+        let gameObj = findGameObjectForSprite(sprite);
+        spritesToAdd.push({sprite, category: getCategory(gameObj), type: 'target', index: i});
+    }
+    
+    for (let i = 0; i < cutoutSprites.length; i++){
+        let sprite = cutoutSprites[i];
+        let gameObj = findGameObjectForSprite(sprite);
+        spritesToAdd.push({sprite, category: getCategory(gameObj), type: 'cutout', index: i});
+    }
+    
+    // Sort by category first
+    spritesToAdd.sort((a, b) => a.category - b.category);
+    
+    // Add in correct order
+    spritesToAdd.forEach(item => {
+        if (item.type === 'target') {
+            addTarget(item.index);
+        } else {
+            addCutout(item.index);
+        }
+    });
 }
 
 applyBlend();
 
-// Add these variables at the top
-let lastTargetCount = 0;
-let lastCutoutCount = 0;
-let lastTargetSprites = [];
-let lastCutoutSprites = [];
-
-function hasSpritesChanged() {
-    const currentTargets = findSpritesWithPattern(targetPatterns);
-    const currentCutouts = findSpritesWithPattern(cutoutPatterns);
-    
-    if (currentTargets.length !== lastTargetCount || 
-        currentCutouts.length !== lastCutoutCount) {
-        return true;
-    }
-    
-    // Check if actual sprites changed
-    for (let i = 0; i < currentTargets.length; i++) {
-        if (currentTargets[i] !== lastTargetSprites[i]) return true;
-    }
-    
-    return false;
-}
-
-// Replace the render hook with:
-game.renderer.render = function(...args) {
-    if (hasSpritesChanged()) {
-        targetSprites = findSpritesWithPattern(targetPatterns);
-        cutoutSprites = findSpritesWithPattern(cutoutPatterns);
-        lastTargetCount = targetSprites.length;
-        lastCutoutCount = cutoutSprites.length;
-        lastTargetSprites = [...targetSprites];
-        lastCutoutSprites = [...cutoutSprites];
+if (!game._renderHooked) {
+    game._renderHooked = true;
+    const originalRender = game.renderer.render;
+    game.renderer.render = function(...args) {
+        // Fix container right before rendering
         applyBlend();
-    }
-    
-    const result = originalRender.apply(this, args);
-    return result;
-};
+        
+        const result = originalRender.apply(this, args);
+        return result;
+    };
+}
