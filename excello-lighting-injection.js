@@ -19,8 +19,9 @@
 // AI consultant: Claude
 // ============================================================================
 
-// Settings
-// =========
+// ============================================================================
+// Settings - Layers
+// ============================================================================
 
 // The things we're cutting out of (targets - bottom layer)
 let targetPatterns=["overlay_", "vignette"];
@@ -34,6 +35,10 @@ let forePatterns=["fore+_", "banner_"];
 // The layer to store the container in. 
 // This layer should already be defined within the game.
 let gameLayer = "overlay";
+
+// ============================================================================
+// Function Delcarations
+// ============================================================================
  
 // Gets all sprites whose filenames match the given array of patterns
 function findSpritesWithPattern(patterns) {
@@ -52,20 +57,7 @@ function findSpritesWithPattern(patterns) {
 }
 
 
-if (!game.excelloContainer || game.excelloContainer.destroyed) {
-	game.excelloContainer = new PIXI.Container();
-	game.excelloContainer.filters = [new PIXI.Filter()];
-}
-
-const parentContainer = game.stage.children.find(child => child.name === gameLayer);
-if (parentContainer && game.excelloContainer.parent !== parentContainer) {
-    parentContainer.addChild(game.excelloContainer);
-}
-
-let targetSprites = findSpritesWithPattern(targetPatterns);
-let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
-let foreSprites = findSpritesWithPattern(forePatterns);
-
+// Add the sprite to the targets (having the lowest priority)
 function addTarget(sprite){
 	if (!game.excelloContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
@@ -73,6 +65,8 @@ function addTarget(sprite){
 	}
 }
 
+// Add the sprite to the cutouts (having a blend mode of DST_OUT; has priority 
+// over targets)
 function addCutout(sprite){
 	if (!game.excelloContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.DST_OUT;
@@ -80,6 +74,7 @@ function addCutout(sprite){
 	}
 }
 
+// Add the sprite to the foreground (fore+; has priority over cutouts)
 function addFore(sprite){
 	if (!game.excelloContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
@@ -87,6 +82,7 @@ function addFore(sprite){
 	}
 }
 
+// Gets the given sprite's gameObject
 function findGameObjectForSprite(sprite) {
     for (let objName in game.objects["ids"]) {
         let gameObject = game.objects["ids"][objName];
@@ -97,6 +93,12 @@ function findGameObjectForSprite(sprite) {
     return null;
 }
 
+// Determines if the given sprite's skin matches any pattern in the given 
+// pattern pool. If so, return its priority. For example:
+//		pool = ["A", "B"]
+//	spriteA would have priority 1 and spriteB would have priority 2. 
+//  spriteA2 would also have priority 1, and so its order in the container with
+//	respect to spriteA would not be guaranteed.
 function getPriorityFromPool(gameObject, patternPool, startingPriority) {
     if (!gameObject || !gameObject.skin) return -1;
 	let priority = startingPriority;
@@ -112,7 +114,9 @@ function getPriorityFromPool(gameObject, patternPool, startingPriority) {
     return -1;
 }
 
+// Gets the given sprite's priority based on its pool (target, cutout, etc.)
 function getPriority(gameObject){
+	
 	// Initialize
 	let priority = 1;
 	let allPools = [targetPatterns, cutoutPatterns, forePatterns];
@@ -134,7 +138,15 @@ function getPriority(gameObject){
 	return -1;
 }
 
+// Main function that applies the blend properties to sprites
 function applyBlend(){
+	
+	// Add sprites to the container based on pattern
+	let targetSprites = findSpritesWithPattern(targetPatterns);
+	let cutoutSprites = findSpritesWithPattern(cutoutPatterns);
+	let foreSprites = findSpritesWithPattern(forePatterns);
+	
+	// Guard nothing to blend
     if (targetSprites.length === 0 && cutoutSprites.length === 0) return;
     
     // Collect all sprites with their priorities
@@ -172,19 +184,37 @@ function applyBlend(){
     });
 }
 
+// ============================================================================
+// Main Execution
+// ============================================================================
+
+// Create the container if it doesn't exist yet
+if (!game.excelloContainer || game.excelloContainer.destroyed) {
+	game.excelloContainer = new PIXI.Container();
+	game.excelloContainer.filters = [new PIXI.Filter()];
+}
+
+// Set the container in the correct layer (defined as "gameLayer" in the settings)
+const parentContainer = game.stage.children.find(child => child.name === gameLayer);
+if (parentContainer && game.excelloContainer.parent !== parentContainer) {
+    parentContainer.addChild(game.excelloContainer);
+}
+
+// Ensure they're all blended correctly
 applyBlend();
 
+// Hook into refresh (e.g., when mapvars update or the player takes a step)
+// Otherwise, the sprites automatically re-parent based on their depth
+// We don't want that since they should only be blending with each other
 if (!game._renderHooked) {
     game._renderHooked = true;
     const originalRender = game.renderer.render;
     game.renderer.render = function(...args) {
-        // Refresh sprite lists and reapply
-        targetSprites = findSpritesWithPattern(targetPatterns);
+        const result = originalRender.apply(this, args);
+		targetSprites = findSpritesWithPattern(targetPatterns);
         cutoutSprites = findSpritesWithPattern(cutoutPatterns);
         foreSprites = findSpritesWithPattern(forePatterns);
         applyBlend();
-        
-        const result = originalRender.apply(this, args);
         return result;
     };
 }
