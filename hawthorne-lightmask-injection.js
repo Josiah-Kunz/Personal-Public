@@ -87,7 +87,7 @@ let desyncDelay = 1000;
 let debugHierarchy = false;
 
 // If true, says how many flickers were found, and then announces on/off states
-let debugFlicker = false;
+let debugFlicker = true;
 
 // ============================================================================
 // Light Mask Function Delcarations
