@@ -43,7 +43,7 @@ game => {
 // ============================================================================
 
 // The things we're cutting out of (targets - bottom layer)
-let targetPatterns=["overlay_", "vignette"];
+let targetPatterns=["overlay_", "_overlay", "vignette"];
 
 // The things doing the cutting (middle layer)
 let cutoutPatterns=["lm_", "-cutout"];
