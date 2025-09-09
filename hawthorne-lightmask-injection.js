@@ -282,12 +282,12 @@ function flickerImage(sprite) {
   
   if (sprite.alpha < 0.5) {
     sprite.alpha = 1;
-    const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
+    const offTime = getRandomInt(game.__minOnTimes[sprite], game.__maxOnTimes[sprite]);
 	setTimeout(() => flickerImage(sprite), offTime);
 	console.log(`Flickered on for another ${offTime} ms.`)
   } else {
     sprite.alpha = 0;
-    const onTime = getRandomInt(minOffTimes[sprite], maxOffTimes[sprite]);
+    const onTime = getRandomInt(game.__minOffTimes[sprite], game.__maxOffTimes[sprite]);
     setTimeout(() => flickerImage(sprite), onTime);
 	console.log(`Flickered off for another ${onTime} ms.`)
   }
@@ -385,7 +385,7 @@ if (game.__numFlickerSprites != currentFlickerSprites.length) {
 		const uid = flickerSprite.uid;
 
 		// Set initial visibility
-		flickerSprite.alpha = initialOpacities[uid]/100;
+		flickerSprite.alpha = game.__initialOpacities[uid]/100;
 
 		// Start flickering after a small random delay to avoid synchronized flickering
 		let startDelay = getRandomInt(0, 1000);
