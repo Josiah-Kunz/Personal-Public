@@ -92,7 +92,7 @@ function findSpritesWithPattern(patterns, reference="skin") {
 	for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
 		if (!gameObject || !gameObject.skin) continue;
-		console.log(gameObject);
+		console.log(gameObject.uid);
 		for(let pattern of patterns){
 			let candidate = gameObject.skin;
 			if (reference == "uid") candidate = gameObject.uid;
@@ -367,8 +367,7 @@ let maxOffTimes = {};
 let initialVisibilities = {};
 
 for (let flickerSprite of flickerSprites) {
-	console.log("======================");
-	console.log(flickerSprite);
+	
     const uid = flickerSprite.uid;
     
     // Set initial visibility
