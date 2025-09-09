@@ -84,10 +84,10 @@ let desyncDelay = 1000;
 // ============================================================================
 
 // If true, prints the hierarchy when pressing F12 in game
-let debugHierarchy = false;
+let debugHierarchy = true;
 
 // If true, says how many flickers were found, and then announces on/off states
-let debugFlicker = true;
+let debugFlicker = false;
 
 // ============================================================================
 // Light Mask Function Delcarations
