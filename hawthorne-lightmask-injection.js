@@ -387,10 +387,12 @@ let currentFlickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
 
 if (!game.__numFlickerSprites) {
     game.__numFlickerSprites = 0;
+	game.__flickerMap = "";
 }
 
-if (game.__numFlickerSprites != currentFlickerSprites.length) {
+if (game.__numFlickerSprites != currentFlickerSprites.length || game.__flickerMap != game.map) {
     game.__flickerSprites = currentFlickerSprites;
+	game.__flickerMap = game.map;
 	
 	setFlickerSettings();
 
