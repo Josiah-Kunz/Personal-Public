@@ -363,8 +363,9 @@ let maxOnTimes = {};
 let maxOffTimes = {};
 let initialVisibilities = {};
 
-
 for (let flickerSprite of flickerSprites) {
+	console.log("======================");
+	console.log(flickerSprite);
     const uid = flickerSprite.uid;
     
     // Set initial visibility
