@@ -283,11 +283,11 @@ function flickerImage(sprite) {
   if (sprite.alpha < 0.5) {
     sprite.alpha = 1;
     const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
-    setTimeout(flickerImage, offTime);
+	setTimeout(() => flickerImage(sprite), offTime);
   } else {
     sprite.alpha = 0;
     const onTime = getRandomInt(minOffTimes[sprite], maxOffTimes[sprite]);
-    setTimeout(flickerImage, onTime);
+    setTimeout(() => flickerImage(sprite), onTime);
   }
 }
 
@@ -370,14 +370,14 @@ setFlickerSettings();
 
 // Initialize each flicker sprite and start the flicker effect
 for (let flickerSprite of flickerSprites) {
-const uid = flickerSprite.uid;
+	const uid = flickerSprite.uid;
 
-// Set initial visibility
-flickerSprite.alpha = initialOpacities[uid]/100;
+	// Set initial visibility
+	flickerSprite.alpha = initialOpacities[uid]/100;
 
-// Start flickering after a small random delay to avoid synchronized flickering
-const startDelay = getRandomInt(0, 1000);
-setTimeout(() => flickerImage(flickerSprite), startDelay);
+	// Start flickering after a small random delay to avoid synchronized flickering
+	const startDelay = getRandomInt(0, 1000);
+	setTimeout(() => flickerImage(flickerSprite), startDelay);
 }
 
 // ============================================================================
