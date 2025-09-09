@@ -79,8 +79,15 @@ let keyParseToken = "_";
 // Otherwise, all the flickering starts at once!
 let desyncDelay = 1000;
 
+// ============================================================================
+// Debug Settings
+// ============================================================================
+
 // If true, prints the hierarchy when pressing F12 in game
-let DEBUG = false;
+let debugHierarchy = false;
+
+// If true, says how many flickers were found, and then announces on/off states
+let debugFlicker = false;
 
 // ============================================================================
 // Light Mask Function Delcarations
@@ -284,12 +291,16 @@ function flickerImage(sprite) {
     sprite.alpha = 1;
     const offTime = getRandomInt(game.__minOnTimes[sprite.uid], game.__maxOnTimes[sprite.uid]);
 	setTimeout(() => flickerImage(sprite), offTime);
-	console.log(`Flickered on for another ${offTime} ms.`)
+	if (debugFlicker){
+		console.log(`Flickered ${sprite.uid} on for another ${offTime} ms.`)
+	}
   } else {
     sprite.alpha = 0;
     const onTime = getRandomInt(game.__minOffTimes[sprite.uid], game.__maxOffTimes[sprite.uid]);
     setTimeout(() => flickerImage(sprite), onTime);
-	console.log(`Flickered off for another ${onTime} ms.`)
+	if (debugFlicker){
+		console.log(`Flickered ${sprite.uid} off for another ${onTime} ms.`)
+	}
   }
 }
 
@@ -320,7 +331,10 @@ function parseCustomSettings(varName) {
 }
 
 function setFlickerSettings() {
-  console.log(`found ${game.__flickerSprites.length} flicker sprites`)
+	
+  if (debugFlicker){
+	console.log(`found ${game.__flickerSprites.length} flicker sprites`);
+  }
   
   for (let flickerSprite of game.__flickerSprites) {
 	  
@@ -394,7 +408,7 @@ if (game.__numFlickerSprites != currentFlickerSprites.length) {
 }
 
 // ============================================================================
-// Debug 
+// Hierarchy Debug 
 // ============================================================================
 
 function detailedHierarchy(container, prefix = '', isLast = true) {
@@ -444,6 +458,6 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
     }
 }
 
-if (DEBUG){
+if (debugHierarchy){
 	detailedHierarchy(game.stage);
 }
