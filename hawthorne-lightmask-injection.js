@@ -39,27 +39,51 @@ game => {
 // ============================================================================
 
 // ============================================================================
-// Settings
+// Layer Settings
 // ============================================================================
 
 // The things we're cutting out of (targets - bottom layer)
-let targetPatterns=["overlay_", "_overlay", "vignette"];
+let targetPatterns = ["overlay_", "_overlay", "vignette"];
 
 // The things doing the cutting (middle layer)
-let cutoutPatterns=["lm_", "-cutout"];
+let cutoutPatterns = ["lm_", "-cutout"];
 
 // These are above the cutouts, so they neither get cut nor get overlaid (fore layer)
-let forePatterns=["fore+_", "banner_"];
+let forePatterns = ["fore+_", "banner_", "_banner"];
 
 // The layer to store the container in. 
 // This layer should already be defined within the game.
 let gameLayer = "overlay";
 
+// ============================================================================
+// Flicker settings 
+// ============================================================================
+
+let flickerPatterns = ["flicker_", "_flicker"]
+
+// Times are in ms 
+// Times are set on a per-sprite basis and can be overidden by 
+let defaultMinOnTime = 50;
+let defaultMaxOnTime = 5000;
+let defaultMinOffTime = 50;
+let defaultMaxOffTime = 100;
+
+// Initial visibility
+let defaultInitialVisibility = "hidden";
+
+// Separates keys from values
+// Example: lamp_minOnTime_35 would override the sprite's defaultMinOnTime to 
+// be 35 ms instead of the default of 50.
+let keyParseToken = "_";
+
+// Otherwise, all the flickering starts at once!
+let desyncDelay = 1000;
+
 // If true, prints the hierarchy when pressing F12 in game
 let DEBUG = true;
 
 // ============================================================================
-// Function Delcarations
+// Light Mask Function Delcarations
 // ============================================================================
  
 // Gets all sprites whose filenames match the given array of patterns
@@ -207,7 +231,7 @@ function applyBlend(){
 }
 
 // ============================================================================
-// Main Execution
+// Layer Execution
 // ============================================================================
 
 // Create the container if it doesn't exist yet
@@ -240,6 +264,116 @@ if (!game._renderHooked) {
         return result;
     };
 }
+
+// ============================================================================
+// Flicker Function Definitions
+// ============================================================================
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function flickerImage(sprite) {
+  if (!sprite) return;
+
+  if (sprite.visibility === 'hidden') {
+    sprite.visibility = 'visible';
+    const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
+    setTimeout(flickerImage, offTime);
+  } else {
+    sprite.visibility = 'hidden';
+    const onTime = getRandomInt(minOffTimes[sprite], maxOffTimes[sprite]);
+    setTimeout(flickerImage, onTime);
+  }
+}
+
+function parseCustomSettings(varName) {
+  const parts = varName.split(keyParseToken);
+  const settings = {};
+  
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    const value = parseInt(parts[i + 1]);
+    
+    if (!isNaN(value)) {
+      if (key.includes('minOnTime')) {
+        settings.minOnTime = value;
+      } else if (key.includes('maxOnTime')) {
+        settings.maxOnTime = value;
+      } else if (key.includes('minOffTime')) {
+        settings.minOffTime = value;
+      } else if (key.includes('maxOffTime')) {
+        settings.maxOffTime = value;
+      } else if (key.includes('initialVisibility')) {
+        settings.initialVisibility = value === 1 ? 'visible' : 'hidden';
+      }
+    }
+  }
+  
+  return settings;
+}
+
+function setFlickerSettings() {
+  flickerSprites = findSpritesWithPattern(flickerPatterns);
+  
+  for (let flickerSprite of flickerSprites) {
+	  
+    let varName = flickerSprite.uid;
+    
+    // Set defaults
+    minOnTimes[varName] = defaultMinOnTime;
+    maxOnTimes[varName] = defaultMaxOnTime;
+    minOffTimes[varName] = defaultMinOffTime;
+    maxOffTimes[varName] = defaultMaxOffTime;
+    initialVisibilities[varName] = defaultInitialVisibility;
+    
+    // Parse custom settings from the sprite name/id
+    const customSettings = parseCustomSettings(varName);
+    
+    // Override defaults with custom settings if they exist
+    if (customSettings.minOnTime !== undefined) {
+      minOnTimes[varName] = customSettings.minOnTime;
+    }
+    if (customSettings.maxOnTime !== undefined) {
+      maxOnTimes[varName] = customSettings.maxOnTime;
+    }
+    if (customSettings.minOffTime !== undefined) {
+      minOffTimes[varName] = customSettings.minOffTime;
+    }
+    if (customSettings.maxOffTime !== undefined) {
+      maxOffTimes[varName] = customSettings.maxOffTime;
+    }
+    if (customSettings.initialVisibility !== undefined) {
+      initialVisibilities[varName] = customSettings.initialVisibility;
+    }
+  }
+}
+
+// ============================================================================
+// Flicker Execution
+// ============================================================================
+
+// Global var declaration
+let flickerSprites = findSpritesWithPattern(flickerPatterns);
+let minOnTimes = {};
+let minOffTimes = {};
+let maxOnTimes = {};
+let maxOffTimes = {};
+let initialVisibilities = {};
+
+
+for (let flickerSprite of flickerSprites) {
+    const uid = flickerSprite.uid;
+    
+    // Set initial visibility
+    flickerSprite.element.style.visibility = initialVisibilities[uid];
+    
+    // Start flickering after a small random delay to avoid synchronized flickering
+    const startDelay = getRandomInt(0, desyncDelay);
+    setTimeout(() => flickerImage(flickerSprite), startDelay);
+ }
 
 // ============================================================================
 // Debug 
