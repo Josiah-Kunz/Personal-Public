@@ -100,7 +100,7 @@ function findSpritesWithPattern(patterns, reference="skin") {
 				console.log(gameObject);
 			}
 			if (candidate.includes(pattern)){
-				console.log(`Candidate ${candidate} matches!`)
+				if (reference == "uid") console.log(`Candidate ${candidate} matches!`);
 				matches.push(gameObject.sprite);
 				break;
 			}
@@ -363,7 +363,7 @@ function setFlickerSettings() {
 // ============================================================================
 
 // Global var declaration
-let flickerSprites = findSpritesWithPattern(flickerPatterns);
+let flickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
 let minOnTimes = {};
 let minOffTimes = {};
 let maxOnTimes = {};
