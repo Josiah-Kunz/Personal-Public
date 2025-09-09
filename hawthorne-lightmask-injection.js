@@ -366,18 +366,25 @@ let maxOnTimes = {};
 let maxOffTimes = {};
 let initialOpacities = {};
 
-setFlickerSettings();
+if (!game.__numFlickerSprites){
+	game.__numFlickerSprites = flickerSprites.length;
+}
 
-// Initialize each flicker sprite and start the flicker effect
-for (let flickerSprite of flickerSprites) {
-	const uid = flickerSprite.uid;
+if (game.__numFlickerSprites != flickerSprites.length){
+	
+	setFlickerSettings();
 
-	// Set initial visibility
-	flickerSprite.alpha = initialOpacities[uid]/100;
+	// Initialize each flicker sprite and start the flicker effect
+	for (let flickerSprite of flickerSprites) {
+		const uid = flickerSprite.uid;
 
-	// Start flickering after a small random delay to avoid synchronized flickering
-	const startDelay = getRandomInt(0, 1000);
-	setTimeout(() => flickerImage(flickerSprite), startDelay);
+		// Set initial visibility
+		flickerSprite.alpha = initialOpacities[uid]/100;
+
+		// Start flickering after a small random delay to avoid synchronized flickering
+		let startDelay = getRandomInt(0, 1000);
+		setTimeout(() => flickerImage(flickerSprite), startDelay);
+	}
 }
 
 // ============================================================================
