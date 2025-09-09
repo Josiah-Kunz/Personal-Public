@@ -366,17 +366,21 @@ let maxOnTimes = {};
 let maxOffTimes = {};
 let initialVisibilities = {};
 
-for (let flickerSprite of flickerSprites) {
-	
+document.addEventListener('DOMContentLoaded', () => {
+  setFlickerSettings();
+  
+  // Initialize each flicker sprite and start the flicker effect
+  for (let flickerSprite of flickerSprites) {
     const uid = flickerSprite.uid;
     
     // Set initial visibility
     flickerSprite.element.style.visibility = initialVisibilities[uid];
     
     // Start flickering after a small random delay to avoid synchronized flickering
-    const startDelay = getRandomInt(0, desyncDelay);
+    const startDelay = getRandomInt(0, 1000);
     setTimeout(() => flickerImage(flickerSprite), startDelay);
- }
+  }
+});
 
 // ============================================================================
 // Debug 
