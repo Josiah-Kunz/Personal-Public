@@ -284,10 +284,12 @@ function flickerImage(sprite) {
     sprite.alpha = 1;
     const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
 	setTimeout(() => flickerImage(sprite), offTime);
+	console.log(`Flickered on for another ${offTime} ms.`)
   } else {
     sprite.alpha = 0;
     const onTime = getRandomInt(minOffTimes[sprite], maxOffTimes[sprite]);
     setTimeout(() => flickerImage(sprite), onTime);
+	console.log(`Flickered off for another ${onTime} ms.`)
   }
 }
 
