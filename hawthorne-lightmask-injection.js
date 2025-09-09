@@ -104,7 +104,6 @@ function findSpritesWithPattern(patterns, reference="skin") {
 	return matches;
 }
 
-
 // Add the sprite to the targets (having the lowest priority)
 function addTarget(sprite){
 	if (!game.excelloContainer.children.includes(sprite)) {
@@ -279,6 +278,7 @@ function getRandomInt(min, max) {
 
 function flickerImage(sprite) {
   if (!sprite) return;
+  console.log("Flickering sprite:");
   console.log(sprite);
   if (sprite.visibility === 'hidden') {
     sprite.visibility = 'visible';
