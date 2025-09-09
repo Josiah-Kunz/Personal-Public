@@ -69,7 +69,7 @@ let defaultMinOffTime = 50;
 let defaultMaxOffTime = 100;
 
 // Initial visibility
-let defaultInitialVisibility = "hidden";
+let defaultInitialOpacity = 100;
 
 // Separates keys from values
 // Example: lamp_minOnTime_35 would override the sprite's defaultMinOnTime to 
@@ -280,12 +280,12 @@ function getRandomInt(min, max) {
 function flickerImage(sprite) {
   if (!sprite) return;
   
-  if (sprite.visibility === 'hidden') {
-    sprite.visibility = 'visible';
+  if (sprite.alpha < 0.5) {
+    sprite.alpha = 1;
     const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
     setTimeout(flickerImage, offTime);
   } else {
-    sprite.visibility = 'hidden';
+    sprite.alpha = 0;
     const onTime = getRandomInt(minOffTimes[sprite], maxOffTimes[sprite]);
     setTimeout(flickerImage, onTime);
   }
@@ -308,8 +308,8 @@ function parseCustomSettings(varName) {
         settings.minOffTime = value;
       } else if (key.includes('maxOffTime')) {
         settings.maxOffTime = value;
-      } else if (key.includes('initialVisibility')) {
-        settings.initialVisibility = value === 1 ? 'visible' : 'hidden';
+      } else if (key.includes('initialOpacity')) {
+        settings.initialOpacity = value > 50 ? 100 : 0;
       }
     }
   }
@@ -330,7 +330,7 @@ function setFlickerSettings() {
     maxOnTimes[varName] = defaultMaxOnTime;
     minOffTimes[varName] = defaultMinOffTime;
     maxOffTimes[varName] = defaultMaxOffTime;
-    initialVisibilities[varName] = defaultInitialVisibility;
+    initialOpacities[varName] = defaultinitialOpacity;
     
     // Parse custom settings from the sprite name/id
     const customSettings = parseCustomSettings(varName);
@@ -348,8 +348,8 @@ function setFlickerSettings() {
     if (customSettings.maxOffTime !== undefined) {
       maxOffTimes[varName] = customSettings.maxOffTime;
     }
-    if (customSettings.initialVisibility !== undefined) {
-      initialVisibilities[varName] = customSettings.initialVisibility;
+    if (customSettings.initialOpacity !== undefined) {
+      initialOpacities[varName] = customSettings.initialOpacity;
     }
   }
 }
@@ -364,7 +364,7 @@ let minOnTimes = {};
 let minOffTimes = {};
 let maxOnTimes = {};
 let maxOffTimes = {};
-let initialVisibilities = {};
+let initialOpacities = {};
 
 setFlickerSettings();
 
@@ -373,7 +373,7 @@ for (let flickerSprite of flickerSprites) {
 const uid = flickerSprite.uid;
 
 // Set initial visibility
-flickerSprite.element.style.visibility = initialVisibilities[uid];
+flickerSprite.alpha = initialOpacities[uid]/100;
 
 // Start flickering after a small random delay to avoid synchronized flickering
 const startDelay = getRandomInt(0, 1000);
@@ -394,14 +394,22 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
     if (container.label) info += ` label:"${container.label}"`;
     if (container.id) info += ` id:${container.id}`;
     if (container === game.excelloContainer) info += ' ⭐ YOUR CONTAINER';
-    if (container.texture && container.texture.baseTexture && container.texture.baseTexture.resource && container.texture.baseTexture.resource.url) {
+    if (container.texture && container.texture.baseTexture 
+		&& container.texture.baseTexture.resource 
+		&& container.texture.baseTexture.resource.url) {
         const url = container.texture.baseTexture.resource.url;
         const filename = url.split('/').pop();
         info += ` img:"${filename}"`;
     }
-    if (container.blendMode && container.blendMode !== 0) info += ` blend:${container.blendMode}`;
-    if (container.children && container.children.length > 0) info += ` (${container.children.length})`;
-    if (container.x !== 0 || container.y !== 0) info += ` pos:(${container.x.toFixed(0)},${container.y.toFixed(0)})`;
+    if (container.blendMode && container.blendMode !== 0){
+		info += ` blend:${container.blendMode}`;
+	}
+    if (container.children && container.children.length > 0){
+		info += ` (${container.children.length})`;
+	}
+    if (container.x !== 0 || container.y !== 0){
+		info += ` pos:(${container.x.toFixed(0)},${container.y.toFixed(0)})`;
+	}
     
     for (let objName in game.objects["ids"]) {
         let gameObject = game.objects["ids"][objName];
