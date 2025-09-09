@@ -92,7 +92,6 @@ function findSpritesWithPattern(patterns, reference="skin") {
 	for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
 		if (!gameObject || !gameObject.skin) continue;
-		console.log(gameObject.uid);
 		for(let pattern of patterns){
 			let candidate = gameObject.skin;
 			if (reference == "uid") candidate = gameObject.uid;
@@ -280,7 +279,7 @@ function getRandomInt(min, max) {
 
 function flickerImage(sprite) {
   if (!sprite) return;
-
+  console.log(sprite);
   if (sprite.visibility === 'hidden') {
     sprite.visibility = 'visible';
     const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
