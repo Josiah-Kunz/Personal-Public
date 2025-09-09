@@ -39,7 +39,7 @@ game => {
 // ============================================================================
 
 // ============================================================================
-// Settings - Layers
+// Settings
 // ============================================================================
 
 // The things we're cutting out of (targets - bottom layer)
@@ -54,6 +54,9 @@ let forePatterns=["fore+_", "banner_"];
 // The layer to store the container in. 
 // This layer should already be defined within the game.
 let gameLayer = "overlay";
+
+// If true, prints the hierarchy when pressing F12 in game
+let DEBUG = true;
 
 // ============================================================================
 // Function Delcarations
@@ -237,3 +240,50 @@ if (!game._renderHooked) {
         return result;
     };
 }
+
+// ============================================================================
+// Debug 
+// ============================================================================
+
+function detailedHierarchy(container, prefix = '', isLast = true) {
+    const connector = isLast ? '└── ' : '├── ';
+    const name = container.constructor.name;
+    
+    // Add useful identifying info
+    let info = '';
+    if (container.name) info += ` "${container.name}"`;
+    if (container.label) info += ` label:"${container.label}"`;
+    if (container.id) info += ` id:${container.id}`;
+    if (container === game.excelloContainer) info += ' ⭐ YOUR CONTAINER';
+    if (container.texture && container.texture.baseTexture && container.texture.baseTexture.resource && container.texture.baseTexture.resource.url) {
+        const url = container.texture.baseTexture.resource.url;
+        const filename = url.split('/').pop();
+        info += ` img:"${filename}"`;
+    }
+    if (container.blendMode && container.blendMode !== 0) info += ` blend:${container.blendMode}`;
+    if (container.children && container.children.length > 0) info += ` (${container.children.length})`;
+    if (container.x !== 0 || container.y !== 0) info += ` pos:(${container.x.toFixed(0)},${container.y.toFixed(0)})`;
+    
+    for (let objName in game.objects["ids"]) {
+        let gameObject = game.objects["ids"][objName];
+        if (gameObject && gameObject.sprite === container) {
+            info += ` 🎮 "${objName}"`;
+            if (gameObject.skin) info += ` skin:"${gameObject.skin}"`;
+            break;
+        }
+    }
+    
+    console.log(prefix + connector + name + info);
+    
+    if (container.children) {
+        container.children.forEach((child, index) => {
+            const isLastChild = index === container.children.length - 1;
+            const newPrefix = prefix + (isLast ? '    ' : '│   ');
+            detailedHierarchy(child, newPrefix, isLastChild);
+        });
+    }
+}
+
+if (DEBUG){
+	detailedHierarchy(game.stage);
+]
