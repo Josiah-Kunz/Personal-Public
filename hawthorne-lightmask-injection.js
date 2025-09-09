@@ -282,12 +282,12 @@ function flickerImage(sprite) {
   
   if (sprite.alpha < 0.5) {
     sprite.alpha = 1;
-    const offTime = getRandomInt(game.__minOnTimes[sprite], game.__maxOnTimes[sprite]);
+    const offTime = getRandomInt(game.__minOnTimes[sprite.uid], game.__maxOnTimes[sprite.uid]);
 	setTimeout(() => flickerImage(sprite), offTime);
 	console.log(`Flickered on for another ${offTime} ms.`)
   } else {
     sprite.alpha = 0;
-    const onTime = getRandomInt(game.__minOffTimes[sprite], game.__maxOffTimes[sprite]);
+    const onTime = getRandomInt(game.__minOffTimes[sprite.uid], game.__maxOffTimes[sprite.uid]);
     setTimeout(() => flickerImage(sprite), onTime);
 	console.log(`Flickered off for another ${onTime} ms.`)
   }
