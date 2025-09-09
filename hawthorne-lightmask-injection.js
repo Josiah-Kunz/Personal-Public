@@ -80,20 +80,23 @@ let keyParseToken = "_";
 let desyncDelay = 1000;
 
 // If true, prints the hierarchy when pressing F12 in game
-let DEBUG = true;
+let DEBUG = false;
 
 // ============================================================================
 // Light Mask Function Delcarations
 // ============================================================================
  
 // Gets all sprites whose filenames match the given array of patterns
-function findSpritesWithPattern(patterns) {
+function findSpritesWithPattern(patterns, reference="skin") {
 	let matches = [];
 	for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
 		if (!gameObject || !gameObject.skin) continue;
+		console.log(gameObject);
 		for(let pattern of patterns){
-			if (gameObject.skin.includes(pattern)){
+			let candidate = gameObject.skin;
+			if (reference == "uid") candidate = gameObject.uid;
+			if (candidate.includes(pattern)){
 				matches.push(gameObject.sprite);
 				break;
 			}
@@ -316,7 +319,7 @@ function parseCustomSettings(varName) {
 }
 
 function setFlickerSettings() {
-  flickerSprites = findSpritesWithPattern(flickerPatterns);
+  flickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
   
   for (let flickerSprite of flickerSprites) {
 	  
