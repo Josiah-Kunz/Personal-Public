@@ -320,38 +320,37 @@ function parseCustomSettings(varName) {
 }
 
 function setFlickerSettings() {
-  flickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
-  console.log(`found ${flickerSprites.length} flicker sprites`)
+  console.log(`found ${game.__flickerSprites.length} flicker sprites`)
   
-  for (let flickerSprite of flickerSprites) {
-	console.log(flickerSprite);
+  for (let flickerSprite of game.__flickerSprites) {
+	  
     let varName = flickerSprite.uid;
     
     // Set defaults
-    minOnTimes[varName] = defaultMinOnTime;
-    maxOnTimes[varName] = defaultMaxOnTime;
-    minOffTimes[varName] = defaultMinOffTime;
-    maxOffTimes[varName] = defaultMaxOffTime;
-    initialOpacities[varName] = defaultInitialOpacity;
+    game.__minOnTimes[varName] = defaultMinOnTime;
+    game.__maxOnTimes[varName] = defaultMaxOnTime;
+    game.__minOffTimes[varName] = defaultMinOffTime;
+    game.__maxOffTimes[varName] = defaultMaxOffTime;
+    game.__initialOpacities[varName] = defaultInitialOpacity;
     
     // Parse custom settings from the sprite name/id
     const customSettings = parseCustomSettings(varName);
     
     // Override defaults with custom settings if they exist
     if (customSettings.minOnTime !== undefined) {
-      minOnTimes[varName] = customSettings.minOnTime;
+      game.__minOnTimes[varName] = customSettings.minOnTime;
     }
     if (customSettings.maxOnTime !== undefined) {
-      maxOnTimes[varName] = customSettings.maxOnTime;
+      game.__maxOnTimes[varName] = customSettings.maxOnTime;
     }
     if (customSettings.minOffTime !== undefined) {
-      minOffTimes[varName] = customSettings.minOffTime;
+      game.__minOffTimes[varName] = customSettings.minOffTime;
     }
     if (customSettings.maxOffTime !== undefined) {
-      maxOffTimes[varName] = customSettings.maxOffTime;
+      game.__maxOffTimes[varName] = customSettings.maxOffTime;
     }
     if (customSettings.initialOpacity !== undefined) {
-      initialOpacities[varName] = customSettings.initialOpacity;
+      game.__initialOpacities[varName] = customSettings.initialOpacity;
     }
   }
 }
@@ -361,23 +360,28 @@ function setFlickerSettings() {
 // ============================================================================
 
 // Global var declaration
-let flickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
-let minOnTimes = {};
-let minOffTimes = {};
-let maxOnTimes = {};
-let maxOffTimes = {};
-let initialOpacities = {};
-
-if (!game.__numFlickerSprites){
-	game.__numFlickerSprites = flickerSprites.length;
+if (!game.__flickerSprites) {
+    game.__flickerSprites = [];
+    game.__minOnTimes = {};
+    game.__minOffTimes = {};
+    game.__maxOnTimes = {};
+    game.__maxOffTimes = {};
+    game.__initialOpacities = {};
 }
 
-if (game.__numFlickerSprites != flickerSprites.length){
+let currentFlickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
+
+if (!game.__numFlickerSprites) {
+    game.__numFlickerSprites = currentFlickerSprites.length;
+}
+
+if (game.__numFlickerSprites != currentFlickerSprites.length) {
+    game.__flickerSprites = currentFlickerSprites;
 	
 	setFlickerSettings();
 
 	// Initialize each flicker sprite and start the flicker effect
-	for (let flickerSprite of flickerSprites) {
+	for (let flickerSprite of game.__flickerSprites) {
 		const uid = flickerSprite.uid;
 
 		// Set initial visibility
