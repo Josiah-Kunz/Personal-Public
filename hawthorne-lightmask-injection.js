@@ -286,4 +286,4 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
 
 if (DEBUG){
 	detailedHierarchy(game.stage);
-]
+}
