@@ -372,7 +372,7 @@ if (!game.__flickerSprites) {
 let currentFlickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
 
 if (!game.__numFlickerSprites) {
-    game.__numFlickerSprites = currentFlickerSprites.length;
+    game.__numFlickerSprites = 0;
 }
 
 if (game.__numFlickerSprites != currentFlickerSprites.length) {
