@@ -330,7 +330,7 @@ function setFlickerSettings() {
     maxOnTimes[varName] = defaultMaxOnTime;
     minOffTimes[varName] = defaultMinOffTime;
     maxOffTimes[varName] = defaultMaxOffTime;
-    initialOpacities[varName] = defaultinitialOpacity;
+    initialOpacities[varName] = defaultInitialOpacity;
     
     // Parse custom settings from the sprite name/id
     const customSettings = parseCustomSettings(varName);
