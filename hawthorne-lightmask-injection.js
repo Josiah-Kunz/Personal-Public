@@ -95,12 +95,7 @@ function findSpritesWithPattern(patterns, reference="skin") {
 		for(let pattern of patterns){
 			let candidate = gameObject.skin;
 			if (reference == "uid") candidate = gameObject.uid;
-			if (reference == "uid"){
-				console.log(`Candidate: ${candidate}`);
-				console.log(gameObject);
-			}
 			if (candidate.includes(pattern)){
-				if (reference == "uid") console.log(`Candidate ${candidate} matches!`);
 				matches.push(gameObject.sprite);
 				break;
 			}
