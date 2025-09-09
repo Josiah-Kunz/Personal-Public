@@ -84,7 +84,7 @@ let desyncDelay = 1000;
 // ============================================================================
 
 // If true, prints the hierarchy when pressing F12 in game
-let debugHierarchy = true;
+let debugHierarchy = false;
 
 // If true, says how many flickers were found, and then announces on/off states
 let debugFlicker = false;
