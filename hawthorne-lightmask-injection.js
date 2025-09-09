@@ -321,7 +321,7 @@ function setFlickerSettings() {
   console.log(`found ${flickerSprites.length} flicker sprites`)
   
   for (let flickerSprite of flickerSprites) {
-	  
+	console.log(flickerSprite);
     let varName = flickerSprite.uid;
     
     // Set defaults
