@@ -95,7 +95,12 @@ function findSpritesWithPattern(patterns, reference="skin") {
 		for(let pattern of patterns){
 			let candidate = gameObject.skin;
 			if (reference == "uid") candidate = gameObject.uid;
+			if (reference == "uid"){
+				console.log(`Candidate: ${candidate}`);
+				console.log(gameObject);
+			}
 			if (candidate.includes(pattern)){
+				console.log(`Candidate ${candidate} matches!`)
 				matches.push(gameObject.sprite);
 				break;
 			}
@@ -278,8 +283,7 @@ function getRandomInt(min, max) {
 
 function flickerImage(sprite) {
   if (!sprite) return;
-  console.log("Flickering sprite:");
-  console.log(sprite);
+  
   if (sprite.visibility === 'hidden') {
     sprite.visibility = 'visible';
     const offTime = getRandomInt(minOnTimes[sprite], maxOnTimes[sprite]);
@@ -319,6 +323,7 @@ function parseCustomSettings(varName) {
 
 function setFlickerSettings() {
   flickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
+  console.log(`found ${flickerSprites.length} flicker sprites`)
   
   for (let flickerSprite of flickerSprites) {
 	  
