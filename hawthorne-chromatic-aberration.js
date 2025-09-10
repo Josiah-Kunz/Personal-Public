@@ -75,7 +75,7 @@ let debugChromatic = false;
 // ============================================================================
 
 // Gets all sprites whose filenames match the given array of patterns
-function findSpritesWithPattern(patterns, reference="skin") {
+function findSpritesWithPattern(patterns, reference="uid") {
 	let matches = [];
 	for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
