@@ -270,12 +270,13 @@ if (!game._updaterHooked) {
     game._updaterHooked = true;
     const originalUpdater = game.updater;
     game.updater = function(...args) {
-        const result = originalUpdater.apply(this, args);
         
         targetSprites = findSpritesWithPattern(targetPatterns);
         cutoutSprites = findSpritesWithPattern(cutoutPatterns);
         foreSprites = findSpritesWithPattern(forePatterns);
         applyBlend();
+		
+		const result = originalUpdater.apply(this, args);
         
         return result;
     };
