@@ -266,15 +266,17 @@ applyBlend();
 // Hook into refresh (e.g., when mapvars update or the player takes a step)
 // Otherwise, the sprites automatically re-parent based on their depth
 // We don't want that since they should only be blending with each other
-if (!game._renderHooked) {
-    game._renderHooked = true;
-    const originalRender = game.renderer.render;
-    game.renderer.render = function(...args) {
-        const result = originalRender.apply(this, args);
-		targetSprites = findSpritesWithPattern(targetPatterns);
+if (!game._updaterHooked) {
+    game._updaterHooked = true;
+    const originalUpdater = game.updater;
+    game.updater = function(...args) {
+        const result = originalUpdater.apply(this, args);
+        
+        targetSprites = findSpritesWithPattern(targetPatterns);
         cutoutSprites = findSpritesWithPattern(cutoutPatterns);
         foreSprites = findSpritesWithPattern(forePatterns);
         applyBlend();
+        
         return result;
     };
 }
