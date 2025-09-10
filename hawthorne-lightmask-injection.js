@@ -104,6 +104,7 @@ function findSpritesWithPattern(patterns, reference="skin") {
 			if (reference == "uid") candidate = gameObject.uid;
 			if (typeof candidate !== "string"){
 				console.log("Candidate is:");
+				console.log(gameObject);
 				console.log(candidate);
 			}
 			if (candidate.includes(pattern)){
