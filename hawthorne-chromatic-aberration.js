@@ -55,10 +55,13 @@ let chromaticSettings = {
   offsetY: 1.0,     // Red channel Y offset (pixels)
   blueOffsetX: -2.0, // Blue channel X offset (pixels)
   blueOffsetY: -1.0, // Blue channel Y offset (pixels)
-  noiseIntensity: 0.05, // Noise strength (0-1)
+  noiseIntensity: 0.25, // Noise strength (0-1)
   flickerSpeed: 0.1,    // How fast the effect changes
   enabled: true
 };
+
+// Separates keys from values for per-sprite overrides
+let keyParseToken = "_";
 
 // ============================================================================
 // Debug Settings
@@ -72,7 +75,7 @@ let debugChromatic = false;
 // ============================================================================
 
 // Gets all sprites whose filenames match the given array of patterns
-function findSpritesWithPattern(patterns, reference="uid") {
+function findSpritesWithPattern(patterns, reference="skin") {
 	let matches = [];
 	for(let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
@@ -80,29 +83,6 @@ function findSpritesWithPattern(patterns, reference="uid") {
 		for(let pattern of patterns){
 			let candidate = gameObject.skin;
 			if (reference == "uid") candidate = gameObject.uid;
-			
-			if (debugChromatic) {
-				console.log(`Checking ${reference}: "${candidate}" against pattern: "${pattern}"`);
-			}
-			
-			if (candidate && candidate.includes(pattern)){
-				if (reference == "uid") gameObject.sprite.uid = gameObject.uid;
-				matches.push(gameObject.sprite);
-				
-				if (debugChromatic) {
-					console.log(`✅ MATCH! Found sprite for pattern "${pattern}" in ${reference}: "${candidate}"`);
-				}
-				break;
-			}
-		}
-	}
-	
-	if (debugChromatic) {
-		console.log(`Total matches found: ${matches.length}`);
-	}
-	
-	return matches;
-} (reference == "uid") candidate = gameObject.uid;
 			if (candidate.includes(pattern)){
 				if (reference == "uid") gameObject.sprite.uid = gameObject.uid;
 				matches.push(gameObject.sprite);
@@ -111,6 +91,46 @@ function findSpritesWithPattern(patterns, reference="uid") {
 		}
 	}
 	return matches;
+}
+
+// Gets the given sprite's gameObject
+function findGameObjectForSprite(sprite) {
+    for (let objName in game.objects["ids"]) {
+        let gameObject = game.objects["ids"][objName];
+        if (gameObject && gameObject.sprite === sprite) {
+            return gameObject;
+        }
+    }
+    return null;
+}
+
+// Parse custom settings from sprite name
+function parseCustomChromaticSettings(spriteName) {
+  const parts = spriteName.split(keyParseToken);
+  const settings = {};
+  
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    const value = parseFloat(parts[i + 1]);
+    
+    if (!isNaN(value)) {
+      if (key.includes('offsetX')) {
+        settings.offsetX = value;
+      } else if (key.includes('offsetY')) {
+        settings.offsetY = value;
+      } else if (key.includes('blueOffsetX')) {
+        settings.blueOffsetX = value;
+      } else if (key.includes('blueOffsetY')) {
+        settings.blueOffsetY = value;
+      } else if (key.includes('noiseIntensity')) {
+        settings.noiseIntensity = value / 100;
+      } else if (key.includes('flickerSpeed')) {
+        settings.flickerSpeed = value / 100;
+      }
+    }
+  }
+  
+  return settings;
 }
 
 // ============================================================================
@@ -212,18 +232,50 @@ function createSimpleNoiseFilter() {
 function applyChromaticEffect(sprite) {
     if (!sprite || sprite._chromaticProcessed) return;
     
+    // Get sprite name for custom settings
+    const gameObject = findGameObjectForSprite(sprite);
+    let spriteName = '';
+    if (gameObject) {
+        spriteName = gameObject.skin || gameObject.uid || '';
+    }
+    
+    // Parse any custom settings
+    const customSettings = parseCustomChromaticSettings(spriteName);
+    
     if (debugChromatic) {
         console.log("Applying chromatic effect to sprite:", sprite);
+        if (Object.keys(customSettings).length > 0) {
+            console.log("Custom settings:", customSettings);
+        }
     }
     
     try {
         // Try to use the custom filter first
         const filter = new ChromaticAberrationFilter();
+        
+        // Apply any custom settings to this specific filter
+        if (customSettings.offsetX !== undefined) {
+            filter.uniforms.uOffset[0] = customSettings.offsetX;
+        }
+        if (customSettings.offsetY !== undefined) {
+            filter.uniforms.uOffset[1] = customSettings.offsetY;
+        }
+        if (customSettings.blueOffsetX !== undefined) {
+            filter.uniforms.uBlueOffset[0] = customSettings.blueOffsetX;
+        }
+        if (customSettings.blueOffsetY !== undefined) {
+            filter.uniforms.uBlueOffset[1] = customSettings.blueOffsetY;
+        }
+        if (customSettings.noiseIntensity !== undefined) {
+            filter.uniforms.uNoise = customSettings.noiseIntensity;
+        }
+        
         sprite.filters = sprite.filters || [];
         sprite.filters.push(filter);
         
-        // Store the filter reference for updates
+        // Store the filter reference and custom settings
         sprite._chromaticFilter = filter;
+        sprite._chromaticCustomSettings = customSettings;
         sprite._chromaticProcessed = true;
         
         if (debugChromatic) {
@@ -286,9 +338,13 @@ function animateChromaticEffects(currentTime) {
     const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
     chromaticSprites.forEach(sprite => {
-        if (sprite._chromaticFilter && sprite._chromaticFilter.updateTime && sprite._chromaticSettings) {
-            // Use the sprite's custom flicker speed
-            sprite._chromaticFilter.updateTime(deltaTime * 0.001 * sprite._chromaticSettings.flickerSpeed * 10);
+        if (sprite._chromaticFilter && sprite._chromaticFilter.updateTime) {
+            // Use custom flicker speed if available, otherwise use global
+            let flickerSpeed = chromaticSettings.flickerSpeed;
+            if (sprite._chromaticCustomSettings && sprite._chromaticCustomSettings.flickerSpeed !== undefined) {
+                flickerSpeed = sprite._chromaticCustomSettings.flickerSpeed;
+            }
+            sprite._chromaticFilter.updateTime(deltaTime * 0.001 * flickerSpeed * 10);
         }
     });
     
