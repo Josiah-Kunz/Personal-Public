@@ -6,6 +6,14 @@
 //		= If the sprite's filename contains one of the key strings in 
 //			chromaticPatterns, it will apply chromatic aberration effects.
 //			-- Example: chromatic_overlay.png or tv_static_aberration.png
+//		= You can override settings per-sprite by adding parameters to the filename:
+//			-- offsetX_5 = Red channel X offset of 5 pixels
+//			-- offsetY_3 = Red channel Y offset of 3 pixels  
+//			-- blueOffsetX_-4 = Blue channel X offset of -4 pixels
+//			-- blueOffsetY_-2 = Blue channel Y offset of -2 pixels
+//			-- noiseIntensity_25 = 25% noise intensity (0-100 range)
+//			-- flickerSpeed_50 = 50% flicker speed (0-100 range)
+//			-- Example: tv_screen_offsetX_5_noiseIntensity_30_flickerSpeed_75.png
 //
 // Inside the JS Raw (inside Mapbuilder's Settings):
 /*
@@ -36,7 +44,7 @@ game => {
 // ============================================================================
 
 // Sprites that match these patterns will get chromatic aberration effects
-let chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "_overlay", "overlay_"];
+let chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "tv_", "_tv"];
 
 // The layer to store the chromatic container in
 let gameLayer = "overlay";
@@ -47,7 +55,7 @@ let chromaticSettings = {
   offsetY: 1.0,     // Red channel Y offset (pixels)
   blueOffsetX: -2.0, // Blue channel X offset (pixels)
   blueOffsetY: -1.0, // Blue channel Y offset (pixels)
-  noiseIntensity: 0.25, // Noise strength (0-1)
+  noiseIntensity: 0.05, // Noise strength (0-1)
   flickerSpeed: 0.1,    // How fast the effect changes
   enabled: true
 };
@@ -255,8 +263,9 @@ function animateChromaticEffects(currentTime) {
     const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
     chromaticSprites.forEach(sprite => {
-        if (sprite._chromaticFilter && sprite._chromaticFilter.updateTime) {
-            sprite._chromaticFilter.updateTime(deltaTime * 0.001); // Convert to seconds
+        if (sprite._chromaticFilter && sprite._chromaticFilter.updateTime && sprite._chromaticSettings) {
+            // Use the sprite's custom flicker speed
+            sprite._chromaticFilter.updateTime(deltaTime * 0.001 * sprite._chromaticSettings.flickerSpeed * 10);
         }
     });
     
