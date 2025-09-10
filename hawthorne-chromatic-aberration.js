@@ -47,7 +47,7 @@ let chromaticSettings = {
   offsetY: 1.0,     // Red channel Y offset (pixels)
   blueOffsetX: -2.0, // Blue channel X offset (pixels)
   blueOffsetY: -1.0, // Blue channel Y offset (pixels)
-  noiseIntensity: 0.1, // Noise strength (0-1)
+  noiseIntensity: 0.25, // Noise strength (0-1)
   flickerSpeed: 0.1,    // How fast the effect changes
   enabled: true
 };
