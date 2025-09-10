@@ -268,8 +268,9 @@ applyBlend();
 // We don't want that since they should only be blending with each other
 if (!game._updateHooked) {
     game._updateHooked = true;
-    const originalUpdate = game.updater;
-    game.updater = function(...args) {
+    const originalUpdate = game.map.update;
+    game.map.update = function(...args) {
+		if (game.map.updating)
 		console.log("Updating!");
 		const result = originalUpdate.apply(this, args);
 		
