@@ -236,7 +236,7 @@ function applyChromaticEffect(sprite) {
 }
 
 function updateChromaticFilters() {
-    const chromaticSprites = findSpritesWithPattern(chromaticPatterns, "uid");
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
     chromaticSprites.forEach(sprite => {
         if (sprite._chromaticFilter && sprite._chromaticFilter.updateSettings) {
@@ -260,7 +260,7 @@ function animateChromaticEffects(currentTime) {
     const deltaTime = currentTime - lastTime;
     lastTime = currentTime;
     
-    const chromaticSprites = findSpritesWithPattern(chromaticPatterns, "uid");
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
     chromaticSprites.forEach(sprite => {
         if (sprite._chromaticFilter && sprite._chromaticFilter.updateTime && sprite._chromaticSettings) {
@@ -280,7 +280,7 @@ function animateChromaticEffects(currentTime) {
 function applyChromaticEffects() {
     if (!chromaticSettings.enabled) return;
     
-    const chromaticSprites = findSpritesWithPattern(chromaticPatterns, "uid");
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
     if (debugChromatic && chromaticSprites.length > 0) {
         console.log(`Found ${chromaticSprites.length} sprites for chromatic effects`);
@@ -326,7 +326,7 @@ function updateChromaticSettings(newSettings) {
 function toggleChromaticEffect(enabled = !chromaticSettings.enabled) {
     chromaticSettings.enabled = enabled;
     
-    const chromaticSprites = findSpritesWithPattern(chromaticPatterns, "uid");
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
     chromaticSprites.forEach(sprite => {
         if (sprite.filters && sprite._chromaticFilter) {
