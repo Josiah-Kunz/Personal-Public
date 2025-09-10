@@ -6,14 +6,15 @@
 //		= If the sprite's filename contains one of the key strings in 
 //			chromaticPatterns, it will apply chromatic aberration effects.
 //			-- Example: chromatic_overlay.png or tv_static_aberration.png
-//		= You can override settings per-sprite by adding parameters to the filename:
+//		= You can override settings per-sprite by adding parameters to the variable name:
 //			-- offsetX_5 = Red channel X offset of 5 pixels
 //			-- offsetY_3 = Red channel Y offset of 3 pixels  
 //			-- blueOffsetX_-4 = Blue channel X offset of -4 pixels
 //			-- blueOffsetY_-2 = Blue channel Y offset of -2 pixels
 //			-- noiseIntensity_25 = 25% noise intensity (0-100 range)
 //			-- flickerSpeed_50 = 50% flicker speed (0-100 range)
-//			-- Example: tv_screen_offsetX_5_noiseIntensity_30_flickerSpeed_75.png
+//		= Example in jCoad: 
+//				tv_screen_offsetX_5_noiseIntensity_30_flickerSpeed_75 = sprite(...)
 //
 // Inside the JS Raw (inside Mapbuilder's Settings):
 /*

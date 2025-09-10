@@ -5,15 +5,15 @@
 	
 game => {
 
-	const scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/341391f7616746a1aca039085ffd1c58e5c10264/rare-shop.js";
-	const scriptName = scriptUrl.split('/').pop().split('.')[0];
+	let shopScriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/341391f7616746a1aca039085ffd1c58e5c10264/rare-shop.js";
+	let shopScriptName = shopScriptUrl.split('/').pop().split('.')[0];
 
-	fetch(scriptUrl)
+	fetch(shopScriptUrl)
 	.then(response => response.text())
 	.then(scriptText => {
 		eval(scriptText);
 	}) 
-	.catch(error => console.error(`Failed to load ${scriptName}:`, error));
+	.catch(error => console.error(`Failed to load ${shopScriptName}:`, error));
 
 }
 	
