@@ -96,16 +96,20 @@ let debugFlicker = false;
 // Gets all sprites whose filenames match the given array of patterns
 function findSpritesWithPattern(patterns, reference="skin") {
 	let matches = [];
-	for(let objName in game.objects["ids"]) {
+	for (let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
-		if (!gameObject || !gameObject.skin) continue;
-		for(let pattern of patterns){
-			let candidate = gameObject.skin;
-			if (reference == "uid") candidate = gameObject.uid;
-			if (typeof candidate !== "string") continue;
-			if (candidate.includes(pattern)){
-				if (reference == "uid") gameObject.sprite.uid = gameObject.uid;
-				matches.push(gameObject.sprite);
+		if (!gameObject) continue;
+
+		let candidate = reference === "uid" ? gameObject.uid : gameObject.skin;
+
+		if (typeof candidate !== "string") continue;
+
+		for (let pattern of patterns) {
+			if (candidate.includes(pattern)) {
+				if (reference === "uid" && gameObject.sprite) {
+					gameObject.sprite.uid = gameObject.uid;
+				}
+				if (gameObject.sprite) matches.push(gameObject.sprite);
 				break;
 			}
 		}
