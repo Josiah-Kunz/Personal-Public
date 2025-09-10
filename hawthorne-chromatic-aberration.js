@@ -1,10 +1,10 @@
 // ============================================================================
-// Standalone Chromatic Aberration Effect Script for jCoad
+// Efficient Chromatic Aberration Effect Script for jCoad (Using PIXI Filters)
 //
 // Usage: 
 //	- Define a sprite in jCoad like normal 
 //		= If the sprite's filename contains one of the key strings in 
-//			chromaticPatterns, it will apply chromatic aberration and noise effects.
+//			chromaticPatterns, it will apply chromatic aberration effects.
 //			-- Example: chromatic_overlay.png or tv_static_aberration.png
 //
 // Inside the JS Raw (inside Mapbuilder's Settings):
@@ -43,11 +43,12 @@ let gameLayer = "overlay";
 
 // Chromatic aberration effect settings
 let chromaticSettings = {
-  rOffset: { x: -1, y: -1 },
-  gOffset: { x: 0, y: 0 },
-  bOffset: { x: 1, y: 1 },
-  noiseAmount: 8,
-  fps: 24,
+  offsetX: 2.0,     // Red channel X offset (pixels)
+  offsetY: 1.0,     // Red channel Y offset (pixels)
+  blueOffsetX: -2.0, // Blue channel X offset (pixels)
+  blueOffsetY: -1.0, // Blue channel Y offset (pixels)
+  noiseIntensity: 0.05, // Noise strength (0-1)
+  flickerSpeed: 0.1,    // How fast the effect changes
   enabled: true
 };
 
@@ -81,159 +82,190 @@ function findSpritesWithPattern(patterns, reference="skin") {
 	return matches;
 }
 
-// Gets the given sprite's gameObject
-function findGameObjectForSprite(sprite) {
-    for (let objName in game.objects["ids"]) {
-        let gameObject = game.objects["ids"][objName];
-        if (gameObject && gameObject.sprite === sprite) {
-            return gameObject;
-        }
+// ============================================================================
+// Chromatic Aberration Filter
+// ============================================================================
+
+// Custom PIXI filter for chromatic aberration
+class ChromaticAberrationFilter extends PIXI.Filter {
+    constructor() {
+        const vertexShader = `
+            attribute vec2 aVertexPosition;
+            attribute vec2 aTextureCoord;
+            
+            uniform mat3 projectionMatrix;
+            
+            varying vec2 vTextureCoord;
+            
+            void main(void) {
+                gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
+                vTextureCoord = aTextureCoord;
+            }
+        `;
+        
+        const fragmentShader = `
+            varying vec2 vTextureCoord;
+            uniform sampler2D uSampler;
+            uniform vec2 uOffset;
+            uniform vec2 uBlueOffset;
+            uniform float uNoise;
+            uniform float uTime;
+            
+            // Simple random function
+            float random(vec2 st) {
+                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+            }
+            
+            void main(void) {
+                vec2 coord = vTextureCoord;
+                
+                // Add some time-based variation to the noise
+                float timeNoise = uTime * 0.1;
+                
+                // Sample each color channel with different offsets
+                float r = texture2D(uSampler, coord + uOffset / 512.0).r;
+                float g = texture2D(uSampler, coord).g;
+                float b = texture2D(uSampler, coord + uBlueOffset / 512.0).b;
+                float a = texture2D(uSampler, coord).a;
+                
+                // Add noise
+                float noise = (random(coord + timeNoise) - 0.5) * uNoise;
+                r = clamp(r + noise, 0.0, 1.0);
+                g = clamp(g + noise, 0.0, 1.0);
+                b = clamp(b + noise, 0.0, 1.0);
+                
+                gl_FragColor = vec4(r, g, b, a);
+            }
+        `;
+        
+        super(vertexShader, fragmentShader);
+        
+        this.uniforms.uOffset = [chromaticSettings.offsetX, chromaticSettings.offsetY];
+        this.uniforms.uBlueOffset = [chromaticSettings.blueOffsetX, chromaticSettings.blueOffsetY];
+        this.uniforms.uNoise = chromaticSettings.noiseIntensity;
+        this.uniforms.uTime = 0.0;
     }
+    
+    updateTime(deltaTime) {
+        this.uniforms.uTime += deltaTime * chromaticSettings.flickerSpeed;
+    }
+    
+    updateSettings() {
+        this.uniforms.uOffset = [chromaticSettings.offsetX, chromaticSettings.offsetY];
+        this.uniforms.uBlueOffset = [chromaticSettings.blueOffsetX, chromaticSettings.blueOffsetY];
+        this.uniforms.uNoise = chromaticSettings.noiseIntensity;
+    }
+}
+
+// ============================================================================
+// Simple Noise Filter (Fallback)
+// ============================================================================
+
+// If the custom filter doesn't work, we can use PIXI's built-in noise filter
+function createSimpleNoiseFilter() {
+    // Use PIXI's built-in noise filter if available
+    if (PIXI.filters && PIXI.filters.NoiseFilter) {
+        const noiseFilter = new PIXI.filters.NoiseFilter();
+        noiseFilter.noise = chromaticSettings.noiseIntensity;
+        return noiseFilter;
+    }
+    
+    // Fallback: create a basic tint-based effect
     return null;
 }
 
 // ============================================================================
-// Chromatic Aberration Functions
+// Effect Application
 // ============================================================================
 
-function applyChromaticAberration(sprite) {
-    if (!sprite || !sprite.texture || !sprite.texture.baseTexture) return;
+function applyChromaticEffect(sprite) {
+    if (!sprite || sprite._chromaticProcessed) return;
     
     if (debugChromatic) {
-        console.log("Applying chromatic aberration to sprite:", sprite);
+        console.log("Applying chromatic effect to sprite:", sprite);
     }
     
-    // Get the original texture data
-    const baseTexture = sprite.texture.baseTexture;
-    if (!baseTexture.resource || !baseTexture.resource.source) return;
-    
-    const img = baseTexture.resource.source;
-    
-    // Create a canvas to process the image
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = img.width || baseTexture.width;
-    canvas.height = img.height || baseTexture.height;
-    
-    // Draw the original image
-    ctx.drawImage(img, 0, 0);
-    
-    // Get the image data
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    const width = canvas.width;
-    const height = canvas.height;
-    
-    // Create new image data for the effect
-    const newImageData = ctx.createImageData(width, height);
-    const newData = newImageData.data;
-    
-    // Apply chromatic aberration
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const i = (y * width + x) * 4;
+    try {
+        // Try to use the custom filter first
+        const filter = new ChromaticAberrationFilter();
+        sprite.filters = sprite.filters || [];
+        sprite.filters.push(filter);
+        
+        // Store the filter reference for updates
+        sprite._chromaticFilter = filter;
+        sprite._chromaticProcessed = true;
+        
+        if (debugChromatic) {
+            console.log("Applied custom chromatic filter to sprite");
+        }
+        
+    } catch (error) {
+        if (debugChromatic) {
+            console.warn("Custom filter failed, trying fallback:", error);
+        }
+        
+        // Fallback: use simple effects
+        const noiseFilter = createSimpleNoiseFilter();
+        if (noiseFilter) {
+            sprite.filters = sprite.filters || [];
+            sprite.filters.push(noiseFilter);
+            sprite._chromaticFilter = noiseFilter;
+            sprite._chromaticProcessed = true;
             
-            // Calculate offset positions for each channel
-            const rx = Math.max(0, Math.min(width - 1, x + chromaticSettings.rOffset.x));
-            const ry = Math.max(0, Math.min(height - 1, y + chromaticSettings.rOffset.y));
-            const ri = (ry * width + rx) * 4;
+            if (debugChromatic) {
+                console.log("Applied fallback noise filter");
+            }
+        } else {
+            // Final fallback: just add a subtle tint effect
+            sprite.tint = 0xFFEEEE; // Slight red tint
+            sprite._chromaticProcessed = true;
             
-            const gx = Math.max(0, Math.min(width - 1, x + chromaticSettings.gOffset.x));
-            const gy = Math.max(0, Math.min(height - 1, y + chromaticSettings.gOffset.y));
-            const gi = (gy * width + gx) * 4;
-            
-            const bx = Math.max(0, Math.min(width - 1, x + chromaticSettings.bOffset.x));
-            const by = Math.max(0, Math.min(height - 1, y + chromaticSettings.bOffset.y));
-            const bi = (by * width + bx) * 4;
-            
-            // Apply the offset channels
-            newData[i]     = data[ri];     // Red from offset position
-            newData[i + 1] = data[gi + 1]; // Green from offset position  
-            newData[i + 2] = data[bi + 2]; // Blue from offset position
-            newData[i + 3] = data[gi + 3]; // Alpha from green position
+            if (debugChromatic) {
+                console.log("Applied tint fallback effect");
+            }
         }
     }
-    
-    // Store the base data for animation
-    if (!sprite._chromaticBaseData) {
-        sprite._chromaticBaseData = new ImageData(
-            new Uint8ClampedArray(newData),
-            width,
-            height
-        );
-        sprite._chromaticCanvas = canvas;
-        sprite._chromaticCtx = ctx;
-        sprite._chromaticAnimationData = ctx.createImageData(width, height);
-    }
-    
-    // Put the initial processed data
-    ctx.putImageData(newImageData, 0, 0);
-    
-    // Create a new texture from the processed canvas
-    const newTexture = PIXI.Texture.from(canvas);
-    sprite.texture = newTexture;
-    
-    // Start the noise animation
-    startNoiseAnimation(sprite);
 }
 
-function startNoiseAnimation(sprite) {
-    if (!sprite._chromaticBaseData || sprite._noiseAnimationActive) return;
+function updateChromaticFilters() {
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
-    sprite._noiseAnimationActive = true;
-    
-    let lastTime = 0;
-    const delay = 1000 / chromaticSettings.fps;
-    const baseData = sprite._chromaticBaseData.data;
-    const animData = sprite._chromaticAnimationData.data;
-    const ctx = sprite._chromaticCtx;
-    const noiseAmount = chromaticSettings.noiseAmount;
-    
-    function animateNoise(currentTime) {
-        if (!sprite._noiseAnimationActive || !sprite.parent) {
-            // Stop animation if sprite is removed or animation disabled
-            return;
+    chromaticSprites.forEach(sprite => {
+        if (sprite._chromaticFilter && sprite._chromaticFilter.updateSettings) {
+            sprite._chromaticFilter.updateSettings();
         }
-        
-        if (currentTime - lastTime >= delay) {
-            // Apply noise to each pixel
-            for (let i = 0; i < baseData.length; i += 4) {
-                animData[i]     = Math.max(0, Math.min(255, baseData[i]     + (Math.random() * 2 - 1) * noiseAmount));
-                animData[i + 1] = Math.max(0, Math.min(255, baseData[i + 1] + (Math.random() * 2 - 1) * noiseAmount));
-                animData[i + 2] = Math.max(0, Math.min(255, baseData[i + 2] + (Math.random() * 2 - 1) * noiseAmount));
-                animData[i + 3] = baseData[i + 3]; // Keep original alpha
-            }
-            
-            // Update the canvas
-            ctx.putImageData(sprite._chromaticAnimationData, 0, 0);
-            
-            // Update the texture
-            sprite.texture.baseTexture.update();
-            
-            lastTime = currentTime;
-        }
-        
-        requestAnimationFrame(animateNoise);
+    });
+}
+
+// ============================================================================
+// Animation Loop
+// ============================================================================
+
+let lastTime = 0;
+
+function animateChromaticEffects(currentTime) {
+    if (!chromaticSettings.enabled) {
+        requestAnimationFrame(animateChromaticEffects);
+        return;
     }
     
-    requestAnimationFrame(animateNoise);
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+    
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
+    
+    chromaticSprites.forEach(sprite => {
+        if (sprite._chromaticFilter && sprite._chromaticFilter.updateTime) {
+            sprite._chromaticFilter.updateTime(deltaTime * 0.001); // Convert to seconds
+        }
+    });
+    
+    requestAnimationFrame(animateChromaticEffects);
 }
 
 // ============================================================================
 // Main Execution
 // ============================================================================
-
-// Create the chromatic container if it doesn't exist
-if (!game.chromaticContainer || game.chromaticContainer.destroyed) {
-	game.chromaticContainer = new PIXI.Container();
-}
-
-// Set the container in the correct layer
-const parentContainer = game.stage.children.find(child => child.name === gameLayer);
-if (parentContainer && game.chromaticContainer.parent !== parentContainer) {
-    parentContainer.addChild(game.chromaticContainer);
-}
 
 // Apply chromatic aberration to matching sprites
 function applyChromaticEffects() {
@@ -241,22 +273,20 @@ function applyChromaticEffects() {
     
     const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
     
+    if (debugChromatic && chromaticSprites.length > 0) {
+        console.log(`Found ${chromaticSprites.length} sprites for chromatic effects`);
+    }
+    
     chromaticSprites.forEach(sprite => {
-        // Only apply if not already processed
-        if (!sprite._chromaticProcessed) {
-            applyChromaticAberration(sprite);
-            sprite._chromaticProcessed = true;
-            
-            // Add to our container for management
-            if (!game.chromaticContainer.children.includes(sprite)) {
-                game.chromaticContainer.addChild(sprite);
-            }
-        }
+        applyChromaticEffect(sprite);
     });
 }
 
 // Initial application
 applyChromaticEffects();
+
+// Start animation loop
+requestAnimationFrame(animateChromaticEffects);
 
 // Hook into the render loop to catch new sprites
 if (!game._chromaticRenderHooked) {
@@ -270,12 +300,13 @@ if (!game._chromaticRenderHooked) {
 }
 
 // ============================================================================
-// Settings Control Functions (Optional)
+// Settings Control Functions
 // ============================================================================
 
 // Function to update chromatic settings on the fly
 function updateChromaticSettings(newSettings) {
     Object.assign(chromaticSettings, newSettings);
+    updateChromaticFilters();
     
     if (debugChromatic) {
         console.log("Updated chromatic settings:", chromaticSettings);
@@ -286,28 +317,36 @@ function updateChromaticSettings(newSettings) {
 function toggleChromaticEffect(enabled = !chromaticSettings.enabled) {
     chromaticSettings.enabled = enabled;
     
-    if (!enabled) {
-        // Stop all animations
-        const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
-        chromaticSprites.forEach(sprite => {
-            sprite._noiseAnimationActive = false;
-        });
-    } else {
-        applyChromaticEffects();
-    }
+    const chromaticSprites = findSpritesWithPattern(chromaticPatterns);
+    
+    chromaticSprites.forEach(sprite => {
+        if (sprite.filters && sprite._chromaticFilter) {
+            if (enabled) {
+                if (!sprite.filters.includes(sprite._chromaticFilter)) {
+                    sprite.filters.push(sprite._chromaticFilter);
+                }
+            } else {
+                const filterIndex = sprite.filters.indexOf(sprite._chromaticFilter);
+                if (filterIndex > -1) {
+                    sprite.filters.splice(filterIndex, 1);
+                }
+            }
+        }
+    });
     
     if (debugChromatic) {
         console.log("Chromatic effect", enabled ? "enabled" : "disabled");
     }
 }
 
-// Make these functions globally accessible for debugging/tweaking
+// Make these functions globally accessible
 if (typeof window !== 'undefined') {
     window.updateChromaticSettings = updateChromaticSettings;
     window.toggleChromaticEffect = toggleChromaticEffect;
 }
 
 if (debugChromatic) {
-    console.log("Chromatic aberration script loaded. Found patterns:", chromaticPatterns);
+    console.log("Efficient chromatic aberration script loaded.");
+    console.log("Patterns:", chromaticPatterns);
     console.log("Settings:", chromaticSettings);
 }
