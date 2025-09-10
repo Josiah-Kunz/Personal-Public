@@ -270,7 +270,7 @@ if (!game._updateHooked) {
     game._updateHooked = true;
     const originalUpdate = game.map.update;
     game.map.update = function(...args) {
-		console.log("Updating!");
+
 		const result = originalUpdate.apply(this, args);
 		
         targetSprites = findSpritesWithPattern(targetPatterns);
@@ -299,17 +299,21 @@ function flickerImage(sprite) {
   if (sprite.alpha < 0.5) {
     sprite.alpha = 1;
     const offTime = getRandomInt(game.map.__minOnTimes[sprite.uid], game.map.__maxOnTimes[sprite.uid]);
-	setTimeout(() => flickerImage(sprite), offTime);
-	if (debugFlicker){
-		console.log(`Flickered ${sprite.uid} on for another ${offTime} ms.`)
-	}
+    // Store the timer ID so we can clear it later if needed
+    const timerId = setTimeout(() => flickerImage(sprite), offTime);
+    game.map.__flickerTimers.set(sprite.uid, timerId);
+    if (debugFlicker){
+      console.log(`Flickered ${sprite.uid} on for another ${offTime} ms.`)
+    }
   } else {
     sprite.alpha = 0;
     const onTime = getRandomInt(game.map.__minOffTimes[sprite.uid], game.map.__maxOffTimes[sprite.uid]);
-    setTimeout(() => flickerImage(sprite), onTime);
-	if (debugFlicker){
-		console.log(`Flickered ${sprite.uid} off for another ${onTime} ms.`)
-	}
+    // Store the timer ID so we can clear it later if needed
+    const timerId = setTimeout(() => flickerImage(sprite), onTime);
+    game.map.__flickerTimers.set(sprite.uid, timerId);
+    if (debugFlicker){
+      console.log(`Flickered ${sprite.uid} off for another ${onTime} ms.`)
+    }
   }
 }
 
@@ -392,6 +396,11 @@ if (!game.map.__flickerSprites) {
     game.map.__initialOpacities = {};
 }
 
+// Initialize timer tracking map to prevent memory leaks on window resize
+if (!game.map.__flickerTimers) {
+    game.map.__flickerTimers = new Map();
+}
+
 let currentFlickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
 
 if (!game.map.__numFlickerSprites) {
@@ -400,7 +409,17 @@ if (!game.map.__numFlickerSprites) {
 }
 
 if (game.map.__numFlickerSprites != currentFlickerSprites.length || game.map.__flickerMap != game.map) {
+    
+    // Clear all existing timers before creating new ones (prevents multiple timers per sprite)
+    if (game.map.__flickerTimers && game.map.__flickerTimers.size > 0) {
+        for (let timerId of game.map.__flickerTimers.values()) {
+            clearTimeout(timerId);
+        }
+        game.map.__flickerTimers.clear();
+    }
+    
     game.map.__flickerSprites = currentFlickerSprites;
+    game.map.__numFlickerSprites = currentFlickerSprites.length;
 	game.map.__flickerMap = game.map;
 	
 	setFlickerSettings();
@@ -414,7 +433,9 @@ if (game.map.__numFlickerSprites != currentFlickerSprites.length || game.map.__f
 
 		// Start flickering after a small random delay to avoid synchronized flickering
 		let startDelay = getRandomInt(0, 1000);
-		setTimeout(() => flickerImage(flickerSprite), startDelay);
+		// Store the initial timer ID for cleanup purposes
+		const timerId = setTimeout(() => flickerImage(flickerSprite), startDelay);
+		game.map.__flickerTimers.set(uid, timerId);
 	}
 }
 
