@@ -36,7 +36,7 @@ game => {
 // ============================================================================
 
 // Sprites that match these patterns will get chromatic aberration effects
-let chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "_stripled"];
+let chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "_overlay", "overlay_"];
 
 // The layer to store the chromatic container in
 let gameLayer = "overlay";
