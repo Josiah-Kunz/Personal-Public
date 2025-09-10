@@ -5,7 +5,7 @@
 	
 game => {
 
-	const scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/61a16403aacc6f603502547a398b91d0dbab98c6/rare-shop.js";
+	const scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/341391f7616746a1aca039085ffd1c58e5c10264/rare-shop.js";
 	const scriptName = scriptUrl.split('/').pop().split('.')[0];
 
 	fetch(scriptUrl)
@@ -17,7 +17,7 @@ game => {
 
 }
 	
-	...and of course change the rareItemStocks settings in this script. Once 
+	...and of course change the rareItemMax settings in this script. Once 
 	you do that, this script can be used globally (that is, imported on every 
 	map with a shop).
 	
@@ -88,6 +88,8 @@ function getCurrentMoney(shop) {
 }
 
 // Temporarily override money/currency so the purchase system runs
+// This lets the player afford just one item. Of course, the correct
+// funds are restored after the purchase.
 function overrideFunds(shop, itemPrice) {
 	let originalMoney = shop.game.player.bag.money;
 	let originalCurrencyAmount;
