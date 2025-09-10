@@ -3,19 +3,19 @@
 	
 	Usage:
 	
-		game => {
+game => {
 
-			const scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/1bf1556c583eadbf31c4a8ffb299fd5216c455a5/excello-lighting-injection.js";
-			const scriptName = scriptUrl.split('/').pop().split('.')[0];
+	const scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/61a16403aacc6f603502547a398b91d0dbab98c6/rare-shop.js";
+	const scriptName = scriptUrl.split('/').pop().split('.')[0];
 
-			fetch(scriptUrl)
-			.then(response => response.text())
-			.then(scriptText => {
-				eval(scriptText);
-			}) 
-			.catch(error => console.error(`Failed to load ${scriptName}:`, error));
+	fetch(scriptUrl)
+	.then(response => response.text())
+	.then(scriptText => {
+		eval(scriptText);
+	}) 
+	.catch(error => console.error(`Failed to load ${scriptName}:`, error));
 
-		}
+}
 	
 	...and of course change the rareItemStocks settings in this script. Once 
 	you do that, this script can be used globally (that is, imported on every 
@@ -32,7 +32,7 @@
 // ============================================================================
 
 rareItemMax = {
-	"06idcypk" : 3
+	"06rpsnfm" : 1	// Master Ball
 }
 
 // ============================================================================
@@ -127,8 +127,6 @@ function hookTextboxYes(game, itemUID, rareItem, originalAnswers) {
 			let originalYesCallback = arr[0][1];
 			arr[0][1] = () => {
 				let result = originalYesCallback();
-				console.log("RESULT:");
-				console.log(result);
 
 				// Increment purchase count on success
 				// Sometimes this triggers twice in a row, hence the timeout
