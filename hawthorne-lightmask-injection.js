@@ -270,7 +270,7 @@ if (!game._updateHooked) {
     game._updateHooked = true;
     const originalUpdate = game.update;
     game.update = function(...args) {
-		
+		console.log("Updating!");
 		const result = originalUpdate.apply(this, args);
 		
         targetSprites = findSpritesWithPattern(targetPatterns);
