@@ -84,6 +84,7 @@ function findSpritesWithPattern(patterns, reference="uid") {
 		for(let pattern of patterns){
 			let candidate = gameObject.skin;
 			if (reference == "uid") candidate = gameObject.uid;
+			if (typeof candidate !== "string") continue;
 			if (candidate.includes(pattern)){
 				if (reference == "uid") gameObject.sprite.uid = gameObject.uid;
 				matches.push(gameObject.sprite);
