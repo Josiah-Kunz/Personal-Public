@@ -236,7 +236,7 @@ function applyChromaticEffect(sprite) {
     const gameObject = findGameObjectForSprite(sprite);
     let spriteName = '';
     if (gameObject) {
-        spriteName = gameObject.skin || gameObject.uid || '';
+        spriteName = gameObject.uid || gameObject.skin || '';
     }
     
     // Parse any custom settings
