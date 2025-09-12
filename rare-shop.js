@@ -21,9 +21,12 @@ game => {
 	you do that, this script can be used globally (that is, imported on every 
 	map with a shop).
 	
-	You can always reset the stock. For example, you could have a monthly shop 
-	with a stock of 1 Master Ball. The day after the vendor appears, just set
-	ev[Purchased_06rpsnfm]=0 and voila!
+	You can always reset the stock. For example, you could have a weekly shop 
+	with a stock of 1 Master Ball, use jCoad:
+	
+		if ev[Route3_Loot_Restock]!=date
+			execute(ev[Route3_Loot_Restock]=%date%)
+			execute(ev[Purchased_06rpsnfm]=0)  // Master Ball
 	
 	The player purchases items one-by-one and is useful for rare items, such 
 	as Leftovers. In its current state, it hypothetically supports custom 
