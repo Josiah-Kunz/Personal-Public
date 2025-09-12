@@ -82,7 +82,7 @@ function filterPurchasableItems(items) {
 	return items.filter(([item]) => {
 		
 		// Could be "Cancel"
-		if (!item or !item.uid) return true;
+		if (!item || !item.uid) return true;
 		
 		// Filter all TMs as purchasable once
 		if (item.uid.startsWith("07")){
