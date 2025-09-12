@@ -80,7 +80,7 @@ let rareItemUIDs = rareItems.map(item => item.uid);
 // Return only items that are still purchasable
 function filterPurchasableItems(items) {
 	return items.filter(([item]) => {
-		
+		console.log(item);
 		// Filter all TMs as purchasable once
 		if (item.uid.startsWith("07")){
 			return false;
