@@ -21,6 +21,10 @@ game => {
 	you do that, this script can be used globally (that is, imported on every 
 	map with a shop).
 	
+	You can always reset the stock. For example, you could have a monthly shop 
+	with a stock of 1 Master Ball. The day after the vendor appears, just set
+	ev[Purchased_06rpsnfm]=0 and voila!
+	
 	The player purchases items one-by-one and is useful for rare items, such 
 	as Leftovers. In its current state, it hypothetically supports custom 
 	currenty, but in practice has not been tested. It is not recommended to use
@@ -33,7 +37,12 @@ game => {
 
 rareItemMax = {
 	"06rpsnfm" : 1,	// Master Ball
-	"061wi1pj" : 3	// Ultra Ball
+	"06xxozfi" : 1,	// Black Sludge
+	"06pkdote" : 1,	// Eject Button
+	"06kq2rdf" : 1,	// Miracle Seed
+	"06il88td" : 1,	// Sharp Beak
+	"061fxr5t" : 1,	// Magnet
+	"065rte6z" : 1,	// Red Card
 }
 
 // ============================================================================
@@ -71,6 +80,13 @@ let rareItemUIDs = rareItems.map(item => item.uid);
 // Return only items that are still purchasable
 function filterPurchasableItems(items) {
 	return items.filter(([item]) => {
+		
+		// Filter all TMs as purchasable once
+		if (item.uid.startsWith("07")){
+			return false;
+		}
+		
+		// Check the list
 		if (rareItemUIDs.includes(item.uid)) {
 			let rareItem = rareItems.find(rareItem => rareItem.uid === item.uid);
 			return rareItem.canPurchase();
