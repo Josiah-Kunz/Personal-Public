@@ -1,0 +1,14 @@
+game => {
+
+    function updateMoneyDigits() {
+        const money = game.player.bag.money;
+        game.map.mapVars["digit_1"] = money % 10;
+        game.map.mapVars["digit_10"] = Math.floor(money / 10) % 10;
+        game.map.mapVars["digit_100"] = Math.floor(money / 100) % 10;
+        game.map.mapVars["digit_1000"] = Math.floor(money / 1000) % 10;
+    }
+
+    updateMoneyDigits();
+
+
+}
