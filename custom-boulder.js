@@ -158,8 +158,9 @@ function checkBouldersMovedLoop(){
 }
 
 console.log(game);
+console.log(game.objects);
 
-if (game && game.objects && game.objects.length > 0 && !initialized){
+if (game && game.objects && !initialized){
 	
 	// Flag
 	initialized = true;
