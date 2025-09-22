@@ -45,6 +45,7 @@ Author: J. Kunz
 */
 
 let boulderPatterns = ["boulder", "temple_sphere", "temple-sphere"];
+let initialized = false;
 
 function findObjectsWithPattern(patterns, reference="skin") {
 	let matches = [];
@@ -155,10 +156,10 @@ function checkBouldersMovedLoop(){
 	requestAnimationFrame(checkBouldersMovedLoop);
 }
 
-if (game && game.objects && game.objects.length > 0 && !game.__requestedBoulderLoops){
+if (game && game.objects && game.objects.length > 0 && !initialized){
 	
 	// Flag
-	game.__requestedBoulderLoops = true;
+	initialized = true;
 	
 	// Set up boulders
 	let boulders = findObjectsWithPattern(boulderPatterns);
