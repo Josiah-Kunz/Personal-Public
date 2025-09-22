@@ -1,0 +1,18 @@
+function checkJumpLoop(){
+	
+	if (game.player.hover < 0 && game.map.mapVars["jumping"]==0){
+		game.trigger("mapvar[jumping]=1");
+		console.log("Started jumping");
+	} else if (game.player.hover >= 0 && game.map.mapVars["jumping"]==1){
+		game.trigger("mapvar[jumping]=0");
+		console.log("Ended jumping");
+	}
+	
+	requestAnimationFrame(checkJumpLoop);
+}
+
+if (!game.__requestedJumpLoop){
+	game.__requestedJumpLoop = true;
+	game.trigger("mapvar[jumping]=0");
+	requestAnimationFrame(checkJumpLoop);
+}

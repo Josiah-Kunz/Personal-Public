@@ -19,8 +19,8 @@
 
 game => {
 
-  const scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/1bf1556c583eadbf31c4a8ffb299fd5216c455a5/excello-lighting-injection.js";
-  const scriptName = scriptUrl.split('/').pop().split('.')[0];
+  let scriptUrl = "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/6aa90e562f82ced27d79155d45889ace5182fb38/hawthorne-lightmask-injection.js";
+  let scriptName = scriptUrl.split('/').pop().split('.')[0];
   
   fetch(scriptUrl)
     .then(response => response.text())

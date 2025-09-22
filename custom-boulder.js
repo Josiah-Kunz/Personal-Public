@@ -30,13 +30,15 @@ Usage in the JS injector:
 
 	game => {
 	const scripts = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/becac3cea737fc5823310d63e4740bd8f0e40123/custom-boulder.js"
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/fe1604e8fbfe079f3cf9d879b1364ce62d6eec06/custom-boulder.js"
 	];
 	
 	scripts.forEach(url => 
 		fetch(url)
-		.then(r => r.text())
-		.then(eval)
+		.then(response => response.text())
+		.then(scriptText => {
+			eval(scriptText);
+		})
 		.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
 	);
 	}
