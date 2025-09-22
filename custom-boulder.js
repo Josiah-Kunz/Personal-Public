@@ -157,6 +157,8 @@ function checkBouldersMovedLoop(){
 	requestAnimationFrame(checkBouldersMovedLoop);
 }
 
+console.log(game);
+
 if (game && game.objects && game.objects.length > 0 && !initialized){
 	
 	// Flag
