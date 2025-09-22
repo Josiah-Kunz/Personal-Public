@@ -46,6 +46,7 @@ Author: J. Kunz
 
 let boulderPatterns = ["boulder", "temple_sphere", "temple-sphere"];
 let initialized = false;
+let boulders = [];
 
 function findObjectsWithPattern(patterns, reference="skin") {
 	let matches = [];
@@ -162,7 +163,8 @@ if (game && game.objects && game.objects.length > 0 && !initialized){
 	initialized = true;
 	
 	// Set up boulders
-	let boulders = findObjectsWithPattern(boulderPatterns);
+	boulders = findObjectsWithPattern(boulderPatterns);
+	console.log(`Initialized ${boulders.length} boulders.`)
 	for (let boulder of boulders){
 		boulder.solid = true;
 		boulder.__cachedX = boulder.x;
