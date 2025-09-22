@@ -30,8 +30,7 @@ Usage in the JS injector:
 
 	game => {
 	const scripts = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/1bf1556c583eadbf31c4a8ffb299fd5216c455a5/excello-lighting-injection.js"
-		// Add more URLs here
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/becac3cea737fc5823310d63e4740bd8f0e40123/custom-boulder.js"
 	];
 	
 	scripts.forEach(url => 
@@ -166,7 +165,7 @@ function checkBouldersMovedLoop(){
 	requestAnimationFrame(checkBouldersMovedLoop);
 }
 
-if (!game.__requestedBoulderLoops){
+if (game && game.objects && game.objects.length > 0 && !game.__requestedBoulderLoops){
 	game.__requestedBoulderLoops = true;
 	requestAnimationFrame(checkBouldersMovedLoop);
 	requestAnimationFrame(checkPlayerMovedLoop);
