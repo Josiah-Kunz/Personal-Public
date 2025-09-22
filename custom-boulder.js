@@ -74,30 +74,33 @@ function checkPlayerPush(){
 		
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
+		
+		let playerDir = game.player.tmp[5][3];
+		
 		boulder.__pushed = 0;
-		console.log(game.player.tmp[5]);
-		if (yDiff == 0 && -16 <= xDiff && xDiff <= 0){
+		
+		if (playerDir == 2 && yDiff == 0 && -16 <= xDiff && xDiff <= 0){
 			if (!game.map.checkNextTile(boulder.nextX+16, boulder.nextY, boulder)){
 				boulder.setPath("1r");
 				boulder.__pushed = 6;
 			}
 		}
 		
-		if (yDiff == 0 && 0 <= xDiff && xDiff <= 16){
+		if (playerDir == 3 && yDiff == 0 && 0 <= xDiff && xDiff <= 16){
 			if (!game.map.checkNextTile(boulder.nextX-16, boulder.nextY, boulder)){
 				boulder.setPath("1l");
 				boulder.__pushed = 4;
 			}
 		}
 		
-		if (xDiff == 0 && -16 <= yDiff && yDiff <= 0){
+		if (playerDir == 0 && xDiff == 0 && -16 <= yDiff && yDiff <= 0){
 			if (!game.map.checkNextTile(boulder.nextX, boulder.nextY+16, boulder)){
 				boulder.setPath("1d");
 				boulder.__pushed = 2;
 			}
 		}
 		
-		if (xDiff == 0 && 0 <= yDiff && yDiff <= 16){
+		if (playerDir == 1 && xDiff == 0 && 0 <= yDiff && yDiff <= 16){
 			if (!game.map.checkNextTile(boulder.nextX, boulder.nextY-16, boulder)){
 				boulder.setPath("1u");
 				boulder.__pushed = 8;
