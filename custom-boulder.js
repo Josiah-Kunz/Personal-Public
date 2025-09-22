@@ -67,13 +67,6 @@ function findObjectsWithPattern(patterns, reference="skin") {
 	return matches;
 }
 
-let boulders = findObjectsWithPattern(boulderPatterns);
-for (let boulder of boulders){
-	boulder.solid = true;
-	boulder.__cachedX = boulder.x;
-	boulder.__cachedY = boulder.y;
-}
-
 function checkPlayerPush(){
 	for(let boulder of boulders){
 		
@@ -166,7 +159,19 @@ function checkBouldersMovedLoop(){
 }
 
 if (game && game.objects && game.objects.length > 0 && !game.__requestedBoulderLoops){
+	
+	// Flag
 	game.__requestedBoulderLoops = true;
+	
+	// Set up boulders
+	let boulders = findObjectsWithPattern(boulderPatterns);
+	for (let boulder of boulders){
+		boulder.solid = true;
+		boulder.__cachedX = boulder.x;
+		boulder.__cachedY = boulder.y;
+	}
+	
+	// Start looping young man!
 	requestAnimationFrame(checkBouldersMovedLoop);
 	requestAnimationFrame(checkPlayerMovedLoop);
 }
