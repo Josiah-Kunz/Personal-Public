@@ -110,9 +110,6 @@ function checkPlayerPush(){
 	}
 }
 
-game.player.__canPush = true;
-game.player.__cachedX = game.player.x;
-game.player.__cachedY = game.player.y;
 function checkPlayerMovedLoop(){
 	
 	for(let boulder of boulders){
@@ -170,6 +167,11 @@ if (game && game.objects && game.objects.length > 0 && !game.__requestedBoulderL
 		boulder.__cachedX = boulder.x;
 		boulder.__cachedY = boulder.y;
 	}
+	
+	// Set up player
+	game.player.__canPush = true;
+	game.player.__cachedX = game.player.x;
+	game.player.__cachedY = game.player.y;
 	
 	// Start looping young man!
 	requestAnimationFrame(checkBouldersMovedLoop);
