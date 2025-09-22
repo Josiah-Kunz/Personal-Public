@@ -75,7 +75,7 @@ function checkPlayerPush(){
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
 		boulder.__pushed = 0;
-		
+		console.log(game.player.tmp[5]);
 		if (yDiff == 0 && -16 <= xDiff && xDiff <= 0){
 			if (!game.map.checkNextTile(boulder.nextX+16, boulder.nextY, boulder)){
 				boulder.setPath("1r");
@@ -156,9 +156,6 @@ function checkBouldersMovedLoop(){
 	
 	requestAnimationFrame(checkBouldersMovedLoop);
 }
-
-console.log(game);
-console.log(game.objects);
 
 if (game && game.objects && !initialized){
 	
