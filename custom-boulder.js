@@ -169,7 +169,6 @@ if (game && game.objects && !initialized){
 	
 	// Set up boulders
 	boulders = findObjectsWithPattern(boulderPatterns);
-	console.log(`Initialized ${boulders.length} boulders.`)
 	for (let boulder of boulders){
 		boulder.solid = true;
 		boulder.__cachedX = boulder.x;
