@@ -30,7 +30,7 @@ Usage in the JS injector:
 
 	game => {
 	const scripts = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/fe1604e8fbfe079f3cf9d879b1364ce62d6eec06/custom-boulder.js"
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/91c6ee3d2286d6dac18a5df06c48b8b23a111d66/custom-boulder.js"
 	];
 	
 	scripts.forEach(url => 
