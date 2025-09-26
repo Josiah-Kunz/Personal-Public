@@ -25,7 +25,7 @@ if (game.map.id != game.map.__cachedid) {
 	game.map.__jsScripts = "";
 	game.map.__cachedid = game.map.id;
 	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/3e7cf1bb878665bad21eebe6677245b2075f53d1/hawthorne-chromatic-aberration.js",
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/133f2ceacd6af0c606df8e7927a8d20cb89ab2fc/hawthorne-chromatic-aberration.js",
 	];
 	scriptUrls.forEach(url => 
 		fetch(url)
@@ -54,13 +54,10 @@ if (game.map.id != game.map.__cachedid) {
 // ============================================================================
 
 // Sprites that match these patterns will get chromatic aberration effects
-var chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "tv_", "_tv"];
-
-// The layer to store the chromatic container in
-var gameLayer = "overlay";
+let chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "tv_", "_tv"];
 
 // Chromatic aberration effect settings
-var chromaticSettings = {
+let chromaticSettings = {
   offsetX: 2.0,     // Red channel X offset (pixels)
   offsetY: 1.0,     // Red channel Y offset (pixels)
   blueOffsetX: -2.0, // Blue channel X offset (pixels)
@@ -71,14 +68,14 @@ var chromaticSettings = {
 };
 
 // Separates keys from values for per-sprite overrides
-var keyParseToken = "_";
+let keyParseToken = "_";
 
 // ============================================================================
 // Debug Settings
 // ============================================================================
 
 // If true, logs chromatic aberration processing
-var debugChromatic = false;
+let debugChromatic = false;
 
 // ============================================================================
 // Utility Functions

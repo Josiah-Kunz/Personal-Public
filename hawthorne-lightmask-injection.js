@@ -24,7 +24,7 @@ if (game.map.id != game.map.__cachedid) {
 	game.map.__jsScripts = "";
 	game.map.__cachedid = game.map.id;
 	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/3e7cf1bb878665bad21eebe6677245b2075f53d1/hawthorne-lightmask-injection.js",
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/e9419423f97225e0b97875eccfb72964fc7180d8/hawthorne-lightmask-injection.js",
 	];
 	scriptUrls.forEach(url => 
 		fetch(url)
@@ -56,30 +56,30 @@ if (game.map.id != game.map.__cachedid) {
 // potential scope and "hoisting" problems, but probably not in this case since
 // injected scripts are meant to be self-contained.
 
-var targetPatterns = ["overlay_", "_overlay", "vignette"];
-var cutoutPatterns = ["lm_", "-cutout"];
-var forePatterns = ["fore+_", "banner_", "_banner"];
-var gameLayer = "overlay";
+let targetPatterns = ["overlay_", "_overlay", "vignette"];
+let cutoutPatterns = ["lm_", "-cutout"];
+let forePatterns = ["fore+_", "banner_", "_banner"];
+let lmContainerLayer = "overlay";
 
 // ============================================================================
 // Flicker settings 
 // ============================================================================
 
-var flickerPatterns = ["flicker_", "_flicker"]
-var defaultMinOnTime = 50;
-var defaultMaxOnTime = 5000;
-var defaultMinOffTime = 50;
-var defaultMaxOffTime = 100;
-var defaultInitialOpacity = 100;
-var keyParseToken = "_";
-var desyncDelay = 1000;
+let flickerPatterns = ["flicker_", "_flicker"]
+let defaultMinOnTime = 50;
+let defaultMaxOnTime = 5000;
+let defaultMinOffTime = 50;
+let defaultMaxOffTime = 100;
+let defaultInitialOpacity = 100;
+let keyParseToken = "_";
+let desyncDelay = 1000;
 
 // ============================================================================
 // Debug Settings
 // ============================================================================
 
-var debugHierarchy = false;
-var debugFlicker = false;
+let debugHierarchy = false;
+let debugFlicker = false;
 
 // ============================================================================
 // Performance Optimization: Caching and Change Detection
@@ -271,7 +271,7 @@ if (!game.lmContainer || game.lmContainer.destroyed) {
 	game.lmContainer.filters = [new PIXI.Filter()];
 }
 
-let parentContainer = game.stage.children.find(child => child.name === gameLayer);
+let parentContainer = game.stage.children.find(child => child.name === lmContainerLayer);
 if (parentContainer && game.lmContainer.parent !== parentContainer) {
 	parentContainer.addChild(game.lmContainer);
 }
