@@ -1,5 +1,46 @@
 // ============================================================================
-// Custom lighting overlay and cutout script - OPTIMIZED VERSION
+// Custom lighting overlay and cutout script.
+// Version: Sep 25 2025
+//
+// Usage: 
+//	- Define a sprite in jCoad like normal 
+//		= If the sprite's filename contains one of the key strings in 
+//			targetPatterns, it will overlay the game and have cutouts.
+//			-- Example: overlay_1_woods.png
+//		= If the sprite's filename contains a cutout key string, it will do
+//			the cutting. Its color will be invisible, but the cut is 
+//			proportional to the sprite's alpha.
+//			-- Example: lm_circle_large.png
+//		= If the sprite's filename contains a forePattern key string, it will 
+//			render above the overlay and not get cut.
+//			-- Example: fore+_town_banner.png
+//
+// Inside the JS Raw (inside Mapbuilder's Settings):
+/*
+
+game => {
+	if (!window.__jsScripts) {
+		window.__jsScripts = "";
+		let scriptUrls = [
+			"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/05bc2af2d464544b56592dabeb70510e6eebbb46/hawthorne-lightmask-injection.js",
+		];
+		scriptUrls.forEach(url => 
+			fetch(url)
+			.then(response => response.text())
+			.then(scriptText => {
+				window.__jsScripts += scriptText;
+			})
+			.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
+		);
+	}
+	eval(window.__jsScripts);
+}
+
+*/
+// 
+// Author: J. Kunz
+// Direction: Gav
+// AI consultant: Claude
 // ============================================================================
 
 // ============================================================================
