@@ -68,7 +68,7 @@ let chromaticSettings = {
 };
 
 // Separates keys from values for per-sprite overrides
-let keyParseToken = "_";
+let chromaticParseToken = "_";
 
 // ============================================================================
 // Debug Settings
@@ -114,7 +114,7 @@ function findGameObjectForSprite(sprite) {
 
 // Parse custom settings from sprite name
 function parseCustomChromaticSettings(spriteName) {
-  const parts = spriteName.split(keyParseToken);
+  const parts = spriteName.split(chromaticParseToken);
   const settings = {};
   
   for (let i = 0; i < parts.length - 1; i++) {
