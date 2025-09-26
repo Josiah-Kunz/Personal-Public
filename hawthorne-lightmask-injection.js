@@ -51,33 +51,35 @@ if (game.map.id != game.map.__cachedid) {
 // ============================================================================
 // Layer Settings
 // ============================================================================
-// Note: "let" is used instead of "const" since these are modular and, 
-// occasionally, other scripts might use the same verbiage.
+// Note: "var" is used instead of "const" since these are modular and, 
+// occasionally, other scripts might use the same verbiage. Yes, there are 
+// potential scope and "hoisting" problems, but probably not in this case since
+// injected scripts are meant to be self-contained.
 
-let targetPatterns = ["overlay_", "_overlay", "vignette"];
-let cutoutPatterns = ["lm_", "-cutout"];
-let forePatterns = ["fore+_", "banner_", "_banner"];
-let gameLayer = "overlay";
+var targetPatterns = ["overlay_", "_overlay", "vignette"];
+var cutoutPatterns = ["lm_", "-cutout"];
+var forePatterns = ["fore+_", "banner_", "_banner"];
+var gameLayer = "overlay";
 
 // ============================================================================
 // Flicker settings 
 // ============================================================================
 
-let flickerPatterns = ["flicker_", "_flicker"]
-let defaultMinOnTime = 50;
-let defaultMaxOnTime = 5000;
-let defaultMinOffTime = 50;
-let defaultMaxOffTime = 100;
-let defaultInitialOpacity = 100;
-let keyParseToken = "_";
-let desyncDelay = 1000;
+var flickerPatterns = ["flicker_", "_flicker"]
+var defaultMinOnTime = 50;
+var defaultMaxOnTime = 5000;
+var defaultMinOffTime = 50;
+var defaultMaxOffTime = 100;
+var defaultInitialOpacity = 100;
+var keyParseToken = "_";
+var desyncDelay = 1000;
 
 // ============================================================================
 // Debug Settings
 // ============================================================================
 
-let debugHierarchy = false;
-let debugFlicker = false;
+var debugHierarchy = false;
+var debugFlicker = false;
 
 // ============================================================================
 // Performance Optimization: Caching and Change Detection

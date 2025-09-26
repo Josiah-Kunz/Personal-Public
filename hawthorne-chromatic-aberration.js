@@ -54,13 +54,13 @@ if (game.map.id != game.map.__cachedid) {
 // ============================================================================
 
 // Sprites that match these patterns will get chromatic aberration effects
-let chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "tv_", "_tv"];
+var chromaticPatterns = ["chromatic_", "_chromatic", "aberration_", "_aberration", "tv_", "_tv"];
 
 // The layer to store the chromatic container in
-let gameLayer = "overlay";
+var gameLayer = "overlay";
 
 // Chromatic aberration effect settings
-let chromaticSettings = {
+var chromaticSettings = {
   offsetX: 2.0,     // Red channel X offset (pixels)
   offsetY: 1.0,     // Red channel Y offset (pixels)
   blueOffsetX: -2.0, // Blue channel X offset (pixels)
@@ -71,14 +71,14 @@ let chromaticSettings = {
 };
 
 // Separates keys from values for per-sprite overrides
-let keyParseToken = "_";
+var keyParseToken = "_";
 
 // ============================================================================
 // Debug Settings
 // ============================================================================
 
 // If true, logs chromatic aberration processing
-let debugChromatic = false;
+var debugChromatic = false;
 
 // ============================================================================
 // Utility Functions
