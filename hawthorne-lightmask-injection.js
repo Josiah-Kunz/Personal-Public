@@ -406,7 +406,7 @@ if (!game.map.__numFlickerSprites) {
 	game.map.__flickerMap = "";
 }
 
-if (game.map.__numFlickerSprites != currentFlickerSprites.length || game.map.__flickerMap != game.map) {
+if (game.map.__numFlickerSprites != currentFlickerSprites.length || game.map.__flickerMap != game.map.uid) {
 
 	// Clear all existing timers before creating new ones (prevents multiple timers per sprite)
 	if (game.map.__flickerTimers && game.map.__flickerTimers.size > 0) {
@@ -418,7 +418,7 @@ if (game.map.__numFlickerSprites != currentFlickerSprites.length || game.map.__f
 
 	game.map.__flickerSprites = currentFlickerSprites;
 	game.map.__numFlickerSprites = currentFlickerSprites.length;
-	game.map.__flickerMap = game.map;
+	game.map.__flickerMap = game.map.uid;
 	
 	setFlickerSettings();
 
