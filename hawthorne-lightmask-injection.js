@@ -19,21 +19,26 @@
 /*
 
 game => {
-if (!game.map.__jsScripts) {
+
+if (game.map.id != game.map.__cachedid) {
 	game.map.__jsScripts = "";
+	game.map.__cachedid = game.map.id;
 	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/05bc2af2d464544b56592dabeb70510e6eebbb46/hawthorne-lightmask-injection.js",
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/2ac99747905fb1596622ea5a83c6b750afea01fa/hawthorne-lightmask-injection.js",
 	];
 	scriptUrls.forEach(url => 
 		fetch(url)
 		.then(response => response.text())
 		.then(scriptText => {
 			game.map.__jsScripts += scriptText;
+			eval(scriptText);
 		})
 		.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
 	);
+} else if (game.map) {
+  eval(game.map.__jsScripts);
 }
-eval(game.map.__jsScripts);
+
 }
 
 */
@@ -46,31 +51,33 @@ eval(game.map.__jsScripts);
 // ============================================================================
 // Layer Settings
 // ============================================================================
+// Note: "let" is used instead of "const" since these are modular and, 
+// occasionally, other scripts might use the same verbiage.
 
-const targetPatterns = ["overlay_", "_overlay", "vignette"];
-const cutoutPatterns = ["lm_", "-cutout"];
-const forePatterns = ["fore+_", "banner_", "_banner"];
-const gameLayer = "overlay";
+let targetPatterns = ["overlay_", "_overlay", "vignette"];
+let cutoutPatterns = ["lm_", "-cutout"];
+let forePatterns = ["fore+_", "banner_", "_banner"];
+let gameLayer = "overlay";
 
 // ============================================================================
 // Flicker settings 
 // ============================================================================
 
-const flickerPatterns = ["flicker_", "_flicker"]
-const defaultMinOnTime = 50;
-const defaultMaxOnTime = 5000;
-const defaultMinOffTime = 50;
-const defaultMaxOffTime = 100;
-const defaultInitialOpacity = 100;
-const keyParseToken = "_";
-const desyncDelay = 1000;
+let flickerPatterns = ["flicker_", "_flicker"]
+let defaultMinOnTime = 50;
+let defaultMaxOnTime = 5000;
+let defaultMinOffTime = 50;
+let defaultMaxOffTime = 100;
+let defaultInitialOpacity = 100;
+let keyParseToken = "_";
+let desyncDelay = 1000;
 
 // ============================================================================
 // Debug Settings
 // ============================================================================
 
-const debugHierarchy = false;
-const debugFlicker = false;
+let debugHierarchy = false;
+let debugFlicker = false;
 
 // ============================================================================
 // Performance Optimization: Caching and Change Detection
@@ -92,13 +99,13 @@ if (!game.__lightMaskCache) {
 }
 
 function shouldUpdate() {
-	const currentObjectCount = Object.keys(game.objects["ids"]).length;
-	const mapChanged = game.__lightMaskCache.lastMapUid !== game.map.id;
-	const objectCountChanged = game.__lightMaskCache.lastObjectCount !== currentObjectCount;
+	let currentObjectCount = Object.keys(game.objects["ids"]).length;
+	let mapChanged = game.__lightMaskCache.lastMapUid !== game.map.id;
+	let objectCountChanged = game.__lightMaskCache.lastObjectCount !== currentObjectCount;
 	
 	// Create a simple hash of object names to detect changes
-	const objectNames = Object.keys(game.objects["ids"]).sort().join(',');
-	const objectsChanged = game.__lightMaskCache.objectsHash !== objectNames;
+	let objectNames = Object.keys(game.objects["ids"]).sort().join(',');
+	let objectsChanged = game.__lightMaskCache.objectsHash !== objectNames;
 	
 	if (mapChanged || objectCountChanged || objectsChanged) {
 		game.__lightMaskCache.lastMapUid = game.map.id;
@@ -169,7 +176,7 @@ function findGameObjectForSprite(sprite) {
 function getPriorityFromPool(gameObject, patternPool, startingPriority) {
 	if (!gameObject || !gameObject.skin) return -1;
 	let priority = startingPriority;
-	const skin = gameObject.skin.toLowerCase();
+	let skin = gameObject.skin.toLowerCase();
 
 	for (let i = 0; i < patternPool.length; i++){
 		if (skin.includes(patternPool[i])){
@@ -262,7 +269,7 @@ if (!game.lmContainer || game.lmContainer.destroyed) {
 	game.lmContainer.filters = [new PIXI.Filter()];
 }
 
-const parentContainer = game.stage.children.find(child => child.name === gameLayer);
+let parentContainer = game.stage.children.find(child => child.name === gameLayer);
 if (parentContainer && game.lmContainer.parent !== parentContainer) {
 	parentContainer.addChild(game.lmContainer);
 }
@@ -277,7 +284,7 @@ if (!game.__lmMap || game.__lmMap !== game.map.id) {
 	}
 	
 	game.map.update = function(...args) {
-		const result = game.map.__originalUpdate.apply(this, args);
+		let result = game.map.__originalUpdate.apply(this, args);
 		applyBlend();
 		return result;
 	};
@@ -298,18 +305,18 @@ function flickerImage(sprite) {
 
 	if (sprite.alpha < 0.5) {
 		sprite.alpha = 1;
-		const offTime = getRandomInt(game.map.__minOnTimes[sprite.uid], game.map.__maxOnTimes[sprite.uid]);
+		let offTime = getRandomInt(game.map.__minOnTimes[sprite.uid], game.map.__maxOnTimes[sprite.uid]);
 		
-		const timerId = setTimeout(() => flickerImage(sprite), offTime);
+		let timerId = setTimeout(() => flickerImage(sprite), offTime);
 		game.map.__flickerTimers.set(sprite.uid, timerId);
 		if (debugFlicker){
 			console.log(`Flickered ${sprite.uid} on for another ${offTime} ms.`)
 		}
 	} else {
 		sprite.alpha = 0;
-		const onTime = getRandomInt(game.map.__minOffTimes[sprite.uid], game.map.__maxOffTimes[sprite.uid]);
+		let onTime = getRandomInt(game.map.__minOffTimes[sprite.uid], game.map.__maxOffTimes[sprite.uid]);
 		
-		const timerId = setTimeout(() => flickerImage(sprite), onTime);
+		let timerId = setTimeout(() => flickerImage(sprite), onTime);
 		game.map.__flickerTimers.set(sprite.uid, timerId);
 		if (debugFlicker){
 			console.log(`Flickered ${sprite.uid} off for another ${onTime} ms.`)
@@ -318,12 +325,12 @@ function flickerImage(sprite) {
 }
 
 function parseCustomSettings(varName) {
-	const parts = varName.split(keyParseToken);
-	const settings = {};
+	let parts = varName.split(keyParseToken);
+	let settings = {};
 
 	for (let i = 0; i < parts.length - 1; i++) {
-		const key = parts[i];
-		const value = parseInt(parts[i + 1]);
+		let key = parts[i];
+		let value = parseInt(parts[i + 1]);
 
 		if (!isNaN(value)) {
 			if (key.includes('minOnTime')) {
@@ -357,7 +364,7 @@ function setFlickerSettings() {
 		game.map.__maxOffTimes[varName] = defaultMaxOffTime;
 		game.map.__initialOpacities[varName] = defaultInitialOpacity;
 
-		const customSettings = parseCustomSettings(varName);
+		let customSettings = parseCustomSettings(varName);
 
 		if (customSettings.minOnTime !== undefined) {
 			game.map.__minOnTimes[varName] = customSettings.minOnTime;
@@ -402,8 +409,8 @@ if (!game.map.__numFlickerSprites) {
 }
 
 // See if anything we care about changed
-const mapChanged = game.map.__flickerMapUid !== game.map.id;
-const spriteCountChanged = game.map.__numFlickerSprites !== currentFlickerSprites.length;
+let mapChanged = game.map.__flickerMapUid !== game.map.id;
+let spriteCountChanged = game.map.__numFlickerSprites !== currentFlickerSprites.length;
 
 if (mapChanged || spriteCountChanged) {
 	
@@ -422,11 +429,11 @@ if (mapChanged || spriteCountChanged) {
 	setFlickerSettings();
 
 	for (let flickerSprite of game.map.__flickerSprites) {
-		const uid = flickerSprite.uid;
+		let uid = flickerSprite.uid;
 		flickerSprite.alpha = game.map.__initialOpacities[uid]/100;
 
 		let startDelay = getRandomInt(0, 1000);
-		const timerId = setTimeout(() => flickerImage(flickerSprite), startDelay);
+		let timerId = setTimeout(() => flickerImage(flickerSprite), startDelay);
 		game.map.__flickerTimers.set(uid, timerId);
 	}
 }
@@ -436,8 +443,8 @@ if (mapChanged || spriteCountChanged) {
 // ============================================================================
 
 function detailedHierarchy(container, prefix = '', isLast = true) {
-	const connector = isLast ? '└── ' : '├── ';
-	const name = container.constructor.name;
+	let connector = isLast ? '└── ' : '├── ';
+	let name = container.letructor.name;
 
 	let info = '';
 	if (container.name) info += ` "${container.name}"`;
@@ -447,8 +454,8 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
 	if (container.texture && container.texture.baseTexture 
 		&& container.texture.baseTexture.resource 
 		&& container.texture.baseTexture.resource.url) {
-		const url = container.texture.baseTexture.resource.url;
-		const filename = url.split('/').pop();
+		let url = container.texture.baseTexture.resource.url;
+		let filename = url.split('/').pop();
 		info += ` img:"${filename}"`;
 	}
 	if (container.blendMode && container.blendMode !== 0){
@@ -474,8 +481,8 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
 
 	if (container.children) {
 		container.children.forEach((child, index) => {
-			const isLastChild = index === container.children.length - 1;
-			const newPrefix = prefix + (isLast ? '    ' : '│   ');
+			let isLastChild = index === container.children.length - 1;
+			let newPrefix = prefix + (isLast ? '    ' : '│   ');
 			detailedHierarchy(child, newPrefix, isLastChild);
 		});
 	}

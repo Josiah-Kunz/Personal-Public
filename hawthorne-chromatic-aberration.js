@@ -21,15 +21,24 @@
 
 game => {
 
-  const scriptUrl = "https://raw.githubusercontent.com/your-repo/chromatic-aberration.js";
-  const scriptName = scriptUrl.split('/').pop().split('.')[0];
-  
-  fetch(scriptUrl)
-    .then(response => response.text())
-    .then(scriptText => {
-      eval(scriptText);
-    }) 
-    .catch(error => console.error(`Failed to load ${scriptName}:`, error));
+if (game.map.id != game.map.__cachedid) {
+	game.map.__jsScripts = "";
+	game.map.__cachedid = game.map.id;
+	let scriptUrls = [
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/133f2ceacd6af0c606df8e7927a8d20cb89ab2fc/hawthorne-chromatic-aberration.js",
+	];
+	scriptUrls.forEach(url => 
+		fetch(url)
+		.then(response => response.text())
+		.then(scriptText => {
+			game.map.__jsScripts += scriptText;
+			eval(scriptText);
+		})
+		.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
+	);
+} else if (game.map) {
+  eval(game.map.__jsScripts);
+}
 
 }
 
