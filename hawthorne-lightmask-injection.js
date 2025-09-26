@@ -24,7 +24,7 @@ if (game.map.id != game.map.__cachedid) {
 	game.map.__jsScripts = "";
 	game.map.__cachedid = game.map.id;
 	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/e9419423f97225e0b97875eccfb72964fc7180d8/hawthorne-lightmask-injection.js",
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/233dd5956a70b0a0728735514a292968a2aeee4e/hawthorne-lightmask-injection.js",
 	];
 	scriptUrls.forEach(url => 
 		fetch(url)
