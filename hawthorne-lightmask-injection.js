@@ -226,7 +226,7 @@ if (parentContainer && game.excelloContainer.parent !== parentContainer) {
 	parentContainer.addChild(game.excelloContainer);
 }
 
-// FIXED: Prevent multiple hook installations
+// Prevent multiple hook installations
 if (!game.__lmMap || game.__lmMap !== game.map.uid) {
 	game.__lmMap = game.map.uid;
 	
@@ -337,7 +337,7 @@ function setFlickerSettings() {
 }
 
 // ============================================================================
-// Flicker Execution (Fixed Timer Logic)
+// Flicker Execution
 // ============================================================================
 
 if (!game.map.__flickerSprites) {
@@ -360,7 +360,7 @@ if (!game.map.__numFlickerSprites) {
 	game.map.__flickerMapUid = "";
 }
 
-// FIXED: Proper map comparison using uid
+// See if anything we care about changed
 const mapChanged = game.map.__flickerMapUid !== game.map.uid;
 const spriteCountChanged = game.map.__numFlickerSprites !== currentFlickerSprites.length;
 
@@ -376,7 +376,7 @@ if (mapChanged || spriteCountChanged) {
 
 	game.map.__flickerSprites = currentFlickerSprites;
 	game.map.__numFlickerSprites = currentFlickerSprites.length;
-	game.map.__flickerMapUid = game.map.uid; // FIXED: Store the uid, not the object
+	game.map.__flickerMapUid = game.map.uid;
 	
 	setFlickerSettings();
 
