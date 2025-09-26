@@ -93,7 +93,7 @@ if (!game.__lightMaskCache) {
 
 function shouldUpdate() {
 	const currentObjectCount = Object.keys(game.objects["ids"]).length;
-	const mapChanged = game.__lightMaskCache.lastMapUid !== game.map.uid;
+	const mapChanged = game.__lightMaskCache.lastMapUid !== game.map.id;
 	const objectCountChanged = game.__lightMaskCache.lastObjectCount !== currentObjectCount;
 	
 	// Create a simple hash of object names to detect changes
@@ -101,7 +101,7 @@ function shouldUpdate() {
 	const objectsChanged = game.__lightMaskCache.objectsHash !== objectNames;
 	
 	if (mapChanged || objectCountChanged || objectsChanged) {
-		game.__lightMaskCache.lastMapUid = game.map.uid;
+		game.__lightMaskCache.lastMapUid = game.map.id;
 		game.__lightMaskCache.lastObjectCount = currentObjectCount;
 		game.__lightMaskCache.objectsHash = objectNames;
 		return true;
@@ -136,23 +136,23 @@ function findSpritesWithPattern(patterns, reference="skin") {
 }
 
 function addTarget(sprite){
-	if (!game.excelloContainer.children.includes(sprite)) {
+	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-		game.excelloContainer.addChild(sprite);
+		game.lmContainer.addChild(sprite);
 	}
 }
 
 function addCutout(sprite){
-	if (!game.excelloContainer.children.includes(sprite)) {
+	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.DST_OUT;
-		game.excelloContainer.addChild(sprite);
+		game.lmContainer.addChild(sprite);
 	}
 }
 
 function addFore(sprite){
-	if (!game.excelloContainer.children.includes(sprite)) {
+	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-		game.excelloContainer.addChild(sprite);
+		game.lmContainer.addChild(sprite);
 	}
 }
 
@@ -240,7 +240,7 @@ function applyBlend(){
 	allSprites.sort((a, b) => a.priority - b.priority);
 
 	// Always rebuild container (engine requirement)
-	game.excelloContainer.removeChildren();
+	game.lmContainer.removeChildren();
 
 	allSprites.forEach(item => {
 		if (item.type === 'target') {
@@ -257,19 +257,19 @@ function applyBlend(){
 // Layer Execution
 // ============================================================================
 
-if (!game.excelloContainer || game.excelloContainer.destroyed) {
-	game.excelloContainer = new PIXI.Container();
-	game.excelloContainer.filters = [new PIXI.Filter()];
+if (!game.lmContainer || game.lmContainer.destroyed) {
+	game.lmContainer = new PIXI.Container();
+	game.lmContainer.filters = [new PIXI.Filter()];
 }
 
 const parentContainer = game.stage.children.find(child => child.name === gameLayer);
-if (parentContainer && game.excelloContainer.parent !== parentContainer) {
-	parentContainer.addChild(game.excelloContainer);
+if (parentContainer && game.lmContainer.parent !== parentContainer) {
+	parentContainer.addChild(game.lmContainer);
 }
 
 // Prevent multiple hook installations
-if (!game.__lmMap || game.__lmMap !== game.map.uid) {
-	game.__lmMap = game.map.uid;
+if (!game.__lmMap || game.__lmMap !== game.map.id) {
+	game.__lmMap = game.map.id;
 	
 	// Store original update if not already stored
 	if (!game.map.__originalUpdate) {
@@ -402,7 +402,7 @@ if (!game.map.__numFlickerSprites) {
 }
 
 // See if anything we care about changed
-const mapChanged = game.map.__flickerMapUid !== game.map.uid;
+const mapChanged = game.map.__flickerMapUid !== game.map.id;
 const spriteCountChanged = game.map.__numFlickerSprites !== currentFlickerSprites.length;
 
 if (mapChanged || spriteCountChanged) {
@@ -417,7 +417,7 @@ if (mapChanged || spriteCountChanged) {
 
 	game.map.__flickerSprites = currentFlickerSprites;
 	game.map.__numFlickerSprites = currentFlickerSprites.length;
-	game.map.__flickerMapUid = game.map.uid;
+	game.map.__flickerMapUid = game.map.id;
 	
 	setFlickerSettings();
 
@@ -443,7 +443,7 @@ function detailedHierarchy(container, prefix = '', isLast = true) {
 	if (container.name) info += ` "${container.name}"`;
 	if (container.label) info += ` label:"${container.label}"`;
 	if (container.id) info += ` id:${container.id}`;
-	if (container === game.excelloContainer) info += ' ⭐ YOUR CONTAINER';
+	if (container === game.lmContainer) info += ' ⭐ YOUR CONTAINER';
 	if (container.texture && container.texture.baseTexture 
 		&& container.texture.baseTexture.resource 
 		&& container.texture.baseTexture.resource.url) {
