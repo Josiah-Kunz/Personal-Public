@@ -28,20 +28,28 @@ Setting the direction sets the row.
 
 Usage in the JS injector:
 
-	game => {
-	const scripts = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/91c6ee3d2286d6dac18a5df06c48b8b23a111d66/custom-boulder.js"
+game => {
+
+if (game.map.id != game.map.__cachedid) {
+	game.map.__jsScripts = "";
+	game.map.__cachedid = game.map.id;
+	let scriptUrls = [
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/91c6ee3d2286d6dac18a5df06c48b8b23a111d66/custom-boulder.js",
 	];
-	
-	scripts.forEach(url => 
+	scriptUrls.forEach(url => 
 		fetch(url)
 		.then(response => response.text())
 		.then(scriptText => {
+			game.map.__jsScripts += scriptText;
 			eval(scriptText);
 		})
 		.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
 	);
-	}
+} else if (game.map) {
+  eval(game.map.__jsScripts);
+}
+
+}
 
 Author: J. Kunz
 */
@@ -144,6 +152,7 @@ function checkBouldersMovedLoop(){
 	game.player.__canPush = true;
 	for(let boulder of boulders){
 		if (!boulder) continue;
+		if (!boulder.uid) continue;
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
 		if (!boulder.__moving && moved){
 			game.trigger(`mapvar[boulder_${boulder.uid}_moved]=${boulder.__pushed}`);
