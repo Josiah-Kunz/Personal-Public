@@ -34,7 +34,7 @@ if (game.map.id != game.map.__cachedid) {
 	game.map.__jsScripts = "";
 	game.map.__cachedid = game.map.id;
 	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/91c6ee3d2286d6dac18a5df06c48b8b23a111d66/custom-boulder.js",
+		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/84d12817d6c4ac304de0904e8dae7fb660450ed8/custom-boulder.js",
 	];
 	scriptUrls.forEach(url => 
 		fetch(url)
