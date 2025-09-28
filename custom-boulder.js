@@ -55,8 +55,6 @@ Author: J. Kunz
 */
 
 let boulderPatterns = ["boulder", "temple_sphere", "temple-sphere"];
-let initialized = false;
-let boulders = [];
 
 function findObjectsWithPattern(patterns, reference="skin") {
 	let matches = [];
@@ -80,7 +78,7 @@ function findObjectsWithPattern(patterns, reference="skin") {
 }
 
 function checkPlayerPush(){
-	for(let boulder of boulders){
+	for(let boulder of game.map.__boulders){
 		
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
@@ -127,10 +125,13 @@ function checkPlayerPush(){
 
 function checkPlayerMovedLoop(){
 	
-	for(let boulder of boulders){
+	// Exit condition
+	if (!game || !game.player || !game.map) return;
+	
+	for(let boulder of game.map.__boulders){
 		if (!boulder) continue;
 		if (boulder.tmp[5] != null){
-			requestAnimationFrame(checkPlayerMovedLoop);
+			game.__playerMovedFrameID = requestAnimationFrame(checkPlayerMovedLoop);
 			return;
 		}
 	}
@@ -144,13 +145,13 @@ function checkPlayerMovedLoop(){
 	game.player.__cachedX = game.player.x;
 	game.player.__cachedY = game.player.y;
 	
-	requestAnimationFrame(checkPlayerMovedLoop);
+	game.__playerMovedFrameID = requestAnimationFrame(checkPlayerMovedLoop);
 }
 
 function checkBouldersMovedLoop(){
 	
 	game.player.__canPush = true;
-	for(let boulder of boulders){
+	for(let boulder of game.map.__boulders){
 		if (!boulder) continue;
 		if (!boulder.uid) continue;
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
@@ -168,17 +169,38 @@ function checkBouldersMovedLoop(){
 		}
 	}
 	
-	requestAnimationFrame(checkBouldersMovedLoop);
+	game.__boulderMovedFrameID = requestAnimationFrame(checkBouldersMovedLoop);
 }
 
-if (game && game.objects && !initialized){
+// Check change of map
+let changedMap = game.map.__boulderMapID != game.map.id;
+
+// Check if boulder count changed (only if we have previous data)
+let currentBoulders = findObjectsWithPattern(boulderPatterns);
+let changedBoulders = false;
+if (game.map.__boulders) {
+	changedBoulders = currentBoulders.length !== game.map.__boulders.length;
+}
+
+if (game && game.objects && (changedBoulders || changedMap)){
 	
 	// Flag
-	initialized = true;
+	game.map.__boulderMapID = game.map.id;
+	
+	// Reset array
+	game.map.__boulders = [];
+	
+	// Cancel previous loops
+	if (game.__boulderMovedFrameID){
+		cancelAnimationFrame(game.__boulderMovedFrameID);
+	}
+	if (game.__playerMovedFrameID){
+		cancelAnimationFrame(game.__playerMovedFrameID);
+	}
 	
 	// Set up boulders
-	boulders = findObjectsWithPattern(boulderPatterns);
-	for (let boulder of boulders){
+	game.map.__boulders = currentBoulders;
+	for (let boulder of game.map.__boulders){
 		boulder.solid = true;
 		boulder.__cachedX = boulder.x;
 		boulder.__cachedY = boulder.y;
@@ -190,6 +212,6 @@ if (game && game.objects && !initialized){
 	game.player.__cachedY = game.player.y;
 	
 	// Start looping young man!
-	requestAnimationFrame(checkBouldersMovedLoop);
-	requestAnimationFrame(checkPlayerMovedLoop);
+	game.__boulderMovedFrameID = requestAnimationFrame(checkBouldersMovedLoop);
+	game.__playerMovedFrameID = requestAnimationFrame(checkPlayerMovedLoop);
 }
