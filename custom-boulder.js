@@ -169,12 +169,15 @@ function checkBouldersMovedLoop(){
 		if (!boulder.__moving && moved){
 			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
 			console.log(`${boulder.uid} started moving`);
+			boulder.animation.setSpeed(10);
+			target.animation.then = game.now;
 			game.player.__canPush = false;
 			game.player.canMove = false;
 			boulder.__moving = true;
 		} else if (boulder.__moving && !moved) {
 			game.trigger(`mapvar[${boulder.uid}_moved]=${0}`);
 			console.log(`${boulder.uid} stopped moving`);
+			boulder.animation.setSpeed(0);
 			game.player.canMove = true;
 			boulder.__moving = false;
 		}
