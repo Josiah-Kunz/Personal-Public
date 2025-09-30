@@ -152,10 +152,22 @@ function checkBouldersMovedLoop(){
 	
 	game.player.__canPush = true;
 	for(let boulder of game.map.__boulders){
+		
+		// Guard
 		if (!boulder) continue;
 		if (!boulder.uid) continue;
+		
+		// Move check
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
-		if (!boulder.__moving && moved){
+		
+		// Fading out will also cause the boulder to "move" to 0,0
+		let fadedOut = false;
+		if (boulder.sprite){
+			fadedOut = boulder.sprite.alpha <= 0;
+		}
+		
+		// Update mapvars as necessary
+		if (!boulder.__moving && moved && !fadedOut){
 			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
 			console.log(`Boulder \"${boulder.uid}\" started moving`);
 			console.log(`This pos: ${boulder.x}, ${boulder.y} | Next pos: ${boulder.nextX}, ${boulder.nextY}`);
