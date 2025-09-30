@@ -1,6 +1,8 @@
 /* ============================================================================
 Custom boulders!
 
+Version: Sep 28, 2025
+
  - Automatically finds "boulders" based on the boulderPatterns (such as 
 	"boulder" and "temple-sphere"). These are the skin (file) name, not uid 
 	(variable name).
@@ -66,10 +68,16 @@ function findObjectsWithPattern(patterns, reference="skin") {
 
 		for (let pattern of patterns) {
 			if (candidate.includes(pattern)) {
+				
+				// If we're searching by UID, make the sprite and GO UID match
 				if (reference === "uid" && gameObject.sprite) {
 					gameObject.sprite.uid = gameObject.uid;
+				} else if reference === "skin"{
+					gameObject.uid = "boulder_" + matches.length + 1;
 				}
-				if (gameObject.sprite) matches.push(gameObject);
+				
+				// Add to array
+				if (gameObject.sprite)matches.push(gameObject);
 				break;
 			}
 		}
