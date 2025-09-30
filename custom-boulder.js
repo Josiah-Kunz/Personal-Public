@@ -161,9 +161,9 @@ function checkBouldersMovedLoop(){
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
 		
 		// Fading out will also cause the boulder to "move" to 0,0
-		let fadedOut = false;
+		let fadedOut = boulder.fade > 0;
 		if (boulder.sprite){
-			fadedOut = boulder.sprite.alpha <= 0;
+			fadedOut = fadedOut || boulder.sprite.alpha <= 0;
 		}
 		
 		// Update mapvars as necessary
