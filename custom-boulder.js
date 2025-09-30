@@ -69,11 +69,14 @@ function findObjectsWithPattern(patterns, reference="skin") {
 		for (let pattern of patterns) {
 			if (candidate.includes(pattern)) {
 				
-				// If we're searching by UID, make the sprite and GO UID match
-				if (reference === "uid" && gameObject.sprite) {
-					gameObject.sprite.uid = gameObject.uid;
-				} else if (reference === "skin"){
+				// Make the boulder names uniform so the dev can reference them like boulder_1, boulder_2, etc.
+				if (reference === "skin"){
 					gameObject.uid = "boulder_" + (matches.length + 1);
+				}
+				
+				// Sprite and GO should have the same UID
+				if (gameObject.sprite){
+					gameObject.sprite.uid = gameObject.uid;
 				}
 				
 				// Add to array
