@@ -80,6 +80,14 @@ function findObjectsWithPattern(patterns, reference="skin") {
 function checkPlayerPush(){
 	for(let boulder of game.map.__boulders){
 		
+		// Guard null
+		if (!boulder) continue;
+		
+		// Guard invisible
+		let fadingOut = boulder.fade > 0;
+		let invisible = boulder.sprite.alpha <= 0;
+		if (fadingOut || invisible) continue;
+		
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
 		
@@ -153,25 +161,22 @@ function checkBouldersMovedLoop(){
 	game.player.__canPush = true;
 	for(let boulder of game.map.__boulders){
 		
-		// Guard
+		// Guard sillyness
 		if (!boulder) continue;
 		if (!boulder.uid) continue;
 		
+		// Guard invisible
+		let fadingOut = boulder.fade > 0;
+		let invisible = boulder.sprite.alpha <= 0;
+		if (fadingOut || invisible) continue;
+		
 		// Move check
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
-		
-		// Fading out will also cause the boulder to "move" to 0,0
-		let fadedOut = boulder.fade > 0;
-		if (boulder.sprite){
-			fadedOut = fadedOut || boulder.sprite.alpha <= 0;
-		}
 		
 		// Update mapvars as necessary
 		if (!boulder.__moving && moved){
 			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
 			console.log(`Boulder \"${boulder.uid}\" started moving`);
-			console.log(`This pos: ${boulder.x}, ${boulder.y} | Next pos: ${boulder.nextX}, ${boulder.nextY}`);
-			console.log(`Fading? ${boulder.fade} | Invisible? ${boulder.sprite.alpha} | Fade speed: ${boulder.fadeSpeed}`);
 			game.player.__canPush = false;
 			game.player.canMove = false;
 			boulder.__moving = true;
