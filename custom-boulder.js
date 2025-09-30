@@ -72,7 +72,7 @@ function findObjectsWithPattern(patterns, reference="skin") {
 				// If we're searching by UID, make the sprite and GO UID match
 				if (reference === "uid" && gameObject.sprite) {
 					gameObject.sprite.uid = gameObject.uid;
-				} else if reference === "skin"{
+				} else if (reference === "skin"){
 					gameObject.uid = "boulder_" + matches.length + 1;
 				}
 				
