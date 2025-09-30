@@ -171,6 +171,7 @@ function checkBouldersMovedLoop(){
 			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
 			console.log(`Boulder \"${boulder.uid}\" started moving`);
 			console.log(`This pos: ${boulder.x}, ${boulder.y} | Next pos: ${boulder.nextX}, ${boulder.nextY}`);
+			console.log(`Fading? ${boulder.fade} | Invisible? ${boulder.sprite.alpha}`);
 			game.player.__canPush = false;
 			game.player.canMove = false;
 			boulder.__moving = true;
