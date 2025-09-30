@@ -155,6 +155,7 @@ function checkBouldersMovedLoop(){
 		if (!boulder) continue;
 		if (!boulder.uid) continue;
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
+		console.log(`This pos: ${boulder.x}, ${boulder.y} | Next pos: ${boulder.nextX}, ${boulder.nextY}`);
 		if (!boulder.__moving && moved){
 			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
 			console.log(`Boulder \"${boulder.uid}\" started moving`);
