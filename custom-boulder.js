@@ -163,15 +163,15 @@ function checkBouldersMovedLoop(){
 		// Fading out will also cause the boulder to "move" to 0,0
 		let fadedOut = boulder.fade > 0;
 		if (boulder.sprite){
-			fadedOut = fadedOut || boulder.sprite.alpha <= 5;
+			fadedOut = fadedOut || boulder.sprite.alpha <= 0;
 		}
 		
 		// Update mapvars as necessary
-		if (!boulder.__moving && moved && !fadedOut){
+		if (!boulder.__moving && moved){
 			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
 			console.log(`Boulder \"${boulder.uid}\" started moving`);
 			console.log(`This pos: ${boulder.x}, ${boulder.y} | Next pos: ${boulder.nextX}, ${boulder.nextY}`);
-			console.log(`Fading? ${boulder.fade} | Invisible? ${boulder.sprite.alpha}`);
+			console.log(`Fading? ${boulder.fade} | Invisible? ${boulder.sprite.alpha} | Fade speed: ${boulder.fadeSpeed}`);
 			game.player.__canPush = false;
 			game.player.canMove = false;
 			boulder.__moving = true;
