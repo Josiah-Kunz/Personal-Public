@@ -1,8 +1,6 @@
 /* ============================================================================
 Custom boulders!
 
-Version: Sep 28, 2025
-
  - Automatically finds "boulders" based on the boulderPatterns (such as 
 	"boulder" and "temple-sphere"). These are the skin (file) name, not uid 
 	(variable name).
@@ -68,19 +66,10 @@ function findObjectsWithPattern(patterns, reference="skin") {
 
 		for (let pattern of patterns) {
 			if (candidate.includes(pattern)) {
-				
-				// Make the boulder names uniform so the dev can reference them like boulder_1, boulder_2, etc.
-				if (reference === "skin"){
-					gameObject.uid = "boulder_" + (matches.length + 1);
-				}
-				
-				// Sprite and GO should have the same UID
-				if (gameObject.sprite){
+				if (reference === "uid" && gameObject.sprite) {
 					gameObject.sprite.uid = gameObject.uid;
 				}
-				
-				// Add to array
-				if (gameObject.sprite)matches.push(gameObject);
+				if (gameObject.sprite) matches.push(gameObject);
 				break;
 			}
 		}
@@ -167,18 +156,14 @@ function checkBouldersMovedLoop(){
 		if (!boulder.uid) continue;
 		let moved = boulder.x != boulder.nextX || boulder.y != boulder.nextY;
 		if (!boulder.__moving && moved){
-			game.trigger(`mapvar[${boulder.uid}_moved]=${boulder.__pushed}`);
-			console.log(`${boulder.uid} started moving`);
-			boulder.animation.setSpeed(10);
-			boulder.animation.loop = -1;
-			boulder.animation.then = game.now;
+			game.trigger(`mapvar[boulder_${boulder.uid}_moved]=${boulder.__pushed}`);
+			console.log(`Boulder ${boulder.uid} started moving`);
 			game.player.__canPush = false;
 			game.player.canMove = false;
 			boulder.__moving = true;
 		} else if (boulder.__moving && !moved) {
-			game.trigger(`mapvar[${boulder.uid}_moved]=${0}`);
-			console.log(`${boulder.uid} stopped moving`);
-			boulder.animation.setSpeed(0);
+			game.trigger(`mapvar[boulder_${boulder.uid}_moved]=${0}`);
+			console.log(`Boulder ${boulder.uid} stopped moving`);
 			game.player.canMove = true;
 			boulder.__moving = false;
 		}
