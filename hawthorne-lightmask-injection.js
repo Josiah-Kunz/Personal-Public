@@ -19,26 +19,30 @@
 /*
 
 game => {
-
-if (game.map.id != game.map.__cachedid) {
-	game.map.__jsScripts = "";
-	game.map.__cachedid = game.map.id;
-	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/233dd5956a70b0a0728735514a292968a2aeee4e/hawthorne-lightmask-injection.js",
-	];
-	scriptUrls.forEach(url => 
-		fetch(url)
-		.then(response => response.text())
-		.then(scriptText => {
-			game.map.__jsScripts += scriptText;
-			eval(scriptText);
-		})
-		.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
-	);
-} else if (game.map) {
-  eval(game.map.__jsScripts);
-}
-
+  if (game.map.id != game.map.__cachedid) {
+    game.map.__jsScripts = "";
+    game.map.__cachedid = game.map.id;
+    game.map.__scriptsLoading = true;
+    
+    let scriptUrls = [
+      "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/e9419423f97225e0b97875eccfb72964fc7180d8/hawthorne-lightmask-injection.js",
+    ];
+    
+    Promise.all(scriptUrls.map(url => 
+      fetch(url)
+        .then(response => response.text())
+        .catch(e => {
+          console.error(`Failed to load ${url.split('/').pop()}:`, e);
+          return "";
+        })
+    )).then(scripts => {
+      game.map.__jsScripts = scripts.join('\n');
+      game.map.__scriptsLoading = false;
+      eval(game.map.__jsScripts);
+    });
+  } else if (game.map && game.map.__jsScripts && !game.map.__scriptsLoading) {
+    eval(game.map.__jsScripts);
+  }
 }
 
 */

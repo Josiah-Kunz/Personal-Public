@@ -29,26 +29,30 @@ Setting the direction sets the row.
 Usage in the JS injector:
 
 game => {
-
-if (game.map.id != game.map.__cachedid) {
-	game.map.__jsScripts = "";
-	game.map.__cachedid = game.map.id;
-	let scriptUrls = [
-		"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/2543ab7da634c4a2c494df998823c2de8c72eeec/custom-boulder.js",
-	];
-	scriptUrls.forEach(url => 
-		fetch(url)
-		.then(response => response.text())
-		.then(scriptText => {
-			game.map.__jsScripts += scriptText;
-			eval(scriptText);
-		})
-		.catch(e => console.error(`Failed to load ${url.split('/').pop()}:`, e))
-	);
-} else if (game.map) {
-  eval(game.map.__jsScripts);
-}
-
+  if (game.map.id != game.map.__cachedid) {
+    game.map.__jsScripts = "";
+    game.map.__cachedid = game.map.id;
+    game.map.__scriptsLoading = true;
+    
+    let scriptUrls = [
+      "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/2543ab7da634c4a2c494df998823c2de8c72eeec/custom-boulder.js",
+    ];
+    
+    Promise.all(scriptUrls.map(url => 
+      fetch(url)
+        .then(response => response.text())
+        .catch(e => {
+          console.error(`Failed to load ${url.split('/').pop()}:`, e);
+          return "";
+        })
+    )).then(scripts => {
+      game.map.__jsScripts = scripts.join('\n');
+      game.map.__scriptsLoading = false;
+      eval(game.map.__jsScripts);
+    });
+  } else if (game.map && game.map.__jsScripts && !game.map.__scriptsLoading) {
+    eval(game.map.__jsScripts);
+  }
 }
 
 Author: J. Kunz
@@ -85,7 +89,9 @@ function checkPlayerPush(){
 		
 		// Guard invisible
 		let fadingOut = boulder.fade > 0;
-		let invisible = boulder.sprite.alpha <= 0;
+		let invisible = boulder.sprite.alpha <= 0.01;
+		console.log(boulder);
+		console.log(`Alpha is ${boulder.sprite.alpha}`);
 		if (fadingOut || invisible) continue;
 		
 		let xDiff = game.player.x - boulder.nextX;
