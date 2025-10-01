@@ -93,6 +93,7 @@ function checkPlayerPush(){
 		console.log(boulder);
 		console.log(`Alpha is ${boulder.sprite.alpha}`);
 		if (fadingOut || invisible) continue;
+		console.log(`Oh, we're continuing with ${boulder.uid}?`);
 		
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
