@@ -90,10 +90,8 @@ function checkPlayerPush(){
 		// Guard invisible
 		let fadingOut = boulder.fade > 0;
 		let invisible = boulder.sprite.alpha <= 0.01;
-		if (fadingOut || invisible){
-			continue;
-			boulder.solid = false;
-		}
+		boulder.solid = !(fadingOut || invisible);
+		if (!boulder.solid) continue;
 		
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
