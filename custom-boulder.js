@@ -90,10 +90,10 @@ function checkPlayerPush(){
 		// Guard invisible
 		let fadingOut = boulder.fade > 0;
 		let invisible = boulder.sprite.alpha <= 0.01;
-		console.log(boulder);
-		console.log(`Alpha is ${boulder.sprite.alpha}`);
-		if (fadingOut || invisible) continue;
-		console.log(`Oh, we're continuing with ${boulder.uid}?`);
+		if (fadingOut || invisible){
+			continue;
+			boulder.solid = false;
+		}
 		
 		let xDiff = game.player.x - boulder.nextX;
 		let yDiff = game.player.y - boulder.nextY;
@@ -227,6 +227,15 @@ if (game && game.objects && (changedBoulders || changedMap)){
 	// Set up boulders
 	game.map.__boulders = currentBoulders;
 	for (let boulder of game.map.__boulders){
+		
+		// Guard null
+		if (!boulder) continue;
+		
+		// Guard opaque
+		let fadingOut = boulder.fade > 0;
+		let invisible = boulder.sprite.alpha <= 0.01;
+		if (fadingOut || invisible) continue;
+		
 		boulder.solid = true;
 		boulder.__cachedX = boulder.x;
 		boulder.__cachedY = boulder.y;
