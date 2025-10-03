@@ -25,7 +25,7 @@ game => {
     game.map.__scriptsLoading = true;
     
     let scriptUrls = [
-      "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/e9419423f97225e0b97875eccfb72964fc7180d8/hawthorne-lightmask-injection.js",
+      "https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/327f9bbd272bd1c345d79e71202604b928d6d7e4/hawthorne-lightmask-injection.js",
     ];
     
     Promise.all(scriptUrls.map(url => 
@@ -296,6 +296,9 @@ if (!game.__lmMap || game.__lmMap !== game.map.id) {
 		return result;
 	};
 }
+
+// Run at least once every time scripts are executed
+applyBlend();
 
 // ============================================================================
 // Flicker Functions (Optimized)
