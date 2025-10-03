@@ -86,10 +86,10 @@ let debugHierarchy = false;
 let debugFlicker = false;
 
 // ============================================================================
-// Performance Optimization: Caching and Change Detection
+// Performance Optimization: Caching and Detection
 // ============================================================================
 
-// Add these global tracking variables
+// Global tracking variables
 if (!game.__lightMaskCache) {
 	game.__lightMaskCache = {
 		lastMapUid: null,
@@ -117,6 +117,7 @@ function shouldUpdate() {
 		game.__lightMaskCache.lastMapUid = game.map.id;
 		game.__lightMaskCache.lastObjectCount = currentObjectCount;
 		game.__lightMaskCache.objectsHash = objectNames;
+		console.log("Change detected! Updating Hawthorne Lightmask...");
 		return true;
 	}
 	
