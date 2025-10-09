@@ -91,7 +91,6 @@ function checkPlayerPush(){
 		let fadingOut = boulder.fade > 0;
 		let invisible = boulder.sprite.alpha <= 0.01;
 		boulder.solid = !(fadingOut || invisible);
-		console.log(`Boulder ${boulder.uid} is solid? ${boulder.solid}`);
 		if (!boulder.solid) continue;
 		
 		let xDiff = game.player.x - boulder.nextX;
