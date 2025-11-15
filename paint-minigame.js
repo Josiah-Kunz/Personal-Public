@@ -98,66 +98,54 @@ const paintingGame = (game, config = {}) => {
 		return dx * dx + dy * dy <= radius * radius;
 	  },
 	  voltorb: (x, y, cfg) => {
-		  const { x: cx, y: cy, radius } = cfg;
-		  const absX = centerX + cx;
-		  const absY = centerY + cy;
-		  const dx = x - absX, dy = y - absY;
-		  
-		  // Check if in circle
-		  if (dx * dx + dy * dy > radius * radius) return false;
-		  
-		  // Top half of circle (red area)
-		  if (y < absY) return true;
-		  
-		// Bottom half - exclude eyes and mouth areas
-		// Eyes: narrow slanted trapezoids that slope DOWN toward center on the top edge.
-		const eyeWidth = radius * 0.50;
-		const eyeHeight = radius * 0.18;
-		const eyeY = absY - radius * 0.08;   // sit on/just above the seam
-		const eyeOffsetX = radius * 0.36;
-		const tilt = radius * 0.14;          // how much top edge slopes toward center
+		const { x: cx, y: cy, radius } = cfg;
+		const absX = centerX + cx;
+		const absY = centerY + cy;
+		const dx = x - absX, dy = y - absY;
 
-		// Helper to test a slanted trapezoid eye centered at (ex, eyeY)
-		function pointInSlantedEye(px, py, ex, leftToRight) {
-		  // leftToRight = true for left eye shape orientation (top slopes down toward center)
-		  // compute local coords relative to eye center
-		  const lx = px - ex;
-		  const ly = py - eyeY;
+		// Check if in circle
+		if (dx * dx + dy * dy > radius * radius) return false;
 
-		  // bounding quickly
-		  if (Math.abs(lx) > eyeWidth * 0.6 + 2 || ly < -eyeHeight - 2 || ly > eyeHeight + 2) return false;
+		// Exclude bottom half
+		if (y >= absY) return false;
 
-		  // parametric top y at this px: top edge slopes toward center
-		  // for left eye, top edge is lower near center (negative slope to the right)
-		  // for right eye, top edge is lower near center (positive slope to the right)
-		  const slopeSign = leftToRight ? -1 : 1;
-		  // compute x offset from outer corner (use half-width reference)
-		  const ref = lx + (leftToRight ? eyeWidth * 0.5 : -eyeWidth * 0.5);
-		  const topYAtX = -eyeHeight * 0.5 + slopeSign * (tilt * (ref / eyeWidth));
-		  const bottomYAtX = eyeHeight * 0.6 + 0.0; // slightly deeper bottom
+		// Eye dimensions (match drawVoltorbEyes)
+		const eyeGap = radius * 0.1;
+		const eyeLevel = radius * 0.18;
+		const eyeWidth = radius * 0.6;
+		const eyeHeightL = radius * 0.375;
+		const eyeHeightR = radius * 0.11;
+		const pupilSize = radius * 0.05;
 
-		  return ly >= topYAtX && ly <= bottomYAtX && Math.abs(lx) <= eyeWidth * 0.6;
-		}
+		// Left eye trapezoid
+		const leftEyeX = absX - eyeGap - eyeWidth / 2;
+		const leftEyeY = absY - eyeLevel;
+		if (Math.abs(x - leftEyeX) < eyeWidth / 2 && 
+		  y >= leftEyeY - eyeHeightL && 
+		  y <= leftEyeY + eyeHeightR) return false;
 
-		// left eye center and right eye center
-		const leftEyeX = absX - eyeOffsetX;
-		const rightEyeX = absX + eyeOffsetX;
+		// Right eye trapezoid
+		const rightEyeX = absX + eyeGap + eyeWidth / 2;
+		const rightEyeY = absY - eyeLevel;
+		if (Math.abs(x - rightEyeX) < eyeWidth / 2 && 
+		  y >= rightEyeY - eyeHeightL && 
+		  y <= rightEyeY + eyeHeightR) return false;
 
-		if (pointInSlantedEye(x, y, leftEyeX, true) || pointInSlantedEye(x, y, rightEyeX, false)) {
-		  return false; // it's an eye (white/empty), exclude from red area
-		}
+		// Left pupil (ellipse)
+		const leftPupilX = absX - eyeGap - eyeWidth / 2;
+		const leftPupilY = absY - eyeLevel - (eyeHeightL + eyeHeightR) / 4;
+		const pupilDx = (x - leftPupilX) / (pupilSize * 0.6);
+		const pupilDy = (y - leftPupilY) / (pupilSize * 1.5);
+		if (pupilDx * pupilDx + pupilDy * pupilDy <= 1) return false;
 
-		// mouth: small horizontal gap along center (thin)
-		if (Math.abs(y - absY) <= Math.max(1, Math.round(radius * 0.03)) && Math.abs(x - absX) <= radius * 0.9) {
-		  return false;
-		}
+		// Right pupil (ellipse)
+		const rightPupilX = absX + eyeGap + eyeWidth / 2;
+		const rightPupilY = absY - eyeLevel - (eyeHeightL + eyeHeightR) / 4;
+		const pupilDx2 = (x - rightPupilX) / (pupilSize * 0.6);
+		const pupilDy2 = (y - rightPupilY) / (pupilSize * 1.5);
+		if (pupilDx2 * pupilDx2 + pupilDy2 * pupilDy2 <= 1) return false;
 
-
-		  
-		  // Mouth line (horizontal line in middle)
-		  if (Math.abs(y - absY) < 2 && Math.abs(dx) < radius * 0.9) return false;
-		  
-		  return true;
+		return true;
 		},
 	  custom: config.customShapeFunction || (() => false),
 	};
@@ -251,8 +239,8 @@ const paintingGame = (game, config = {}) => {
 
 		// Draw horizontal line in middle
 		ctx.beginPath();
-		ctx.moveTo(absX - radius * 0.9, absY);
-		ctx.lineTo(absX + radius * 0.9, absY);
+		ctx.moveTo(absX - radius, absY);
+		ctx.lineTo(absX + radius, absY);
 		ctx.stroke();
 
 		// Draw eyes as angled segments
