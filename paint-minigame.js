@@ -159,9 +159,9 @@ const paintingGame = (game, config = {}) => {
     const outRatio = outside / inside;
 
     if (comp >= completenessThreshold && outRatio <= forgivenessRatio) {
-      onWin({ completeness: comp, outsideRatio: outRatio, paintedInside: inside, paintedOutside: outside, totalInside: total });
+      onWin({ completeness: comp, outsideRatio: outRatio, paintedInside: inside, paintedOutside: outside, totalInside: total, threshold: completenessThreshold });
     } else {
-      onLose({ completeness: comp, outsideRatio: outRatio, paintedInside: inside, paintedOutside: outside, totalInside: total });
+      onLose({ completeness: comp, outsideRatio: outRatio, paintedInside: inside, paintedOutside: outside, totalInside: total, threshold: completenessThreshold });
     }
   };
 
@@ -312,7 +312,11 @@ if (game.map.mapVars["paint_square"]===1){
 	onLose: (stats) => {
 		console.log("Too messy! You lose!", stats);
 		painting.destroy();
-		game.trigger("mapvar[paint_square]=-100&unfreeze");
+		if (stats.completeness < stats.threshold){
+			game.trigger("mapvar[paint_square]=-50&unfreeze");
+		} else {
+			game.trigger("mapvar[paint_square]=-100&unfreeze");
+		}
 	},
 	});
 
