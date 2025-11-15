@@ -109,28 +109,36 @@ const paintingGame = (game, config = {}) => {
 		  // Top half of circle (red area)
 		  if (y < absY) return true;
 		  
-		  // Bottom half - exclude eyes and mouth areas
-		  const eyeRadius = radius * 0.25;
-		  const eyeY = absY + radius * 0.2;
-		  const eyeOffsetX = radius * 0.35;
-		  
-		  // Left eye - angular triangular shape
-		  const leftEyeX = absX - eyeOffsetX;
-		  const leftDx = x - leftEyeX;
-		  const leftDy = y - eyeY;
-		  const leftDist = Math.sqrt(leftDx * leftDx + leftDy * leftDy);
-		  const leftAngle = Math.atan2(leftDy, leftDx);
-		  // Eye spans from about -π/6 to π/6 (60 degree cone pointing right)
-		  if (leftDist < eyeRadius && leftAngle > -Math.PI/6 && leftAngle < Math.PI/6) return false;
-		  
-		  // Right eye - angular triangular shape  
-		  const rightEyeX = absX + eyeOffsetX;
-		  const rightDx = x - rightEyeX;
-		  const rightDy = y - eyeY;
-		  const rightDist = Math.sqrt(rightDx * rightDx + rightDy * rightDy);
-		  const rightAngle = Math.atan2(rightDy, rightDx);
-		  // Eye spans from about 5π/6 to 7π/6 (60 degree cone pointing left)
-		  if (rightDist < eyeRadius && rightAngle > 5*Math.PI/6 && rightAngle < 7*Math.PI/6) return false;
+		  // Bottom half - exclude eyes (Voltorb's angry slanted eyes)
+		const eyeWidth = radius * 0.45;
+		const eyeHeight = radius * 0.18;
+		const eyeY = absY + radius * 0.05;   // place eyes higher
+		const tilt = radius * 0.12;          // diagonal slant amount
+
+		// LEFT EYE BOUNDING BOX
+		let lx0 = absX - eyeWidth - tilt;
+		let lx1 = absX - tilt * 0.2;
+		let ly0 = eyeY - eyeHeight;
+		let ly1 = eyeY + eyeHeight;
+
+		// Slanted shape: y must be above the slanted line
+		let leftSlopeY = eyeY + (x - (absX - eyeWidth)) * 0.25;
+		if (x >= lx0 && x <= lx1 && y >= ly0 && y <= ly1 && y < leftSlopeY) {
+			return false;
+		}
+
+		// RIGHT EYE BOUNDING BOX
+		let rx0 = absX + tilt * 0.2;
+		let rx1 = absX + eyeWidth + tilt;
+		let ry0 = eyeY - eyeHeight;
+		let ry1 = eyeY + eyeHeight;
+
+		// Slanted shape: y must be above the slanted line (mirrored)
+		let rightSlopeY = eyeY - (x - (absX + eyeWidth)) * 0.25;
+		if (x >= rx0 && x <= rx1 && y >= ry0 && y <= ry1 && y < rightSlopeY) {
+			return false;
+		}
+
 		  
 		  // Mouth line (horizontal line in middle)
 		  if (Math.abs(y - absY) < 2 && Math.abs(dx) < radius * 0.9) return false;
@@ -180,18 +188,28 @@ const paintingGame = (game, config = {}) => {
 		ctx.stroke();
 
 		// Draw eyes as angled segments
-		const eyeRadius = radius * 0.25;
-		const eyeY = absY + radius * 0.2;
-		const eyeOffsetX = radius * 0.35;
+		const eyeWidth = radius * 0.45;
+		const eyeHeight = radius * 0.18;
+		const eyeY = absY + radius * 0.05;
+		const tilt = radius * 0.12;
 
-		// Left eye (points right, angry look)
+		// Left eye points
 		ctx.beginPath();
-		ctx.arc(absX - eyeOffsetX, eyeY, eyeRadius, -Math.PI/6, Math.PI/6);
+		ctx.moveTo(absX - eyeWidth - tilt, eyeY - eyeHeight);  // top-left
+		ctx.lineTo(absX - tilt * 0.2,   eyeY - eyeHeight);      // top-right
+		ctx.lineTo(absX - tilt * 0.2,   eyeY);                  // mid-right
+		ctx.lineTo(absX - eyeWidth,     eyeY + eyeHeight);      // bottom-left
+		ctx.closePath();
 		ctx.stroke();
 
-		// Right eye (points left, angry look)
+		// Right eye points
 		ctx.beginPath();
-		ctx.arc(absX + eyeOffsetX, eyeY, eyeRadius, 5*Math.PI/6, 7*Math.PI/6);
+		ctx.moveTo(absX + tilt * 0.2,    eyeY - eyeHeight);      // top-left
+		ctx.lineTo(absX + eyeWidth + tilt, eyeY - eyeHeight);    // top-right
+		ctx.lineTo(absX + eyeWidth,      eyeY + eyeHeight);      // bottom-right
+		ctx.lineTo(absX + tilt * 0.2,    eyeY);                  // mid-left
+		ctx.closePath();
+		ctx.stroke();
 
 		return;
 	}
