@@ -105,13 +105,13 @@ const paintingGame = (game, config = {}) => {
 
 		// Check if in circle
 		if (dx * dx + dy * dy > radius * radius){
-			console.log("Outside the Voltorb's radius! Bad!");
+			if (isDrawing) console.log("Outside the Voltorb's radius! Bad!");
 			return false;
 		}
 
 		// Exclude bottom half
 		if (y >= absY){
-			console.log("Inside the bottom half of the Voltorb! Bad!");
+			if (isDrawing) console.log("Inside the bottom half of the Voltorb! Bad!");
 			return false;
 		}
 
@@ -129,7 +129,7 @@ const paintingGame = (game, config = {}) => {
 		if (Math.abs(x - leftEyeX) < eyeWidth / 2 && 
 		  y >= leftEyeY - eyeHeightL && 
 		  y <= leftEyeY + eyeHeightR){
-			  console.log("Inside left eye! Bad!");
+			  if (isDrawing) console.log("Inside left eye! Bad!");
 			  return false;
 		  }
 
@@ -139,7 +139,7 @@ const paintingGame = (game, config = {}) => {
 		if (Math.abs(x - rightEyeX) < eyeWidth / 2 && 
 		  y >= rightEyeY - eyeHeightL && 
 		  y <= rightEyeY + eyeHeightR){
-			  console.log("Inside right eye! Bad!");
+			  if (isDrawing) console.log("Inside right eye! Bad!");
 			  return false;
 		  }
 
