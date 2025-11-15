@@ -109,35 +109,49 @@ const paintingGame = (game, config = {}) => {
 		  // Top half of circle (red area)
 		  if (y < absY) return true;
 		  
-		  // Bottom half - exclude eyes (Voltorb's angry slanted eyes)
-		const eyeWidth = radius * 0.45;
+		// Bottom half - exclude eyes and mouth areas
+		// Eyes: narrow slanted trapezoids that slope DOWN toward center on the top edge.
+		const eyeWidth = radius * 0.50;
 		const eyeHeight = radius * 0.18;
-		const eyeY = absY + radius * 0.05;   // place eyes higher
-		const tilt = radius * 0.12;          // diagonal slant amount
+		const eyeY = absY - radius * 0.08;   // sit on/just above the seam
+		const eyeOffsetX = radius * 0.36;
+		const tilt = radius * 0.14;          // how much top edge slopes toward center
 
-		// LEFT EYE BOUNDING BOX
-		let lx0 = absX - eyeWidth - tilt;
-		let lx1 = absX - tilt * 0.2;
-		let ly0 = eyeY - eyeHeight;
-		let ly1 = eyeY + eyeHeight;
+		// Helper to test a slanted trapezoid eye centered at (ex, eyeY)
+		function pointInSlantedEye(px, py, ex, leftToRight) {
+		  // leftToRight = true for left eye shape orientation (top slopes down toward center)
+		  // compute local coords relative to eye center
+		  const lx = px - ex;
+		  const ly = py - eyeY;
 
-		// Slanted shape: y must be above the slanted line
-		let leftSlopeY = eyeY + (x - (absX - eyeWidth)) * 0.25;
-		if (x >= lx0 && x <= lx1 && y >= ly0 && y <= ly1 && y < leftSlopeY) {
-			return false;
+		  // bounding quickly
+		  if (Math.abs(lx) > eyeWidth * 0.6 + 2 || ly < -eyeHeight - 2 || ly > eyeHeight + 2) return false;
+
+		  // parametric top y at this px: top edge slopes toward center
+		  // for left eye, top edge is lower near center (negative slope to the right)
+		  // for right eye, top edge is lower near center (positive slope to the right)
+		  const slopeSign = leftToRight ? -1 : 1;
+		  // compute x offset from outer corner (use half-width reference)
+		  const ref = lx + (leftToRight ? eyeWidth * 0.5 : -eyeWidth * 0.5);
+		  const topYAtX = -eyeHeight * 0.5 + slopeSign * (tilt * (ref / eyeWidth));
+		  const bottomYAtX = eyeHeight * 0.6 + 0.0; // slightly deeper bottom
+
+		  return ly >= topYAtX && ly <= bottomYAtX && Math.abs(lx) <= eyeWidth * 0.6;
 		}
 
-		// RIGHT EYE BOUNDING BOX
-		let rx0 = absX + tilt * 0.2;
-		let rx1 = absX + eyeWidth + tilt;
-		let ry0 = eyeY - eyeHeight;
-		let ry1 = eyeY + eyeHeight;
+		// left eye center and right eye center
+		const leftEyeX = absX - eyeOffsetX;
+		const rightEyeX = absX + eyeOffsetX;
 
-		// Slanted shape: y must be above the slanted line (mirrored)
-		let rightSlopeY = eyeY - (x - (absX + eyeWidth)) * 0.25;
-		if (x >= rx0 && x <= rx1 && y >= ry0 && y <= ry1 && y < rightSlopeY) {
-			return false;
+		if (pointInSlantedEye(x, y, leftEyeX, true) || pointInSlantedEye(x, y, rightEyeX, false)) {
+		  return false; // it's an eye (white/empty), exclude from red area
 		}
+
+		// mouth: small horizontal gap along center (thin)
+		if (Math.abs(y - absY) <= Math.max(1, Math.round(radius * 0.03)) && Math.abs(x - absX) <= radius * 0.9) {
+		  return false;
+		}
+
 
 		  
 		  // Mouth line (horizontal line in middle)
@@ -188,26 +202,27 @@ const paintingGame = (game, config = {}) => {
 		ctx.stroke();
 
 		// Draw eyes as angled segments
-		const eyeWidth = radius * 0.45;
+		const eyeWidth = radius * 0.50;
 		const eyeHeight = radius * 0.18;
-		const eyeY = absY + radius * 0.05;
-		const tilt = radius * 0.12;
+		const eyeY = absY - radius * 0.08;
+		const eyeOffsetX = radius * 0.36;
+		const tilt = radius * 0.14;
 
-		// Left eye points
+		// Left eye polygon (top edge slopes down toward center)
 		ctx.beginPath();
-		ctx.moveTo(absX - eyeWidth - tilt, eyeY - eyeHeight);  // top-left
-		ctx.lineTo(absX - tilt * 0.2,   eyeY - eyeHeight);      // top-right
-		ctx.lineTo(absX - tilt * 0.2,   eyeY);                  // mid-right
-		ctx.lineTo(absX - eyeWidth,     eyeY + eyeHeight);      // bottom-left
+		ctx.moveTo(absX - eyeOffsetX - eyeWidth*0.5, eyeY - eyeHeight*0.5);                // outer-top
+		ctx.lineTo(absX - eyeOffsetX + eyeWidth*0.25, eyeY - eyeHeight*0.5 + (-tilt));     // inner-top (lower)
+		ctx.lineTo(absX - eyeOffsetX + eyeWidth*0.35, eyeY + eyeHeight*0.6);               // inner-bottom
+		ctx.lineTo(absX - eyeOffsetX - eyeWidth*0.5, eyeY + eyeHeight*0.6);                // outer-bottom
 		ctx.closePath();
 		ctx.stroke();
 
-		// Right eye points
+		// Right eye polygon (mirror)
 		ctx.beginPath();
-		ctx.moveTo(absX + tilt * 0.2,    eyeY - eyeHeight);      // top-left
-		ctx.lineTo(absX + eyeWidth + tilt, eyeY - eyeHeight);    // top-right
-		ctx.lineTo(absX + eyeWidth,      eyeY + eyeHeight);      // bottom-right
-		ctx.lineTo(absX + tilt * 0.2,    eyeY);                  // mid-left
+		ctx.moveTo(absX + eyeOffsetX + eyeWidth*0.5, eyeY - eyeHeight*0.5);                // outer-top
+		ctx.lineTo(absX + eyeOffsetX - eyeWidth*0.25, eyeY - eyeHeight*0.5 + (-tilt));     // inner-top (lower)
+		ctx.lineTo(absX + eyeOffsetX - eyeWidth*0.35, eyeY + eyeHeight*0.6);               // inner-bottom
+		ctx.lineTo(absX + eyeOffsetX + eyeWidth*0.5, eyeY + eyeHeight*0.6);                // outer-bottom
 		ctx.closePath();
 		ctx.stroke();
 
