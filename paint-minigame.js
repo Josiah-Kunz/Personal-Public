@@ -104,10 +104,16 @@ const paintingGame = (game, config = {}) => {
 		const dx = x - absX, dy = y - absY;
 
 		// Check if in circle
-		if (dx * dx + dy * dy > radius * radius) return false;
+		if (dx * dx + dy * dy > radius * radius){
+			console.log("Outside the Voltorb's radius! Bad!");
+			return false;
+		}
 
 		// Exclude bottom half
-		if (y >= absY) return false;
+		if (y >= absY){
+			console.log("Inside the bottom half of the Voltorb! Bad!");
+			return false;
+		}
 
 		// Eye dimensions (match drawVoltorbEyes)
 		const eyeGap = radius * 0.1;
@@ -122,28 +128,20 @@ const paintingGame = (game, config = {}) => {
 		const leftEyeY = absY - eyeLevel;
 		if (Math.abs(x - leftEyeX) < eyeWidth / 2 && 
 		  y >= leftEyeY - eyeHeightL && 
-		  y <= leftEyeY + eyeHeightR) return false;
+		  y <= leftEyeY + eyeHeightR){
+			  console.log("Inside left eye! Bad!");
+			  return false;
+		  }
 
 		// Right eye trapezoid
 		const rightEyeX = absX + eyeGap + eyeWidth / 2;
 		const rightEyeY = absY - eyeLevel;
 		if (Math.abs(x - rightEyeX) < eyeWidth / 2 && 
 		  y >= rightEyeY - eyeHeightL && 
-		  y <= rightEyeY + eyeHeightR) return false;
-
-		// Left pupil (ellipse)
-		const leftPupilX = absX - eyeGap - eyeWidth / 2;
-		const leftPupilY = absY - eyeLevel - (eyeHeightL + eyeHeightR) / 4;
-		const pupilDx = (x - leftPupilX) / (pupilSize * 0.6);
-		const pupilDy = (y - leftPupilY) / (pupilSize * 1.5);
-		if (pupilDx * pupilDx + pupilDy * pupilDy <= 1) return false;
-
-		// Right pupil (ellipse)
-		const rightPupilX = absX + eyeGap + eyeWidth / 2;
-		const rightPupilY = absY - eyeLevel - (eyeHeightL + eyeHeightR) / 4;
-		const pupilDx2 = (x - rightPupilX) / (pupilSize * 0.6);
-		const pupilDy2 = (y - rightPupilY) / (pupilSize * 1.5);
-		if (pupilDx2 * pupilDx2 + pupilDy2 * pupilDy2 <= 1) return false;
+		  y <= rightEyeY + eyeHeightR){
+			  console.log("Inside right eye! Bad!");
+			  return false;
+		  }
 
 		return true;
 		},
