@@ -198,12 +198,28 @@ const paintingGame = (game, config = {}) => {
 		ctx.stroke();
 
 		// Pupils
-		ctx.fillStyle = '#000000';
+		ctx.fillStyle = ctx.strokeStyle;
 		ctx.beginPath();
-		ctx.arc(cx - eyeGap - eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
-		ctx.closePath();
-		ctx.arc(cx + eyeGap + eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
-		ctx.closePath();
+		ctx.ellipse(
+		  cx - eyeGap - eyeWidth/2,           // x center
+		  cy - eyeLevel - (eyeHeightL + eyeHeightR)/4,  // y center
+		  pupilSize * 0.6,                     // x radius (narrower)
+		  pupilSize * 1.5,                     // y radius (taller)
+		  0,                                   // rotation
+		  0,                                   // start angle
+		  Math.PI * 2                          // end angle
+		);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.ellipse(
+		  cx + eyeGap + eyeWidth/2,
+		  cy - eyeLevel - (eyeHeightL + eyeHeightR)/4,
+		  pupilSize * 0.6,                     // x radius (narrower)
+		  pupilSize * 1.5,                     // y radius (taller)
+		  0,
+		  0,
+		  Math.PI * 2
+		);
 		ctx.fill();
 	}
 
