@@ -174,7 +174,7 @@ const paintingGame = (game, config = {}) => {
 		
 	  const eyeGap = R * 0.1;
 	  const eyeLevel = R * 0.18;
-	  const eyeWidth = R * 0.75;
+	  const eyeWidth = R * 0.6;
 	  const eyeHeightL = R * 0.375;
 	  const eyeHeightR = R * 0.11;
 
