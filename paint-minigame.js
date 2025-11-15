@@ -186,6 +186,15 @@ const paintingGame = (game, config = {}) => {
 	  ctx.lineTo(cx - eyeGap, cy-eyeLevel - eyeHeightR);
 	  ctx.closePath();
 	  ctx.stroke();
+	  
+	  // Right eye
+	  ctx.beginPath();
+	  ctx.moveTo(cx + eyeGap, cy-eyeLevel);
+	  ctx.lineTo(cx + eyeGap + eyeWidth, cy-eyeLevel);
+	  ctx.lineTo(cx + eyeGap + eyeWidth, cy-eyeLevel - eyeHeightL);
+	  ctx.lineTo(cx + eyeGap, cy-eyeLevel - eyeHeightR);
+	  ctx.closePath();
+	  ctx.stroke();
 	}
 
 
