@@ -225,6 +225,7 @@ const paintingGame = (game, config = {}) => {
       
       document.getElementById('brushSizeSlider').addEventListener('input', (e) => {
         brushSize = parseInt(e.target.value);
+		game.trigger(`mapvar[brush_size]=${brushSize}`);
         document.getElementById('brushSizeValue').textContent = brushSize;
       });
     }
@@ -299,7 +300,7 @@ if (game.map.mapVars["paint_square"]===1){
 	shape: 'square',
 	shapeConfig: { x: 0, y: 0, size: 69 },
 	colors: ['#FF0000'],
-	initialBrushSize: 30,
+	initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
 	showBrushSizePicker: true,
 	showDoneButton: true,
 	completenessThreshold: 0.90,
