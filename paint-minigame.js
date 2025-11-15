@@ -98,34 +98,45 @@ const paintingGame = (game, config = {}) => {
 		return dx * dx + dy * dy <= radius * radius;
 	  },
 	  voltorb: (x, y, cfg) => {
-		const { x: cx, y: cy, radius } = cfg;
-		const absX = centerX + cx;
-		const absY = centerY + cy;
-		const dx = x - absX, dy = y - absY;
-		
-		// Check if in circle
-		if (dx * dx + dy * dy > radius * radius) return false;
-		
-		// Top half of circle (red area)
-		if (y < absY) return true;
-		
-		// Bottom half - exclude eyes and mouth areas
-		const eyeWidth = radius * 0.35;
-		const eyeHeight = radius * 0.2;
-		const eyeY = absY + radius * 0.15;
-		const eyeOffsetX = radius * 0.3;
-		
-		// Left eye
-		if (Math.abs(dx + eyeOffsetX) < eyeWidth && Math.abs(y - eyeY) < eyeHeight) return false;
-		
-		// Right eye  
-		if (Math.abs(dx - eyeOffsetX) < eyeWidth && Math.abs(y - eyeY) < eyeHeight) return false;
-		
-		// Mouth line (horizontal line in middle)
-		if (Math.abs(y - absY) < 2 && Math.abs(dx) < radius * 0.9) return false;
-		
-		return true;
-	  },
+		  const { x: cx, y: cy, radius } = cfg;
+		  const absX = centerX + cx;
+		  const absY = centerY + cy;
+		  const dx = x - absX, dy = y - absY;
+		  
+		  // Check if in circle
+		  if (dx * dx + dy * dy > radius * radius) return false;
+		  
+		  // Top half of circle (red area)
+		  if (y < absY) return true;
+		  
+		  // Bottom half - exclude eyes and mouth areas
+		  const eyeRadius = radius * 0.25;
+		  const eyeY = absY + radius * 0.2;
+		  const eyeOffsetX = radius * 0.35;
+		  
+		  // Left eye - angular triangular shape
+		  const leftEyeX = absX - eyeOffsetX;
+		  const leftDx = x - leftEyeX;
+		  const leftDy = y - eyeY;
+		  const leftDist = Math.sqrt(leftDx * leftDx + leftDy * leftDy);
+		  const leftAngle = Math.atan2(leftDy, leftDx);
+		  // Eye spans from about -π/6 to π/6 (60 degree cone pointing right)
+		  if (leftDist < eyeRadius && leftAngle > -Math.PI/6 && leftAngle < Math.PI/6) return false;
+		  
+		  // Right eye - angular triangular shape  
+		  const rightEyeX = absX + eyeOffsetX;
+		  const rightDx = x - rightEyeX;
+		  const rightDy = y - eyeY;
+		  const rightDist = Math.sqrt(rightDx * rightDx + rightDy * rightDy);
+		  const rightAngle = Math.atan2(rightDy, rightDx);
+		  // Eye spans from about 5π/6 to 7π/6 (60 degree cone pointing left)
+		  if (rightDist < eyeRadius && rightAngle > 5*Math.PI/6 && rightAngle < 7*Math.PI/6) return false;
+		  
+		  // Mouth line (horizontal line in middle)
+		  if (Math.abs(y - absY) < 2 && Math.abs(dx) < radius * 0.9) return false;
+		  
+		  return true;
+		},
 	  custom: config.customShapeFunction || (() => false),
 	};
 
@@ -157,34 +168,33 @@ const paintingGame = (game, config = {}) => {
 		const { x, y, radius } = shapeConfig;
 		const absX = centerX + x;
 		const absY = centerY + y;
-		
+
 		// Draw outer circle
 		ctx.arc(absX, absY, radius, 0, Math.PI * 2);
 		ctx.stroke();
-		
+
 		// Draw horizontal line in middle
 		ctx.beginPath();
 		ctx.moveTo(absX - radius * 0.9, absY);
 		ctx.lineTo(absX + radius * 0.9, absY);
 		ctx.stroke();
-		
-		// Draw eyes
-		const eyeWidth = radius * 0.35;
-		const eyeHeight = radius * 0.2;
-		const eyeY = absY + radius * 0.15;
-		const eyeOffsetX = radius * 0.3;
-		
-		// Left eye
+
+		// Draw eyes as angled segments
+		const eyeRadius = radius * 0.25;
+		const eyeY = absY + radius * 0.2;
+		const eyeOffsetX = radius * 0.35;
+
+		// Left eye (points right, angry look)
 		ctx.beginPath();
-		ctx.rect(absX - eyeOffsetX - eyeWidth, eyeY - eyeHeight, eyeWidth * 2, eyeHeight * 2);
+		ctx.arc(absX - eyeOffsetX, eyeY, eyeRadius, -Math.PI/6, Math.PI/6);
 		ctx.stroke();
-		
-		// Right eye
+
+		// Right eye (points left, angry look)
 		ctx.beginPath();
-		ctx.rect(absX + eyeOffsetX - eyeWidth, eyeY - eyeHeight, eyeWidth * 2, eyeHeight * 2);
-		
-		return; // Skip the final stroke since we already stroked
-	  }
+		ctx.arc(absX + eyeOffsetX, eyeY, eyeRadius, 5*Math.PI/6, 7*Math.PI/6);
+
+		return;
+	}
 	  
 	  ctx.stroke();
 	};
