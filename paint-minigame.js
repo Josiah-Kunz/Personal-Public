@@ -177,6 +177,7 @@ const paintingGame = (game, config = {}) => {
 	  const eyeWidth = R * 0.6;
 	  const eyeHeightL = R * 0.375;
 	  const eyeHeightR = R * 0.11;
+	  const pupilSize = R * 0.05;
 
 	  // Left eye
 	  ctx.beginPath();
@@ -195,6 +196,10 @@ const paintingGame = (game, config = {}) => {
 	  ctx.lineTo(cx + eyeGap, cy-eyeLevel - eyeHeightR);
 	  ctx.closePath();
 	  ctx.stroke();
+	  
+	  // Pupils
+	  ctx.arc(cx - eyeGap - eyeWidth/2, cy-eyeLevel, pupilSize, 0, Math.PI * 2);
+	  ctx.arc(cx + eyeGap + eyeWidth/2, cy-eyeLevel, pupilSize, 0, Math.PI * 2);
 	}
 
 
