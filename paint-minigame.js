@@ -1,5 +1,3 @@
-game => {
-
 const paintingGame = (game, config = {}) => {
   const {
     width = 356,
@@ -319,6 +317,4 @@ if (game.map.mapVars["paint_square"]===1){
 	});
 
 	
-}
-
 }
