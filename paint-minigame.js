@@ -172,38 +172,38 @@ const paintingGame = (game, config = {}) => {
   
 	function drawVoltorbEyes(ctx, cx, cy, R) {
 		
-	  const eyeGap = R * 0.1;
-	  const eyeLevel = R * 0.18;
-	  const eyeWidth = R * 0.6;
-	  const eyeHeightL = R * 0.375;
-	  const eyeHeightR = R * 0.11;
-	  const pupilSize = R * 0.05;
+		const eyeGap = R * 0.1;
+		const eyeLevel = R * 0.18;
+		const eyeWidth = R * 0.6;
+		const eyeHeightL = R * 0.375;
+		const eyeHeightR = R * 0.11;
+		const pupilSize = R * 0.05;
 
-	  // Left eye
-	  ctx.beginPath();
-	  ctx.moveTo(cx - eyeGap, cy-eyeLevel);
-	  ctx.lineTo(cx - eyeGap - eyeWidth, cy-eyeLevel);
-	  ctx.lineTo(cx - eyeGap - eyeWidth, cy-eyeLevel - eyeHeightL);
-	  ctx.lineTo(cx - eyeGap, cy-eyeLevel - eyeHeightR);
-	  ctx.closePath();
-	  ctx.stroke();
-	  
-	  // Right eye
-	  ctx.beginPath();
-	  ctx.moveTo(cx + eyeGap, cy-eyeLevel);
-	  ctx.lineTo(cx + eyeGap + eyeWidth, cy-eyeLevel);
-	  ctx.lineTo(cx + eyeGap + eyeWidth, cy-eyeLevel - eyeHeightL);
-	  ctx.lineTo(cx + eyeGap, cy-eyeLevel - eyeHeightR);
-	  ctx.closePath();
-	  ctx.stroke();
-	  
-	  // Pupils
-	  ctx.beginPath();
-	  ctx.arc(cx - eyeGap - eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
-	  ctx.fill();
-	  ctx.beginPath();
-	  ctx.arc(cx + eyeGap + eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
-	  ctx.fill();
+		// Left eye
+		ctx.beginPath();
+		ctx.moveTo(cx - eyeGap, cy-eyeLevel);
+		ctx.lineTo(cx - eyeGap - eyeWidth, cy-eyeLevel);
+		ctx.lineTo(cx - eyeGap - eyeWidth, cy-eyeLevel - eyeHeightL);
+		ctx.lineTo(cx - eyeGap, cy-eyeLevel - eyeHeightR);
+		ctx.closePath();
+		ctx.stroke();
+
+		// Right eye
+		ctx.beginPath();
+		ctx.moveTo(cx + eyeGap, cy-eyeLevel);
+		ctx.lineTo(cx + eyeGap + eyeWidth, cy-eyeLevel);
+		ctx.lineTo(cx + eyeGap + eyeWidth, cy-eyeLevel - eyeHeightL);
+		ctx.lineTo(cx + eyeGap, cy-eyeLevel - eyeHeightR);
+		ctx.closePath();
+		ctx.stroke();
+
+		// Pupils
+		ctx.beginPath();
+		ctx.arc(cx - eyeGap - eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
+		ctx.closePath();
+		ctx.arc(cx + eyeGap + eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
+		ctx.closePath();
+		ctx.fill();
 	}
 
 
