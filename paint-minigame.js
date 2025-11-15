@@ -313,9 +313,9 @@ if (game.map.mapVars["paint_square"]===1){
 		console.log("Too messy! You lose!", stats);
 		painting.destroy();
 		if (stats.completeness < stats.threshold){
-			game.trigger("mapvar[paint_square]=-50&unfreeze");
+			game.trigger("mapvar[paint_square]=50&unfreeze");
 		} else {
-			game.trigger("mapvar[paint_square]=-100&unfreeze");
+			game.trigger("mapvar[paint_square]=60&unfreeze");
 		}
 	},
 	});
