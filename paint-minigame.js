@@ -135,7 +135,7 @@ const paintingGame = (game, config = {}) => {
     if (perm) {
 		
 	  // Make sure we're within the canvas bounds (white)
-	  if (x < x0 || x >= x0 + width || y < y0 || y >= y0 + height) return;
+	  if (x - half < x0 || x + half >= x0 + width || y - half < y0 || y + half >= y0 + height) return;
 		
       c.fillStyle = currentColor;
       c.fillRect(x - half, y - half, brushSize, brushSize);
