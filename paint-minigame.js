@@ -199,8 +199,10 @@ const paintingGame = (game, config = {}) => {
 	  
 	  // Pupils
 	  ctx.beginPath();
-	  ctx.arc(cx - eyeGap - eyeWidth/2, cy-eyeLevel + (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
-	  ctx.arc(cx + eyeGap + eyeWidth/2, cy-eyeLevel + (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
+	  ctx.arc(cx - eyeGap - eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
+	  ctx.fill();
+	  ctx.beginPath();
+	  ctx.arc(cx + eyeGap + eyeWidth/2, cy-eyeLevel - (eyeHeightL + eyeHeightR)/2, pupilSize, 0, Math.PI * 2);
 	  ctx.fill();
 	}
 
