@@ -17,6 +17,9 @@ const paintingGame = (game, config = {}) => {
   let brushSize = initialBrushSize;
   let x0 = (game.width - width)/2;
   let y0 = (game.height - height)/2;
+  
+  let lastX = null;
+  let lastY = null;
 
   const canvas = document.createElement('canvas');
   canvas.id = 'game-painting';
@@ -111,6 +114,40 @@ const paintingGame = (game, config = {}) => {
     ctx.stroke();
   };
 
+
+	const drawLine = (x1, y1, x2, y2) => {
+	  const dx = x2 - x1;
+	  const dy = y2 - y1;
+	  const distance = Math.sqrt(dx * dx + dy * dy);
+	  const steps = Math.ceil(distance);
+	  
+	  for (let i = 0; i <= steps; i++) {
+		const t = steps > 0 ? i / steps : 0;
+		const x = Math.round(x1 + dx * t);
+		const y = Math.round(y1 + dy * t);
+		drawPoint(x, y);
+	  }
+	};
+
+	const drawPoint = (x, y) => {
+	  const half = Math.floor(brushSize / 2);
+	  
+	  // Boundary check
+	  if (x - half < x0 || x + half > x0 + width || 
+		  y - half < y0 || y + half > y0 + height) return;
+	  
+	  ctx.fillStyle = currentColor;
+	  ctx.fillRect(x - half, y - half, brushSize, brushSize);
+	  
+	  for (let dx = 0; dx < brushSize; dx++) {
+		for (let dy = 0; dy < brushSize; dy++) {
+		  const key = `${x - half + dx},${y - half + dy}`;
+		  if (insidePixels.has(key)) paintedInside.add(key);
+		  else paintedOutside.add(key);
+		}
+	  }
+	};
+
   const redraw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#FFFFFF';
@@ -118,42 +155,38 @@ const paintingGame = (game, config = {}) => {
     drawOutline();
   };
 
-  const draw = (clientX, clientY, perm = true) => {
-    const cvs = perm ? canvas : cursorCanvas;
-    const c = cvs.getContext('2d');
-    
-    if (!perm) c.clearRect(0, 0, cvs.width, cvs.height);
-    
-    const rect = cvs.getBoundingClientRect();
-    const x = Math.floor((clientX - rect.left) * cvs.width / rect.width);
-    const y = Math.floor((clientY - rect.top) * cvs.height / rect.height);
+	const draw = (clientX, clientY, perm = true) => {
+	  const cvs = perm ? canvas : cursorCanvas;
+	  const c = cvs.getContext('2d');
+	  
+	  if (!perm) c.clearRect(0, 0, cvs.width, cvs.height);
+	  
+	  const rect = cvs.getBoundingClientRect();
+	  const x = Math.floor((clientX - rect.left) * cvs.width / rect.width);
+	  const y = Math.floor((clientY - rect.top) * cvs.height / rect.height);
 
-    if (x < 0 || x >= cvs.width || y < 0 || y >= cvs.height) return;
+	  if (x < 0 || x >= cvs.width || y < 0 || y >= cvs.height) return;
 
-    const half = Math.floor(brushSize / 2);
-    
-    if (perm) {
-		
-	  // Make sure we're within the canvas bounds (white)
-	  if (x - half < x0 || x + half > x0 + width || y - half < y0 || y + half > y0 + height) return;
-		
-      c.fillStyle = currentColor;
-      c.fillRect(x - half, y - half, brushSize, brushSize);
-      
-      for (let dx = 0; dx < brushSize; dx++) {
-        for (let dy = 0; dy < brushSize; dy++) {
-          const key = `${x - half + dx},${y - half + dy}`;
-          if (insidePixels.has(key)) paintedInside.add(key);
-          else paintedOutside.add(key);
-        }
-      }
-    } else {
-      c.globalAlpha = 1.0;
-      c.strokeStyle = '#000000';
-      c.lineWidth = 1;
-      c.strokeRect(x - half, y - half, brushSize, brushSize);
-    }
-  };
+	  const half = Math.floor(brushSize / 2);
+	  
+	  if (perm) {
+		if (lastX !== null && lastY !== null) {
+		  // Draw line from last position to current position
+		  drawLine(lastX, lastY, x, y);
+		} else {
+		  // First point, just draw it
+		  drawPoint(x, y);
+		}
+		lastX = x;
+		lastY = y;
+	  } else {
+		// Cursor preview (unchanged)
+		c.globalAlpha = 1.0;
+		c.strokeStyle = '#000000';
+		c.lineWidth = 1;
+		c.strokeRect(x - half, y - half, brushSize, brushSize);
+	  }
+	};
 
   const checkResult = () => {
     const total = insidePixels.size;
@@ -179,8 +212,17 @@ const paintingGame = (game, config = {}) => {
     if (isDrawing) draw(e.clientX, e.clientY);
   });
 
-  canvas.addEventListener('mouseup', () => isDrawing = false);
-  canvas.addEventListener('mouseleave', () => isDrawing = false);
+	canvas.addEventListener('mouseup', () => {
+	  isDrawing = false;
+	  lastX = null;
+	  lastY = null;
+	});
+
+	canvas.addEventListener('mouseleave', () => {
+	  isDrawing = false;
+	  lastX = null;
+	  lastY = null;
+	});
 
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
@@ -196,11 +238,13 @@ const paintingGame = (game, config = {}) => {
     if (isDrawing) draw(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
 
-  canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    isDrawing = false;
-  }, { passive: false });
+	canvas.addEventListener('touchend', (e) => {
+	  e.preventDefault();
+	  e.stopPropagation();
+	  isDrawing = false;
+	  lastX = null;
+	  lastY = null;
+	}, { passive: false });
 
   let uiContainer = null;
   if (showBrushSizePicker || showDoneButton) {
