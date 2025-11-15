@@ -171,49 +171,19 @@ const paintingGame = (game, config = {}) => {
   }
   
 	function drawVoltorbEyes(ctx, cx, cy, R) {
-	  const eyeWidth = R * 0.28;
-	  const eyeHeight = R * 0.12;
-	  const eyeTilt = R * 0.07;
-	  const eyeGap = R * 0.06;
-
-	  // Left inner
-	  const lix = cx - eyeGap;
-	  const liyt = cy - R * 0.12 - eyeTilt;
-	  const liyb = liyt + eyeHeight;
-
-	  // Left outer
-	  const lox = lix - eyeWidth;
-	  const loyt = liyt + eyeTilt * 1.4;
-	  const loyb = loyt + eyeHeight;
-
-	  // Right inner
-	  const rix = cx + eyeGap;
-	  const riyt = liyt;
-	  const riyb = liyb;
-
-	  // Right outer
-	  const rox = rix + eyeWidth;
-	  const royt = loyt;
-	  const royb = loyb;
-
-	  ctx.strokeStyle = "#aaa";
-	  ctx.lineWidth = 2;
+		
+	  const eyeGap = R * 0.1;
+	  const eyeLevel = R * 0.07;
+	  const eyeWidth = R * 0.2;
+	  const eyeHeightL = R * 0.1;
+	  const eyeHeightR = R * 0.03;
 
 	  // Left eye
 	  ctx.beginPath();
-	  ctx.moveTo(lox, loyt);
-	  ctx.lineTo(lix, liyt);
-	  ctx.lineTo(lix, liyb);
-	  ctx.lineTo(lox, loyb);
-	  ctx.closePath();
-	  ctx.stroke();
-
-	  // Right eye
-	  ctx.beginPath();
-	  ctx.moveTo(rix, riyt);
-	  ctx.lineTo(rox, royt);
-	  ctx.lineTo(rox, royb);
-	  ctx.lineTo(rix, riyb);
+	  ctx.moveTo(cx - eyeGap, cy-eyeLevel);
+	  ctx.lineTo(cx - eyeGap - eyeWidth, cy-eyeLevel);
+	  ctx.lineTo(cx - eyeGap - eyeWidth, cy-eyeLevel - eyeHeightL);
+	  ctx.lineTo(cx - eyeGap, cy-eyeLevel - eyeHeightR);
 	  ctx.closePath();
 	  ctx.stroke();
 	}
