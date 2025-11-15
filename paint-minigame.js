@@ -172,11 +172,11 @@ const paintingGame = (game, config = {}) => {
   
 	function drawVoltorbEyes(ctx, cx, cy, R) {
 		
-	  const eyeGap = R * 0.1;
-	  const eyeLevel = R * 0.07;
-	  const eyeWidth = R * 0.2;
-	  const eyeHeightL = R * 0.1;
-	  const eyeHeightR = R * 0.03;
+	  const eyeGap = R * 0.25;
+	  const eyeLevel = R * 0.18;
+	  const eyeWidth = R * 0.5;
+	  const eyeHeightL = R * 0.25;
+	  const eyeHeightR = R * 0.075;
 
 	  // Left eye
 	  ctx.beginPath();
