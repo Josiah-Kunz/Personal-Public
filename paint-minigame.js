@@ -1,3 +1,12 @@
+const BrushShapeMap = {
+  square: 1,
+  circle: 2,
+};
+
+const BrushShapeReverseMap = Object.fromEntries(
+  Object.entries(BrushShapeMap).map(([k, v]) => [v, k])
+);
+
 const paintingGame = (game, config = {}) => {
   const {
     width = 356,
@@ -6,7 +15,9 @@ const paintingGame = (game, config = {}) => {
     shapeConfig = { x: 100, y: 100, size: 200 },
     colors = ['#FF0000'],
     initialBrushSize = 10,
+	initialBrushShape = 'square',
     showBrushSizePicker = true,
+	showBrushShapePicker = true,
     showDoneButton = true,
     completenessThreshold = 0.95,
     forgivenessRatio = 0.1,
@@ -15,6 +26,8 @@ const paintingGame = (game, config = {}) => {
   } = config;
 
   let brushSize = initialBrushSize;
+  let brushShape = initialBrushShape;
+  
   let x0 = (game.width - width)/2;
   let y0 = (game.height - height)/2;
   
@@ -130,22 +143,43 @@ const paintingGame = (game, config = {}) => {
 	};
 
 	const drawPoint = (x, y) => {
-	  const half = Math.floor(brushSize / 2);
-	  
-	  // Boundary check
-	  if (x - half < x0 || x + half > x0 + width || 
+		const half = Math.floor(brushSize / 2);
+
+		// Boundary check
+		if (x - half < x0 || x + half > x0 + width || 
 		  y - half < y0 || y + half > y0 + height) return;
-	  
-	  ctx.fillStyle = currentColor;
-	  ctx.fillRect(x - half, y - half, brushSize, brushSize);
-	  
-	  for (let dx = 0; dx < brushSize; dx++) {
-		for (let dy = 0; dy < brushSize; dy++) {
-		  const key = `${x - half + dx},${y - half + dy}`;
-		  if (insidePixels.has(key)) paintedInside.add(key);
-		  else paintedOutside.add(key);
+
+		ctx.fillStyle = currentColor;
+
+		if (brushShape === 'circle') {
+		// Draw circle
+		ctx.beginPath();
+		ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Track painted pixels in circle
+		for (let dx = -half; dx <= half; dx++) {
+		  for (let dy = -half; dy <= half; dy++) {
+			if (dx * dx + dy * dy <= (brushSize / 2) * (brushSize / 2)) {
+			  const key = `${x + dx},${y + dy}`;
+			  if (insidePixels.has(key)) paintedInside.add(key);
+			  else paintedOutside.add(key);
+			}
+		  }
 		}
-	  }
+		} else {
+		// Draw square
+		ctx.fillRect(x - half, y - half, brushSize, brushSize);
+
+		// Track painted pixels in square
+		for (let dx = 0; dx < brushSize; dx++) {
+		  for (let dy = 0; dy < brushSize; dy++) {
+			const key = `${x - half + dx},${y - half + dy}`;
+			if (insidePixels.has(key)) paintedInside.add(key);
+			else paintedOutside.add(key);
+		  }
+		}
+		}
 	};
 
   const redraw = () => {
@@ -180,11 +214,19 @@ const paintingGame = (game, config = {}) => {
 		lastX = x;
 		lastY = y;
 	  } else {
-		// Cursor preview (unchanged)
+		// Cursor preview
 		c.globalAlpha = 1.0;
 		c.strokeStyle = '#000000';
 		c.lineWidth = 1;
-		c.strokeRect(x - half, y - half, brushSize, brushSize);
+		
+		// Draw depending on shape
+		if (brushShape === 'circle') {
+			c.beginPath();
+			c.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+			c.stroke();
+		} else {
+			c.strokeRect(x - half, y - half, brushSize, brushSize);
+		}
 	  }
 	};
 
@@ -277,6 +319,23 @@ const paintingGame = (game, config = {}) => {
         document.getElementById('brushSizeValue').textContent = brushSize;
       });
     }
+	
+	if (showBrushShapePicker) {
+		const shapeDiv = document.createElement('div');
+		shapeDiv.innerHTML = `
+		<label style="display:block;margin-bottom:3px;font-size:12px;font-weight:bold;color:black">Brush Shape:</label>
+		<select id="brushShapeSelect" style="padding:4px;font-size:12px;">
+		  <option value="square" ${brushShape === 'square' ? 'selected' : ''}>Square</option>
+		  <option value="circle" ${brushShape === 'circle' ? 'selected' : ''}>Circle</option>
+		</select>
+		`;
+		uiContainer.appendChild(shapeDiv);
+
+		document.getElementById('brushShapeSelect').addEventListener('change', (e) => {
+		brushShape = e.target.value;
+		game.trigger(`mapvar[brush_shape]=${BrushShapeMap[brushShape]}`);
+		});
+	}
     
     if (showDoneButton) {
       const doneBtn = document.createElement('button');
@@ -317,6 +376,12 @@ const paintingGame = (game, config = {}) => {
         document.getElementById('brushSizeValue').textContent = s;
       }
     },
+	setBrushShape: (s) => {
+		brushShape = s;
+		if (uiContainer && showBrushShapePicker) {
+		  document.getElementById('brushShapeSelect').value = s;
+		}
+	},
     reset: () => {
       paintedInside.clear();
       paintedOutside.clear();
@@ -349,6 +414,7 @@ if (game.map.mapVars["paint_square"]===1){
 	shapeConfig: { x: 0, y: 0, size: 69 },
 	colors: ['#FF0000'],
 	initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
+	initialBrushShape: BrushShapeReverseMap[game.map.mapVars["brush_shape"]] || 'square',
 	showBrushSizePicker: true,
 	showDoneButton: true,
 	completenessThreshold: 0.90,
