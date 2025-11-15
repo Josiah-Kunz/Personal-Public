@@ -169,6 +169,55 @@ const paintingGame = (game, config = {}) => {
       if (isInside(x, y, shapeConfig)) insidePixels.add(`${x},${y}`);
     }
   }
+  
+	function drawVoltorbEyes(ctx, cx, cy, R) {
+	  const eyeWidth = R * 0.28;
+	  const eyeHeight = R * 0.12;
+	  const eyeTilt = R * 0.07;
+	  const eyeGap = R * 0.06;
+
+	  // Left inner
+	  const lix = cx - eyeGap;
+	  const liyt = cy - R * 0.12 - eyeTilt;
+	  const liyb = liyt + eyeHeight;
+
+	  // Left outer
+	  const lox = lix - eyeWidth;
+	  const loyt = liyt + eyeTilt * 1.4;
+	  const loyb = loyt + eyeHeight;
+
+	  // Right inner
+	  const rix = cx + eyeGap;
+	  const riyt = liyt;
+	  const riyb = liyb;
+
+	  // Right outer
+	  const rox = rix + eyeWidth;
+	  const royt = loyt;
+	  const royb = loyb;
+
+	  ctx.strokeStyle = "#aaa";
+	  ctx.lineWidth = 2;
+
+	  // Left eye
+	  ctx.beginPath();
+	  ctx.moveTo(lox, loyt);
+	  ctx.lineTo(lix, liyt);
+	  ctx.lineTo(lix, liyb);
+	  ctx.lineTo(lox, loyb);
+	  ctx.closePath();
+	  ctx.stroke();
+
+	  // Right eye
+	  ctx.beginPath();
+	  ctx.moveTo(rix, riyt);
+	  ctx.lineTo(rox, royt);
+	  ctx.lineTo(rox, royb);
+	  ctx.lineTo(rix, riyb);
+	  ctx.closePath();
+	  ctx.stroke();
+	}
+
 
 	const drawOutline = () => {
 	  ctx.strokeStyle = '#00000040';
@@ -202,29 +251,7 @@ const paintingGame = (game, config = {}) => {
 		ctx.stroke();
 
 		// Draw eyes as angled segments
-		const eyeWidth = radius * 0.50;
-		const eyeHeight = radius * 0.18;
-		const eyeY = absY - radius * 0.08;
-		const eyeOffsetX = radius * 0.36;
-		const tilt = radius * 0.14;
-
-		// Left eye polygon (top edge slopes down toward center)
-		ctx.beginPath();
-		ctx.moveTo(absX - eyeOffsetX - eyeWidth*0.5, eyeY - eyeHeight*0.5);                // outer-top
-		ctx.lineTo(absX - eyeOffsetX + eyeWidth*0.25, eyeY - eyeHeight*0.5 + (-tilt));     // inner-top (lower)
-		ctx.lineTo(absX - eyeOffsetX + eyeWidth*0.35, eyeY + eyeHeight*0.6);               // inner-bottom
-		ctx.lineTo(absX - eyeOffsetX - eyeWidth*0.5, eyeY + eyeHeight*0.6);                // outer-bottom
-		ctx.closePath();
-		ctx.stroke();
-
-		// Right eye polygon (mirror)
-		ctx.beginPath();
-		ctx.moveTo(absX + eyeOffsetX + eyeWidth*0.5, eyeY - eyeHeight*0.5);                // outer-top
-		ctx.lineTo(absX + eyeOffsetX - eyeWidth*0.25, eyeY - eyeHeight*0.5 + (-tilt));     // inner-top (lower)
-		ctx.lineTo(absX + eyeOffsetX - eyeWidth*0.35, eyeY + eyeHeight*0.6);               // inner-bottom
-		ctx.lineTo(absX + eyeOffsetX + eyeWidth*0.5, eyeY + eyeHeight*0.6);                // outer-bottom
-		ctx.closePath();
-		ctx.stroke();
+		drawVoltorbEyes(ctx, centerX, centerY, radius);
 
 		return;
 	}
