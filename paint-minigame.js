@@ -82,23 +82,52 @@ const paintingGame = (game, config = {}) => {
   const centerX = width / 2 + x0;
   const centerY = height / 2 + y0;
 
-  const shapes = {
-    square: (x, y, cfg) => {
-      const { x: cx, y: cy, size } = cfg;
-      const half = size / 2;
-      const absX = centerX + cx;
-      const absY = centerY + cy;
-      return x >= absX - half && x < absX + half && y >= absY - half && y < absY + half;
-    },
-    circle: (x, y, cfg) => {
-      const { x: cx, y: cy, radius } = cfg;
-      const absX = centerX + cx;
-      const absY = centerY + cy;
-      const dx = x - absX, dy = y - absY;
-      return dx * dx + dy * dy <= radius * radius;
-    },
-    custom: config.customShapeFunction || (() => false),
-  };
+	const shapes = {
+	  square: (x, y, cfg) => {
+		const { x: cx, y: cy, size } = cfg;
+		const half = size / 2;
+		const absX = centerX + cx;
+		const absY = centerY + cy;
+		return x >= absX - half && x < absX + half && y >= absY - half && y < absY + half;
+	  },
+	  circle: (x, y, cfg) => {
+		const { x: cx, y: cy, radius } = cfg;
+		const absX = centerX + cx;
+		const absY = centerY + cy;
+		const dx = x - absX, dy = y - absY;
+		return dx * dx + dy * dy <= radius * radius;
+	  },
+	  voltorb: (x, y, cfg) => {
+		const { x: cx, y: cy, radius } = cfg;
+		const absX = centerX + cx;
+		const absY = centerY + cy;
+		const dx = x - absX, dy = y - absY;
+		
+		// Check if in circle
+		if (dx * dx + dy * dy > radius * radius) return false;
+		
+		// Top half of circle (red area)
+		if (y < absY) return true;
+		
+		// Bottom half - exclude eyes and mouth areas
+		const eyeWidth = radius * 0.35;
+		const eyeHeight = radius * 0.2;
+		const eyeY = absY + radius * 0.15;
+		const eyeOffsetX = radius * 0.3;
+		
+		// Left eye
+		if (Math.abs(dx + eyeOffsetX) < eyeWidth && Math.abs(y - eyeY) < eyeHeight) return false;
+		
+		// Right eye  
+		if (Math.abs(dx - eyeOffsetX) < eyeWidth && Math.abs(y - eyeY) < eyeHeight) return false;
+		
+		// Mouth line (horizontal line in middle)
+		if (Math.abs(y - absY) < 2 && Math.abs(dx) < radius * 0.9) return false;
+		
+		return true;
+	  },
+	  custom: config.customShapeFunction || (() => false),
+	};
 
   const isInside = shapes[shape] || shapes.square;
 
@@ -108,24 +137,57 @@ const paintingGame = (game, config = {}) => {
     }
   }
 
-  const drawOutline = () => {
-    ctx.strokeStyle = '#00000040';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    if (shape === 'square') {
-      const { x, y, size } = shapeConfig;
-      const half = size / 2;
-      const absX = centerX + x;
-      const absY = centerY + y;
-      ctx.rect(absX - half, absY - half, size, size);
-    } else if (shape === 'circle') {
-      const { x, y, radius } = shapeConfig;
-      const absX = centerX + x;
-      const absY = centerY + y;
-      ctx.arc(absX, absY, radius, 0, Math.PI * 2);
-    }
-    ctx.stroke();
-  };
+	const drawOutline = () => {
+	  ctx.strokeStyle = '#00000040';
+	  ctx.lineWidth = 1;
+	  ctx.beginPath();
+	  
+	  if (shape === 'square') {
+		const { x, y, size } = shapeConfig;
+		const half = size / 2;
+		const absX = centerX + x;
+		const absY = centerY + y;
+		ctx.rect(absX - half, absY - half, size, size);
+	  } else if (shape === 'circle') {
+		const { x, y, radius } = shapeConfig;
+		const absX = centerX + x;
+		const absY = centerY + y;
+		ctx.arc(absX, absY, radius, 0, Math.PI * 2);
+	  } else if (shape === 'voltorb') {
+		const { x, y, radius } = shapeConfig;
+		const absX = centerX + x;
+		const absY = centerY + y;
+		
+		// Draw outer circle
+		ctx.arc(absX, absY, radius, 0, Math.PI * 2);
+		ctx.stroke();
+		
+		// Draw horizontal line in middle
+		ctx.beginPath();
+		ctx.moveTo(absX - radius * 0.9, absY);
+		ctx.lineTo(absX + radius * 0.9, absY);
+		ctx.stroke();
+		
+		// Draw eyes
+		const eyeWidth = radius * 0.35;
+		const eyeHeight = radius * 0.2;
+		const eyeY = absY + radius * 0.15;
+		const eyeOffsetX = radius * 0.3;
+		
+		// Left eye
+		ctx.beginPath();
+		ctx.rect(absX - eyeOffsetX - eyeWidth, eyeY - eyeHeight, eyeWidth * 2, eyeHeight * 2);
+		ctx.stroke();
+		
+		// Right eye
+		ctx.beginPath();
+		ctx.rect(absX + eyeOffsetX - eyeWidth, eyeY - eyeHeight, eyeWidth * 2, eyeHeight * 2);
+		
+		return; // Skip the final stroke since we already stroked
+	  }
+	  
+	  ctx.stroke();
+	};
 
 
 	const drawLine = (x1, y1, x2, y2) => {
@@ -434,6 +496,43 @@ if (game.map.mapVars["paint_square"]===1){
 		}
 	},
 	});
-
 	
 }
+
+if (game.map.mapVars["paint_voltorb"]===1){
+	
+	game.trigger("mapvar[paint_voltorb]=2&with&freeze");
+	console.log("Started painting a Voltorb!");
+	
+	const painting = paintingGame(game, {
+	width: 200,
+	height: 246,
+	shape: 'voltorb',
+	shapeConfig: { x: 0, y: 0, radius: 80 },
+	colors: ['#FF0000'],
+	initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
+	initialBrushShape: game.map.mapVars["brush_shape"] || 'square',
+	showBrushSizePicker: true,
+	showBrushShapePicker: true,
+	showDoneButton: true,
+	completenessThreshold: 0.90,
+	forgivenessRatio: 0.15,
+	onWin: (stats) => {
+	  console.log("Winner!", stats);
+	  painting.destroy();
+	  game.trigger("mapvar[paint_voltorb]=100&unfreeze");
+	},
+	onLose: (stats) => {
+		console.log("Too messy! You lose!", stats);
+		painting.destroy();
+		if (stats.completeness < stats.threshold){
+			game.trigger("mapvar[paint_voltorb]=50&unfreeze");
+		} else {
+			game.trigger("mapvar[paint_voltorb]=60&unfreeze");
+		}
+	},
+	});
+	
+}
+
+
