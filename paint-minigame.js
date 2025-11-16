@@ -177,8 +177,8 @@ function paintingGame(game, config) {
   // Paintable canvas (below outline)
   var canvas = document.createElement("canvas");
   canvas.id = "game-painting";
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = game.width;
+  canvas.height = game.height;
   Object.assign(canvas.style, {
     position: "absolute",
     top: "0",
@@ -426,9 +426,8 @@ function paintingGame(game, config) {
 		  var px = x + dx;
 		  var py = y + dy;
 
-		  // Don't paint outside the canvas
-		  if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
-		  console.log(`px: ${px} canvas.x: ${canvas.x} canvas width: ${canvas.width}`);
+		  // Don't paint outside the canvas (white area)
+		  if (px < x0 || px >= x0 + width || py < y0 || py >= y0 + height) continue;
 		  
 
 		  // First, check if this pixel is an ignored (black) pixel.
