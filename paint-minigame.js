@@ -290,7 +290,7 @@ function paintingGame(game, config) {
 
 				// Transparent is bad
 				if (a === 0) {
-					maskIndexMap[my * maskWidth + mx] = null;
+					maskIndexMap[my * maskWidth + mx] = "__OUTSIDE__";
 					continue;
 				}
 
@@ -304,7 +304,7 @@ function paintingGame(game, config) {
 				
 				// White is bad
 				if (hex === "#FFFFFF") {
-					maskIndexMap[my * maskWidth + mx] = null;
+					maskIndexMap[my * maskWidth + mx] = "__OUTSIDE__";
 					continue;
 				}
 
