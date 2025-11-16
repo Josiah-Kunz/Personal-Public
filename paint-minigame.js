@@ -398,12 +398,20 @@ function paintingGame(game, config) {
 
 
   // Get mask color at canvas position
+  // If we're outside the canvas, return "__OUTSIDE__" so it's truthy, but not a legit color
   function getMaskColorAtCanvasXY(x, y) {
-    var m = canvasToMaskXY(x, y);
-    if (!m) return null;
-    var flat = m.my * maskWidth + m.mx;
-    return maskIndexMap ? maskIndexMap[flat] || null : null;
+    let mx = x - x0;
+    let my = y - y0;
+    
+    // Outside the mask → always outside the shape
+    if (mx < 0 || mx >= maskWidth || my < 0 || my >= maskHeight) {
+        return "__OUTSIDE__";
+    }
+
+    let idx = my * maskWidth + mx;
+    return maskIndexMap[idx] ?? "__OUTSIDE__";
   }
+
 
   // Draw brush point
   function applyBrushPoint(x, y) {
@@ -418,7 +426,7 @@ function paintingGame(game, config) {
         var px = x + dx;
         var py = y + dy;
 
-        if (px < x0 || px >= x0 + width || py < y0 || py >= y0 + height) continue;
+        if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
 
 		// Check black pixel (and hence ignored)
 		var maskXY = canvasToMaskXY(px, py);
@@ -427,8 +435,8 @@ function paintingGame(game, config) {
 		if (ignoredPixels.has(maskIdx)) {
 			continue;
 		}
-
-        var maskHex = getMaskColorAtCanvasXY(px, py);
+		
+		var maskHex = getMaskColorAtCanvasXY(px, py);
         var key = px + "," + py;
 
         if (maskHex && maskHex === currentColor) {
