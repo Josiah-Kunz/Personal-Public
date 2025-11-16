@@ -427,6 +427,8 @@ function paintingGame(game, config) {
 		  var py = y + dy;
 
 		  if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
+		  console.log(`x: ${px}, y: ${py}`);
+		  
 
 		  // First, check if this pixel is an ignored (black) pixel.
 		  // We only can check ignoredPixels when the pixel maps into the mask.
@@ -434,7 +436,6 @@ function paintingGame(game, config) {
 		  if (maskXY) {
 			var maskIdx = maskXY.my * maskWidth + maskXY.mx;
 			if (ignoredPixels.has(maskIdx)) {
-			  // Black pixels are fully ignored (you said that's desired)
 			  continue;
 			}
 		  }
