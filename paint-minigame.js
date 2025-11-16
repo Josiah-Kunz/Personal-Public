@@ -48,7 +48,7 @@ Example usage:
 	game => {
 
 		let scriptUrls = [
-			"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/0cd4d32682156be1862265c7e5c11bf4f76b7e9e/paint-minigame.js",
+			"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/f2cff496091040dd7fb0bc4125a35692b20b6c30/paint-minigame.js",
 
 		];
 
