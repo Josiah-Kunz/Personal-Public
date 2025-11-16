@@ -606,7 +606,9 @@ function paintingGame(game, config) {
         brushSize = parseInt(ev.target.value, 10);
         var el = document.getElementById("brushSizeValue");
         if (el) el.textContent = brushSize;
-        game.trigger("mapvar[brush_size]=" + brushSize);
+		if (game.map.mapVars["brush_size"] != brushSize){
+			game.trigger("mapvar[brush_size]=" + brushSize);
+		}
       });
       brushDiv.appendChild(inputRange);
       uiContainer.appendChild(brushDiv);
@@ -628,7 +630,10 @@ function paintingGame(game, config) {
       select.value = brushShape;
       select.addEventListener("change", function (ev) {
         brushShape = ev.target.value;
-        game.trigger("mapvar[brush_shape]=" + (brushShape === "circle" ? 2 : 1));
+		var brushIdx = brushShape === "circle" ? 2 : 1;
+		if (game.map.mapVars["brush_shape"] != brushIdx){
+			game.trigger("mapvar[brush_shape]=" + brushIdx);
+		}
       });
       shapeDiv.appendChild(select);
       uiContainer.appendChild(shapeDiv);
