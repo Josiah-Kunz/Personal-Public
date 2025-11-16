@@ -52,7 +52,7 @@ function rgbToHsl(r, g, b) {
   return { h: h, s: s, l: l };
 }
 
-// Sort palette by hue (option D)
+// Sort palette by hue
 function sortColorsByHue(colors) {
   var withHue = colors.map(function (hex) {
     var c = hexToRgb(hex);
@@ -69,9 +69,6 @@ function paintingGame(game, config) {
   // config defaults
   var width = config.width || 356;
   var height = config.height || 288;
-  var shape = config.shape || "square"; // fallback shapes still supported
-  var shapeConfig = config.shapeConfig || { x: 100, y: 100, size: 200 };
-  var colors = config.colors || ["#FF0000"]; // fallback
   var initialBrushSize = typeof config.initialBrushSize === "number" ? config.initialBrushSize : 10;
   var initialBrushShape = config.initialBrushShape || "square";
   var showBrushSizePicker = typeof config.showBrushSizePicker === "boolean" ? config.showBrushSizePicker : true;
@@ -95,6 +92,7 @@ function paintingGame(game, config) {
   var lastX = null;
   var lastY = null;
 
+  // Paintable canvas (below outline)
   var canvas = document.createElement("canvas");
   canvas.id = "game-painting";
   canvas.width = game.width;
@@ -106,11 +104,31 @@ function paintingGame(game, config) {
     width: "100%",
     height: "100%",
     imageRendering: "pixelated",
-    pointerEvents: "auto"
+    pointerEvents: "auto",
+    zIndex: "0"
   });
   var ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
 
+  // Outline canvas (above painting, below cursor)
+  var outlineCanvas = document.createElement("canvas");
+  outlineCanvas.id = "game-outline";
+  outlineCanvas.width = game.width;
+  outlineCanvas.height = game.height;
+  Object.assign(outlineCanvas.style, {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    imageRendering: "pixelated",
+    pointerEvents: "none",
+    zIndex: "1"
+  });
+  var oCtx = outlineCanvas.getContext("2d");
+  oCtx.imageSmoothingEnabled = false;
+
+  // Cursor canvas (top layer)
   var cursorCanvas = document.createElement("canvas");
   cursorCanvas.width = game.width;
   cursorCanvas.height = game.height;
@@ -120,7 +138,7 @@ function paintingGame(game, config) {
     left: "0",
     width: "100%",
     height: "100%",
-    zIndex: "1",
+    zIndex: "2",
     pointerEvents: "none",
     imageRendering: "pixelated"
   });
@@ -130,60 +148,34 @@ function paintingGame(game, config) {
   var gameContainer = document.getElementById("game-container");
   if (gameContainer) {
     gameContainer.appendChild(canvas);
+    gameContainer.appendChild(outlineCanvas);
     gameContainer.appendChild(cursorCanvas);
   }
 
   var isDrawing = false;
-  var currentColor = colors[0];
+  var currentColor = null;
 
   // Mask structures
   var maskImage = null;
   var maskWidth = 0;
   var maskHeight = 0;
-  // maskIndexMap maps flat index (y*maskWidth + x) -> color hex string or null for forbidden
   var maskIndexMap = null;
-  // palette: array of hex strings (paintable colors)
   var palette = [];
-  // quick lookup: color -> { total: n, painted: nPainted, pixels: Set of flat indices }
   var regions = {};
 
-  // track painted pixels on the canvas as flat index "x,y"
+  // track painted pixels
   var paintedInside = new Set();
   var paintedOutside = new Set();
 
-  var centerX = width / 2 + x0;
-  var centerY = height / 2 + y0;
-
-  // fallback geometric shapes (kept for backwards compatibility if no mask provided)
-  function shapeSquare(x, y, cfg) {
-    var cx = cfg.x, cy = cfg.y, size = cfg.size;
-    var half = size / 2;
-    var absX = centerX + cx;
-    var absY = centerY + cy;
-    return x >= absX - half && x < absX + half && y >= absY - half && y < absY + half;
-  }
-  function shapeCircle(x, y, cfg) {
-    var cx = cfg.x, cy = cfg.y, radius = cfg.radius;
-    var absX = centerX + cx;
-    var absY = centerY + cy;
-    var dx = x - absX, dy = y - absY;
-    return dx * dx + dy * dy <= radius * radius;
-  }
-
-  // Load mask from a sprite object (sprite should provide .url or .src)
+  // Load mask from a sprite object
   function loadMaskFromSprite(sprite, callback) {
-    // sprite may be a string (URL), or an object with common url/src fields
     var url = null;
     if (!sprite) { callback(new Error("No sprite provided")); return; }
 
     if (typeof sprite === "string") url = sprite;
     else {
       url = sprite.url || sprite.src || sprite.image || sprite.path || sprite.texture || sprite.sheet;
-      // last resort: try to stringify
-      if (!url && sprite.uid && sprite.skin) {
-        // can't turn sprite into URL: fail gracefully
-        url = null;
-      }
+      if (!url && sprite.uid && sprite.skin) url = null;
     }
     if (!url) { callback(new Error("Sprite has no recognized URL field")); return; }
 
@@ -211,7 +203,6 @@ function paintingGame(game, config) {
           var i = (my * maskWidth + mx) * 4;
           var r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3];
 
-          // Transparent => forbidden
           if (a === 0) {
             maskIndexMap[my * maskWidth + mx] = null;
             continue;
@@ -219,30 +210,24 @@ function paintingGame(game, config) {
 
           var hex = rgbToHex(r, g, b).toUpperCase();
 
-          // White or black exact => forbidden per rules
           if (hex === "#FFFFFF" || hex === "#000000") {
             maskIndexMap[my * maskWidth + mx] = null;
             continue;
           }
 
-          // Otherwise this is a paintable color
-          // Record unique palette colors
           if (!(hex in colorToIndex)) {
             colorToIndex[hex] = colorList.length;
             colorList.push(hex);
             regions[hex] = { total: 0, painted: 0, pixels: new Set() };
           }
 
-          var idx = colorToIndex[hex];
           maskIndexMap[my * maskWidth + mx] = hex;
           regions[hex].total += 1;
           regions[hex].pixels.add(my * maskWidth + mx);
         }
       }
 
-      // Sort palette by hue (option D)
       palette = sortColorsByHue(colorList);
-
       callback(null);
     };
     img.onerror = function (err) {
@@ -251,63 +236,59 @@ function paintingGame(game, config) {
     img.src = url;
   }
 
-  // If maskPattern provided, attempt to find sprite via findSpritesWithPattern
+  // Find and load mask
   function locateAndLoadMask(callback) {
     if (maskSprite) {
       loadMaskFromSprite(maskSprite, callback);
     } else if (maskPattern && maskPattern.length > 0) {
       var sprites = findSpritesWithPattern(maskPattern, "skin");
       if (sprites && sprites.length > 0) {
-        // use first match
         loadMaskFromSprite(sprites[0], callback);
       } else {
         callback(new Error("No sprite found matching pattern"));
       }
     } else {
-      // No mask configured; callback success but maskIndexMap remains null (fallback to shapes)
-      callback(null);
+      callback(new Error("No mask configured - maskPattern or maskSprite required"));
     }
   }
 
-  // Draw the mask overlay (outline) scaled into the content region
-  function drawMaskOverlay() {
-    // clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // white background
+  // Draw white background
+  function drawBackground() {
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(x0, y0, width, height);
-
-    if (!maskImage) {
-      // fallback: draw shape outline
-      ctx.strokeStyle = "#00000040";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      if (shape === "square") {
-        var cfg = shapeConfig;
-        var half = cfg.size / 2;
-        var absX = centerX + cfg.x;
-        var absY = centerY + cfg.y;
-        ctx.rect(absX - half, absY - half, cfg.size, cfg.size);
-        ctx.stroke();
-      } else if (shape === "circle") {
-        var cfg2 = shapeConfig;
-        var absXC = centerX + cfg2.x;
-        var absYC = centerY + cfg2.y;
-        ctx.beginPath();
-        ctx.arc(absXC, absYC, cfg2.radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      return;
-    }
-
-    // draw mask image scaled to the target content rectangle
-    ctx.save();
-    ctx.globalAlpha = 1.0;
-    ctx.drawImage(maskImage, x0, y0, width, height);
-    ctx.restore();
   }
 
-  // Convert client coordinates to canvas pixel coordinates
+  // Draw the mask outline (black lines only)
+  function drawOutline() {
+    if (!maskImage) return;
+
+    oCtx.clearRect(0, 0, outlineCanvas.width, outlineCanvas.height);
+
+    var tcanvas = document.createElement("canvas");
+    tcanvas.width = maskWidth;
+    tcanvas.height = maskHeight;
+    var tctx = tcanvas.getContext("2d");
+    tctx.drawImage(maskImage, 0, 0);
+    var imgData = tctx.getImageData(0, 0, maskWidth, maskHeight);
+    var data = imgData.data;
+
+    // Keep only black pixels
+    for (var i = 0; i < data.length; i += 4) {
+      var r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+      var hex = rgbToHex(r, g, b).toUpperCase();
+      
+      if (hex === "#000000" && a > 0) {
+        data[i + 3] = 255;
+      } else {
+        data[i + 3] = 0;
+      }
+    }
+
+    tctx.putImageData(imgData, 0, 0);
+    oCtx.drawImage(tcanvas, x0, y0, width, height);
+  }
+
+  // Convert client coordinates to canvas
   function clientToCanvas(clientX, clientY, cvs) {
     var rect = cvs.getBoundingClientRect();
     var x = Math.floor((clientX - rect.left) * cvs.width / rect.width);
@@ -315,9 +296,8 @@ function paintingGame(game, config) {
     return { x: x, y: y };
   }
 
-  // Convert canvas pixel (x,y) into mask coordinates (mx,my) - returns null if outside mask area
+  // Convert canvas to mask coordinates
   function canvasToMaskXY(x, y) {
-    // only within the content rect (x0..x0+width-1, y0..y0+height-1)
     if (x < x0 || x >= x0 + width || y < y0 || y >= y0 + height) return null;
     if (!maskImage) return null;
     var relX = x - x0;
@@ -328,7 +308,7 @@ function paintingGame(game, config) {
     return { mx: mx, my: my };
   }
 
-  // Helper to get mask color at canvas pixel (x,y). Returns hex or null if forbidden/no-mask.
+  // Get mask color at canvas position
   function getMaskColorAtCanvasXY(x, y) {
     var m = canvasToMaskXY(x, y);
     if (!m) return null;
@@ -336,14 +316,12 @@ function paintingGame(game, config) {
     return maskIndexMap ? maskIndexMap[flat] || null : null;
   }
 
-  // Draw a "point" with selected color onto the permanent canvas and track stats.
+  // Draw brush point
   function applyBrushPoint(x, y) {
     var half = Math.floor(brushSize / 2);
 
-    // iterate brush footprint in pixel coordinates
     for (var dx = -half; dx <= half; dx++) {
       for (var dy = -half; dy <= half; dy++) {
-        // if circle brush, skip outside circle
         if (brushShape === "circle") {
           if (dx * dx + dy * dy > (brushSize / 2) * (brushSize / 2)) continue;
         }
@@ -351,39 +329,31 @@ function paintingGame(game, config) {
         var px = x + dx;
         var py = y + dy;
 
-        // boundary check to content area
         if (px < x0 || px >= x0 + width || py < y0 || py >= y0 + height) continue;
 
         var maskHex = getMaskColorAtCanvasXY(px, py);
         var key = px + "," + py;
 
         if (maskHex && maskHex === currentColor) {
-          // paint inside correct region
-          // draw pixel onto canvas (we use fillRect for speed; could be imageData for more control)
           ctx.fillStyle = currentColor;
           ctx.fillRect(px, py, 1, 1);
 
           if (!paintedInside.has(key)) {
             paintedInside.add(key);
-            // update region counts
             if (regions[maskHex]) {
               regions[maskHex].painted += 1;
             }
           }
         } else {
-          // either forbidden or wrong-color region -> outside
-          // We can choose to draw wrong color or ignore; here we draw the selected color to show mistake
-          // If you'd prefer to ignore, comment out the next two lines.
           ctx.fillStyle = currentColor;
           ctx.fillRect(px, py, 1, 1);
-
           if (!paintedOutside.has(key)) paintedOutside.add(key);
         }
       }
     }
   }
 
-  // Bresenham-ish line drawing via linear interpolation already used earlier
+  // Draw line between points
   function drawLinePoints(x1, y1, x2, y2) {
     var dx = x2 - x1;
     var dy = y2 - y1;
@@ -397,7 +367,7 @@ function paintingGame(game, config) {
     }
   }
 
-  // Cursor / preview draw
+  // Draw cursor preview
   function drawCursorPreview(clientX, clientY) {
     cCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
     var p = clientToCanvas(clientX, clientY, cursorCanvas);
@@ -417,16 +387,7 @@ function paintingGame(game, config) {
     }
   }
 
-  // Public: redraw everything (background + mask overlay + already painted content is on canvas)
-  function redraw() {
-    // we don't clear the permanent canvas painted content; but redraw background + mask overlay on top
-    // To make outline visible, we re-draw the mask overlay after (but not clearing painted pixels)
-    // Clear entire canvas and re-create painted content from paintedInside/paintedOutside sets would be expensive;
-    // So we keep painted pixels permanently drawn and still overlay mask.
-    drawMaskOverlay();
-  }
-
-  // Completion check
+  // Check completion
   function checkResult() {
     var totalPaintable = 0;
     var paintedCount = 0;
@@ -434,7 +395,6 @@ function paintingGame(game, config) {
       var hex = palette[i];
       if (regions[hex]) totalPaintable += regions[hex].total;
     }
-    // paintedInside count approximated by paintedInside.size
     paintedCount = paintedInside.size;
     var comp = totalPaintable === 0 ? 0 : paintedCount / totalPaintable;
     var outRatio = paintedOutside.size / (paintedInside.size || 1);
@@ -446,7 +406,7 @@ function paintingGame(game, config) {
     }
   }
 
-  // Mouse / touch event handlers
+  // Mouse events
   canvas.addEventListener("mousedown", function (e) {
     isDrawing = true;
     var p = clientToCanvas(e.clientX, e.clientY, canvas);
@@ -478,6 +438,7 @@ function paintingGame(game, config) {
     lastY = null;
   });
 
+  // Touch events
   canvas.addEventListener("touchstart", function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -511,7 +472,7 @@ function paintingGame(game, config) {
     lastY = null;
   }, { passive: false });
 
-  // UI container: brush size, shape, palette, done button
+  // Build UI
   var uiContainer = null;
 
   function buildUI() {
@@ -534,7 +495,6 @@ function paintingGame(game, config) {
       maxWidth: "90%"
     });
 
-    // brush size
     if (showBrushSizePicker) {
       var brushDiv = document.createElement("div");
       brushDiv.innerHTML = '<label style="display:block;margin-bottom:3px;font-size:12px;font-weight:bold;color:black">Brush Size: <span id="brushSizeValue">' + brushSize + '</span></label>';
@@ -555,7 +515,6 @@ function paintingGame(game, config) {
       uiContainer.appendChild(brushDiv);
     }
 
-    // brush shape picker
     if (showBrushShapePicker) {
       var shapeDiv = document.createElement("div");
       shapeDiv.innerHTML = '<label style="display:block;margin-bottom:3px;font-size:12px;font-weight:bold;color:black">Brush Shape:</label>';
@@ -578,7 +537,6 @@ function paintingGame(game, config) {
       uiContainer.appendChild(shapeDiv);
     }
 
-    // palette container (populated after mask loads)
     var paletteHolder = document.createElement("div");
     paletteHolder.id = "paletteHolder";
     paletteHolder.style.display = "flex";
@@ -586,7 +544,6 @@ function paintingGame(game, config) {
     paletteHolder.style.alignItems = "center";
     uiContainer.appendChild(paletteHolder);
 
-    // done button
     if (showDoneButton) {
       var doneBtn = document.createElement("button");
       doneBtn.textContent = "Done";
@@ -598,18 +555,13 @@ function paintingGame(game, config) {
     gameContainer.appendChild(uiContainer);
   }
 
-  // create palette UI buttons from palette array (palette populated after mask load)
+  // Render palette buttons
   function renderPalette() {
     var holder = document.getElementById("paletteHolder");
     if (!holder) return;
     holder.innerHTML = "";
-    if (!palette || palette.length === 0) {
-      // fallback: show single color (currentColor)
-      var b = document.createElement("button");
-      b.textContent = "Color";
-      holder.appendChild(b);
-      return;
-    }
+    if (!palette || palette.length === 0) return;
+    
     for (var i = 0; i < palette.length; i++) {
       (function (hex) {
         var btn = document.createElement("button");
@@ -623,13 +575,11 @@ function paintingGame(game, config) {
         btn.style.outline = "none";
         btn.addEventListener("click", function () {
           currentColor = hex;
-          // highlight selected
           var children = holder.children;
           for (var k = 0; k < children.length; k++) children[k].style.boxShadow = "";
           btn.style.boxShadow = "0 0 0 3px rgba(0,0,0,0.25) inset";
         });
         holder.appendChild(btn);
-        // auto-select first
         if (i === 0) {
           currentColor = hex;
           setTimeout(function () { btn.style.boxShadow = "0 0 0 3px rgba(0,0,0,0.25) inset"; }, 0);
@@ -638,7 +588,7 @@ function paintingGame(game, config) {
     }
   }
 
-  // API: set brush shape / size externally
+  // API functions
   function setBrushSize(s) {
     brushSize = s;
     var sEl = document.getElementById("brushSizeSlider");
@@ -656,42 +606,27 @@ function paintingGame(game, config) {
   function reset() {
     paintedInside.clear();
     paintedOutside.clear();
-    // clear canvas to white and redraw mask overlay (painted pixels remain cleared)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawMaskOverlay();
-    // reset region painted counts
+    drawBackground();
     for (var c in regions) {
       if (regions.hasOwnProperty(c)) regions[c].painted = 0;
     }
   }
 
-  // Initialize UI now
   buildUI();
 
-  // Start mask loading and once loaded, prepare palette and initial overlay
   locateAndLoadMask(function (err) {
     if (err) {
-      // no mask: fallback behavior (we still draw overlay)
-      console.warn("Mask load issue:", err);
+      console.error("Mask load failed:", err);
+      alert("Failed to load painting mask: " + err.message);
+      return;
     }
 
-    // If mask exists but palette is empty -> user might expect provided colors fallback
-    if (palette.length === 0 && colors && colors.length > 0) {
-      // use fallback colors (but only include those not white/black)
-      palette = colors.filter(function (h) { return h.toUpperCase() !== "#FFFFFF" && h.toUpperCase() !== "#000000"; });
-      palette = sortColorsByHue(palette);
-      for (var ii = 0; ii < palette.length; ii++) {
-        var h = palette[ii];
-        if (!regions[h]) regions[h] = { total: 0, painted: 0, pixels: new Set() };
-      }
-    }
-
-    // Render overlay and palette
-    drawMaskOverlay();
+    drawBackground();
+    drawOutline();
     renderPalette();
   });
 
-  // expose API and return
   return {
     canvas: canvas,
     ctx: ctx,
@@ -719,13 +654,14 @@ function paintingGame(game, config) {
     },
     destroy: function () {
       if (canvas.parentElement) canvas.parentElement.removeChild(canvas);
+      if (outlineCanvas.parentElement) outlineCanvas.parentElement.removeChild(outlineCanvas);
       if (cursorCanvas.parentElement) cursorCanvas.parentElement.removeChild(cursorCanvas);
       if (uiContainer && uiContainer.parentElement) uiContainer.parentElement.removeChild(uiContainer);
     }
   };
 }
 
-// ----- Example usage for Voltorb (mask must exist as a sprite matching pattern) -----
+// ----- Example usage -----
 if (game.map.mapVars["paint_voltorb"] === 1) {
   game.trigger("mapvar[paint_voltorb]=2&with&freeze");
   console.log("Started painting a Voltorb!");
@@ -733,12 +669,7 @@ if (game.map.mapVars["paint_voltorb"] === 1) {
   var painting = paintingGame(game, {
     width: 200,
     height: 246,
-    // ask the engine to find a sprite whose skin includes "voltorb_mask" (adjust pattern as needed)
-    maskPattern: ["voltorb_mask"],      // <- change to the actual pattern in your assets
-    // OR supply maskSprite: someSpriteObject
-    shape: "voltorb",                  // only used as fallback if mask fails
-    shapeConfig: { x: 0, y: 0, radius: 80 },
-    colors: ["#FF0000"],               // fallback palette if mask not found
+    maskPattern: ["voltorb_mask"],
     initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
     initialBrushShape: game.map.mapVars["brush_shape"] === 2 ? "circle" : "square",
     showBrushSizePicker: true,
@@ -746,7 +677,16 @@ if (game.map.mapVars["paint_voltorb"] === 1) {
     showDoneButton: true,
     completenessThreshold: 0.90,
     forgivenessRatio: 0.15,
-    onWin: function (stats) { console.log("Winner!", stats); painting.destroy(); game.trigger("mapvar[paint_voltorb]=100&unfreeze"); },
-    onLose: function (stats) { console.log("Too messy! You lose!", stats); painting.destroy(); if (stats.completeness < stats.threshold) game.trigger("mapvar[paint_voltorb]=50&unfreeze"); else game.trigger("mapvar[paint_voltorb]=60&unfreeze"); }
+    onWin: function (stats) { 
+      console.log("Winner!", stats); 
+      painting.destroy(); 
+      game.trigger("mapvar[paint_voltorb]=100&unfreeze"); 
+    },
+    onLose: function (stats) { 
+      console.log("Too messy! You lose!", stats); 
+      painting.destroy(); 
+      if (stats.completeness < stats.threshold) game.trigger("mapvar[paint_voltorb]=50&unfreeze"); 
+      else game.trigger("mapvar[paint_voltorb]=60&unfreeze"); 
+    }
   });
 }
