@@ -656,7 +656,37 @@ function paintingGame(game, config) {
   };
 }
 
-// ----- Example usage -----
+// Square
+if (game.map.mapVars["paint_square"] === 1) {
+  game.trigger("mapvar[paint_square]=2&with&freeze");
+  console.log("Started painting a Square!");
+
+  var painting = paintingGame(game, {
+    width: 200,
+    height: 246,
+    maskPattern: ["painting-mask-square"],
+    initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
+    initialBrushShape: game.map.mapVars["brush_shape"] === 2 ? "circle" : "square",
+    showBrushSizePicker: true,
+    showBrushShapePicker: true,
+    showDoneButton: true,
+    completenessThreshold: 0.90,
+    forgivenessRatio: 0.15,
+    onWin: function (stats) { 
+      console.log("Winner!", stats); 
+      painting.destroy(); 
+      game.trigger("mapvar[paint_square]=100&unfreeze"); 
+    },
+    onLose: function (stats) { 
+      console.log("Too messy! You lose!", stats); 
+      painting.destroy(); 
+      if (stats.completeness < stats.threshold) game.trigger("mapvar[paint_square]=50&unfreeze"); 
+      else game.trigger("mapvar[paint_square]=60&unfreeze"); 
+    }
+  });
+}
+
+// Voltorb
 if (game.map.mapVars["paint_voltorb"] === 1) {
   game.trigger("mapvar[paint_voltorb]=2&with&freeze");
   console.log("Started painting a Voltorb!");
