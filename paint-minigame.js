@@ -466,9 +466,7 @@ function paintingGame(game, config) {
 			if (!paintedOutside.has(key)) paintedOutside.add(key);
 		  } else {
 			// Defensive fallback: if maskHex is falsy (shouldn't happen now),
-			// paint but don't count it as outside/inside.
-			ctx.fillStyle = currentColor;
-			ctx.fillRect(px, py, 1, 1);
+			// paint but don't count it as outside/inside and don't paint it (for visual bug indication).
 		  }
 		}
 	  }
