@@ -280,6 +280,7 @@ function paintingGame(game, config) {
 		maskIndexMap = new Array(maskWidth * maskHeight);
 		let colorList = [];
 		let colorToIndex = {};
+		let ignoredPixels = new Set();
 		regions = {};
 
 		for (let my = 0; my < maskHeight; my++) {
@@ -287,13 +288,19 @@ function paintingGame(game, config) {
 				let i = (my * maskWidth + mx) * 4;
 				let r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3];
 
+				// Transparent is bad
 				if (a === 0) {
 					maskIndexMap[my * maskWidth + mx] = null;
 					continue;
 				}
 
 				let hex = rgbToHex(r, g, b).toUpperCase();
-				if (hex === "#FFFFFF" || hex === "#000000") {
+				
+				if (hex === "#000000"){
+					ignoredPixels.add(my * maskWidth + mx);
+				}
+				
+				if (hex === "#FFFFFF") {
 					maskIndexMap[my * maskWidth + mx] = null;
 					continue;
 				}
@@ -408,6 +415,12 @@ function paintingGame(game, config) {
         var py = y + dy;
 
         if (px < x0 || px >= x0 + width || py < y0 || py >= y0 + height) continue;
+
+		// Check black pixel (and hence ignored)
+		var maskIdx = py * maskWidth + px;
+		if (ignoredPixels.has(maskIdx)) {
+			continue;
+		}
 
         var maskHex = getMaskColorAtCanvasXY(px, py);
         var key = px + "," + py;
