@@ -669,7 +669,7 @@ if (game.map.mapVars["paint_voltorb"] === 1) {
   var painting = paintingGame(game, {
     width: 200,
     height: 246,
-    maskPattern: ["voltorb_mask"],
+    maskPattern: ["painting-mask-voltorb"],
     initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
     initialBrushShape: game.map.mapVars["brush_shape"] === 2 ? "circle" : "square",
     showBrushSizePicker: true,
