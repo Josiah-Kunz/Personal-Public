@@ -168,90 +168,87 @@ function paintingGame(game, config) {
   var paintedInside = new Set();
   var paintedOutside = new Set();
 
-  // Load mask from a sprite object
-  function loadMaskFromSprite(sprite, callback) {
-    var url = null;
-    if (!sprite) { callback(new Error("No sprite provided")); return; }
+  // ----- Load mask directly from Pixi sprite -----
+	function loadMaskFromSprite(sprite, callback) {
+		if (!sprite || !sprite._texture || !sprite._texture.baseTexture) {
+			callback(new Error("Invalid Pixi sprite"));
+			return;
+		}
 
-    if (typeof sprite === "string") url = sprite;
-    else {
-      url = sprite.url || sprite.src || sprite.image || sprite.path || sprite.texture || sprite.sheet;
-      if (!url && sprite.uid && sprite.skin) url = null;
-    }
-    if (!url) { callback(new Error("Sprite has no recognized URL field")); return; }
+		// Access the underlying image or canvas
+		let source = sprite._texture.baseTexture.resource?.source;
+		if (!source) {
+			callback(new Error("Cannot access underlying image of sprite"));
+			return;
+		}
 
-    var img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = function () {
-      maskImage = img;
-      maskWidth = img.width;
-      maskHeight = img.height;
+		// Create a temporary canvas to read pixels
+		let tcanvas = document.createElement("canvas");
+		tcanvas.width = source.width;
+		tcanvas.height = source.height;
+		let tctx = tcanvas.getContext("2d");
+		tctx.drawImage(source, 0, 0);
 
-      var tcanvas = document.createElement("canvas");
-      tcanvas.width = maskWidth;
-      tcanvas.height = maskHeight;
-      var tctx = tcanvas.getContext("2d");
-      tctx.drawImage(img, 0, 0);
-      var imgData = tctx.getImageData(0, 0, maskWidth, maskHeight).data;
+		let imgData = tctx.getImageData(0, 0, tcanvas.width, tcanvas.height).data;
 
-      // Build maskIndexMap and regions
-      maskIndexMap = new Array(maskWidth * maskHeight);
-      var colorList = [];
-      var colorToIndex = {};
+		// Initialize mask structures
+		maskImage = source;
+		maskWidth = source.width;
+		maskHeight = source.height;
 
-      for (var my = 0; my < maskHeight; my++) {
-        for (var mx = 0; mx < maskWidth; mx++) {
-          var i = (my * maskWidth + mx) * 4;
-          var r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3];
+		maskIndexMap = new Array(maskWidth * maskHeight);
+		let colorList = [];
+		let colorToIndex = {};
+		regions = {};
 
-          if (a === 0) {
-            maskIndexMap[my * maskWidth + mx] = null;
-            continue;
-          }
+		for (let my = 0; my < maskHeight; my++) {
+			for (let mx = 0; mx < maskWidth; mx++) {
+				let i = (my * maskWidth + mx) * 4;
+				let r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3];
 
-          var hex = rgbToHex(r, g, b).toUpperCase();
+				if (a === 0) {
+					maskIndexMap[my * maskWidth + mx] = null;
+					continue;
+				}
 
-          if (hex === "#FFFFFF" || hex === "#000000") {
-            maskIndexMap[my * maskWidth + mx] = null;
-            continue;
-          }
+				let hex = rgbToHex(r, g, b).toUpperCase();
+				if (hex === "#FFFFFF" || hex === "#000000") {
+					maskIndexMap[my * maskWidth + mx] = null;
+					continue;
+				}
 
-          if (!(hex in colorToIndex)) {
-            colorToIndex[hex] = colorList.length;
-            colorList.push(hex);
-            regions[hex] = { total: 0, painted: 0, pixels: new Set() };
-          }
+				if (!(hex in colorToIndex)) {
+					colorToIndex[hex] = colorList.length;
+					colorList.push(hex);
+					regions[hex] = { total: 0, painted: 0, pixels: new Set() };
+				}
 
-          maskIndexMap[my * maskWidth + mx] = hex;
-          regions[hex].total += 1;
-          regions[hex].pixels.add(my * maskWidth + mx);
-        }
-      }
+				maskIndexMap[my * maskWidth + mx] = hex;
+				regions[hex].total += 1;
+				regions[hex].pixels.add(my * maskWidth + mx);
+			}
+		}
 
-      palette = sortColorsByHue(colorList);
-      callback(null);
-    };
-    img.onerror = function (err) {
-      callback(new Error("Failed to load mask image: " + err));
-    };
-    img.src = url;
-  }
+		palette = sortColorsByHue(colorList);
+		callback(null);
+	}
 
-  // Find and load mask
-  function locateAndLoadMask(callback) {
-    if (maskSprite) {
-      loadMaskFromSprite(maskSprite, callback);
-    } else if (maskPattern && maskPattern.length > 0) {
-      var sprites = findSpritesWithPattern(maskPattern, "skin");
-      if (sprites && sprites.length > 0) {
-        loadMaskFromSprite(sprites[0], callback);
-      } else {
-        callback(new Error(`No sprite found matching pattern ${maskSprite}`));
-      }
-    } else {
-      callback(new Error("No mask configured - maskPattern or maskSprite required"));
-    }
-  }
+	// ----- Locate and load mask -----
+	function locateAndLoadMask(callback) {
+		if (maskSprite) {
+			loadMaskFromSprite(maskSprite, callback);
+		} else if (maskPattern && maskPattern.length > 0) {
+			let sprites = findSpritesWithPattern(maskPattern, "skin");
+			if (sprites && sprites.length > 0) {
+				loadMaskFromSprite(sprites[0], callback);
+			} else {
+				callback(new Error(`No sprite found matching pattern ${maskPattern}`));
+			}
+		} else {
+			callback(new Error("No mask configured - maskPattern or maskSprite required"));
+		}
+	}
+
 
   // Draw white background
   function drawBackground() {
