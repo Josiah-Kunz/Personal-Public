@@ -1,4 +1,3 @@
-// ----- helper you already provided (kept as-is) -----
 function findSpritesWithPattern(patterns, reference) {
   if (typeof reference === "undefined") reference = "skin";
   let matches = [];
@@ -245,7 +244,7 @@ function paintingGame(game, config) {
       if (sprites && sprites.length > 0) {
         loadMaskFromSprite(sprites[0], callback);
       } else {
-        callback(new Error("No sprite found matching pattern"));
+        callback(new Error(`No sprite found matching pattern ${maskSprite}`));
       }
     } else {
       callback(new Error("No mask configured - maskPattern or maskSprite required"));
