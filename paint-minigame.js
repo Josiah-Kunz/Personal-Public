@@ -280,7 +280,7 @@ function paintingGame(game, config) {
 		maskIndexMap = new Array(maskWidth * maskHeight);
 		let colorList = [];
 		let colorToIndex = {};
-		let ignoredPixels = new Set();
+		ignoredPixels = new Set();
 		regions = {};
 
 		for (let my = 0; my < maskHeight; my++) {
