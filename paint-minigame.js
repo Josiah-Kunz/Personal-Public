@@ -298,6 +298,7 @@ function paintingGame(game, config) {
 				
 				if (hex === "#000000"){
 					ignoredPixels.add(my * maskWidth + mx);
+					continue;
 				}
 				
 				if (hex === "#FFFFFF") {
