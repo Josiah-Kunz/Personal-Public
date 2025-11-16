@@ -1,3 +1,57 @@
+/**
+
+A painting minigame that uses pre-drawn, pre-colored pieces of art. The player draws color on outlined versions and their performance is judged.
+
+Example usage:
+
+ - Upload a sprite to Pokengine. The sprite should be no bigger than 200 x 246 pixels.
+ - On your map, create a sprite somewhere it can't be seen. Example:
+    snorlax=sprite(186753/painting-mask-snorlax,void)
+ - Have an NPC start the painting with, e.g.,:
+	instructor.msg(Good luck!)&mapvar[paint_snorlax]=1
+ - Modify this script with the relevant parameters. Make sure to put it at the very end of this script. Example:
+
+	if (game.map.mapVars["paint_snorlax"] === 1) {
+	  game.trigger("mapvar[paint_snorlax]=2&with&freeze");
+	  console.log("Started painting a Snorlax!");
+
+	  var painting = paintingGame(game, {
+		width: 200,
+		height: 246,
+		maskPattern: ["painting-mask-snorlax"],
+		initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
+		initialBrushShape: game.map.mapVars["brush_shape"] === 2 ? "circle" : "square",
+		showBrushSizePicker: true,
+		showBrushShapePicker: true,
+		showDoneButton: true,
+		completenessThreshold: 0.98,
+		forgivenessRatio: 0.08,
+		onWin: function (stats) { 
+		  console.log("Winner!", stats); 
+		  painting.destroy(); 
+		  game.trigger("mapvar[paint_snorlax]=100&unfreeze"); 
+		},
+		onLose: function (stats) { 
+		  console.log("Too messy! You lose!", stats); 
+		  painting.destroy(); 
+		  if (stats.completeness < stats.threshold) game.trigger("mapvar[paint_snorlax]=50&unfreeze"); 
+		  else game.trigger("mapvar[paint_snorlax]=60&unfreeze"); 
+		}
+	  });
+	}
+	
+ - You can have follow-up conversations based on the performance. In this case:
+	-> mapvar[paint_snorlax]=50 means the painting was incomplete (too much whitespace)
+	-> mapvar[paint_snorlax]=60 means the painting was too messy (outside the outlines)
+	
+
+Author: JosiahKunz
+Consulting AI:
+	- ChatGPT
+	- Claude
+
+*/
+
 function findSpritesWithPattern(patterns, reference) {
   if (typeof reference === "undefined") reference = "skin";
   let matches = [];
