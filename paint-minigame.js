@@ -296,16 +296,19 @@ function paintingGame(game, config) {
 
 				let hex = rgbToHex(r, g, b).toUpperCase();
 				
+				// Black is ignored
 				if (hex === "#000000"){
 					ignoredPixels.add(my * maskWidth + mx);
 					continue;
 				}
 				
+				// White is bad
 				if (hex === "#FFFFFF") {
 					maskIndexMap[my * maskWidth + mx] = null;
 					continue;
 				}
 
+				// Color gets assigned to a "region"
 				if (!(hex in colorToIndex)) {
 					colorToIndex[hex] = colorList.length;
 					colorList.push(hex);
@@ -418,7 +421,9 @@ function paintingGame(game, config) {
         if (px < x0 || px >= x0 + width || py < y0 || py >= y0 + height) continue;
 
 		// Check black pixel (and hence ignored)
-		var maskIdx = py * maskWidth + px;
+		var maskXY = canvasToMaskXY(px, py);
+		if (!maskXY) continue;
+		var maskIdx = maskXY.my * maskWidth + maskXY.mx;
 		if (ignoredPixels.has(maskIdx)) {
 			continue;
 		}
@@ -436,7 +441,7 @@ function paintingGame(game, config) {
               regions[maskHex].painted += 1;
             }
           }
-        } else {
+        } else if (maskHex) {
           ctx.fillStyle = currentColor;
           ctx.fillRect(px, py, 1, 1);
           if (!paintedOutside.has(key)) paintedOutside.add(key);
