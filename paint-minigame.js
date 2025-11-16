@@ -170,6 +170,10 @@ function paintingGame(game, config) {
 
   var lastX = null;
   var lastY = null;
+  
+  // Limit canvas to width x height
+  var x0 = (game.width-width)/2;
+  var y0 = (game.height-height)/2;
 
   // Paintable canvas (below outline)
   var canvas = document.createElement("canvas");
@@ -361,7 +365,7 @@ function paintingGame(game, config) {
   // Draw white background
   function drawBackground() {
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(x0, y0, width, height);
   }
 
   // Draw the mask outline (black lines only)
@@ -419,8 +423,8 @@ function paintingGame(game, config) {
         var px = x + dx;
         var py = y + dy;
 
-        // Don't paint outside canvas bounds
-        if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
+        // Don't paint outside white canvas bounds
+        if (px < x0 || px >= width + x0 || py < y0 || py >= height + y0) continue;
 
         let canvasIdx = py * canvas.width + px;
         
