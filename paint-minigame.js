@@ -262,29 +262,26 @@ function paintingGame(game, config) {
 
     oCtx.clearRect(0, 0, outlineCanvas.width, outlineCanvas.height);
 
-    var tcanvas = document.createElement("canvas");
+    // Draw each black pixel from the mask
+    let tcanvas = document.createElement("canvas");
     tcanvas.width = maskWidth;
     tcanvas.height = maskHeight;
-    var tctx = tcanvas.getContext("2d");
+    let tctx = tcanvas.getContext("2d");
     tctx.drawImage(maskImage, 0, 0);
-    var imgData = tctx.getImageData(0, 0, maskWidth, maskHeight);
-    var data = imgData.data;
+    let imgData = tctx.getImageData(0, 0, maskWidth, maskHeight);
+    let data = imgData.data;
 
-    // Keep only black pixels
-    for (var i = 0; i < data.length; i += 4) {
-      var r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-      var hex = rgbToHex(r, g, b).toUpperCase();
-      
-      if (hex === "#000000" && a > 0) {
-        data[i + 3] = 255;
-      } else {
-        data[i + 3] = 0;
-      }
+    for (let i = 0; i < data.length; i += 4) {
+        let r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        let hex = rgbToHex(r, g, b).toUpperCase();
+        data[i + 3] = (hex === "#000000" && a > 0) ? 255 : 0;
     }
 
     tctx.putImageData(imgData, 0, 0);
-    oCtx.drawImage(tcanvas, x0, y0, width, height);
-  }
+    // Draw at natural size (top-left corner)
+    oCtx.drawImage(tcanvas, x0, y0);
+   }
+
 
   // Convert client coordinates to canvas
   function clientToCanvas(clientX, clientY, cvs) {
@@ -296,15 +293,12 @@ function paintingGame(game, config) {
 
   // Convert canvas to mask coordinates
   function canvasToMaskXY(x, y) {
-    if (x < x0 || x >= x0 + width || y < y0 || y >= y0 + height) return null;
-    if (!maskImage) return null;
-    var relX = x - x0;
-    var relY = y - y0;
-    var mx = Math.floor(relX * maskWidth / width);
-    var my = Math.floor(relY * maskHeight / height);
-    if (mx < 0 || mx >= maskWidth || my < 0 || my >= maskHeight) return null;
-    return { mx: mx, my: my };
+    if (x < x0 || x >= x0 + maskWidth || y < y0 || y >= y0 + maskHeight) return null;
+    let mx = x - x0;
+    let my = y - y0;
+    return { mx, my };
   }
+
 
   // Get mask color at canvas position
   function getMaskColorAtCanvasXY(x, y) {
