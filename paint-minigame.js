@@ -415,48 +415,64 @@ function paintingGame(game, config) {
 
   // Draw brush point
   function applyBrushPoint(x, y) {
-    var half = Math.floor(brushSize / 2);
+	  var half = Math.floor(brushSize / 2);
 
-    for (var dx = -half; dx <= half; dx++) {
-      for (var dy = -half; dy <= half; dy++) {
-        if (brushShape === "circle") {
-          if (dx * dx + dy * dy > (brushSize / 2) * (brushSize / 2)) continue;
-        }
+	  for (var dx = -half; dx <= half; dx++) {
+		for (var dy = -half; dy <= half; dy++) {
+		  if (brushShape === "circle") {
+			if (dx * dx + dy * dy > (brushSize / 2) * (brushSize / 2)) continue;
+		  }
 
-        var px = x + dx;
-        var py = y + dy;
+		  var px = x + dx;
+		  var py = y + dy;
 
-        if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
+		  if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
 
-		// Check black pixel (and hence ignored)
-		var maskXY = canvasToMaskXY(px, py);
-		if (!maskXY) continue;
-		var maskIdx = maskXY.my * maskWidth + maskXY.mx;
-		if (ignoredPixels.has(maskIdx)) {
-			continue;
+		  // First, check if this pixel is an ignored (black) pixel.
+		  // We only can check ignoredPixels when the pixel maps into the mask.
+		  var maskXY = canvasToMaskXY(px, py);
+		  if (maskXY) {
+			var maskIdx = maskXY.my * maskWidth + maskXY.mx;
+			if (ignoredPixels.has(maskIdx)) {
+			  // Black pixels are fully ignored (you said that's desired)
+			  continue;
+			}
+		  }
+		  // Get the mask "color" for this canvas position. This function
+		  // now returns "__OUTSIDE__" for pixels outside the mask.
+		  var maskHex = getMaskColorAtCanvasXY(px, py);
+		  var key = px + "," + py;
+
+		  // maskHex can be:
+		  //  - a real hex color string (region)
+		  //  - "__OUTSIDE__" for outside or transparent/white
+		  //  - or possibly null/undefined in some broken case (we handle defensively)
+		  if (maskHex && maskHex === currentColor) {
+			// Correct color in region
+			ctx.fillStyle = currentColor;
+			ctx.fillRect(px, py, 1, 1);
+
+			if (!paintedInside.has(key)) {
+			  paintedInside.add(key);
+			  if (regions[maskHex]) {
+				regions[maskHex].painted += 1;
+			  }
+			}
+		  } else if (maskHex) {
+			// Any other truthy maskHex (including "__OUTSIDE__") counts as outside
+			ctx.fillStyle = currentColor;
+			ctx.fillRect(px, py, 1, 1);
+			if (!paintedOutside.has(key)) paintedOutside.add(key);
+		  } else {
+			// Defensive fallback: if maskHex is falsy (shouldn't happen now),
+			// paint but don't count it as outside/inside.
+			ctx.fillStyle = currentColor;
+			ctx.fillRect(px, py, 1, 1);
+		  }
 		}
-		
-		var maskHex = getMaskColorAtCanvasXY(px, py);
-        var key = px + "," + py;
+	  }
+	}
 
-        if (maskHex && maskHex === currentColor) {
-          ctx.fillStyle = currentColor;
-          ctx.fillRect(px, py, 1, 1);
-
-          if (!paintedInside.has(key)) {
-            paintedInside.add(key);
-            if (regions[maskHex]) {
-              regions[maskHex].painted += 1;
-            }
-          }
-        } else if (maskHex) {
-          ctx.fillStyle = currentColor;
-          ctx.fillRect(px, py, 1, 1);
-          if (!paintedOutside.has(key)) paintedOutside.add(key);
-        }
-      }
-    }
-  }
 
   // Draw line between points
   function drawLinePoints(x1, y1, x2, y2) {
