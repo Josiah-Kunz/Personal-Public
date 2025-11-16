@@ -700,8 +700,8 @@ if (game.map.mapVars["paint_voltorb"] === 1) {
     showBrushSizePicker: true,
     showBrushShapePicker: true,
     showDoneButton: true,
-    completenessThreshold: 0.90,
-    forgivenessRatio: 0.15,
+    completenessThreshold: 0.95,
+    forgivenessRatio: 0.10,
     onWin: function (stats) { 
       console.log("Winner!", stats); 
       painting.destroy(); 
@@ -712,6 +712,36 @@ if (game.map.mapVars["paint_voltorb"] === 1) {
       painting.destroy(); 
       if (stats.completeness < stats.threshold) game.trigger("mapvar[paint_voltorb]=50&unfreeze"); 
       else game.trigger("mapvar[paint_voltorb]=60&unfreeze"); 
+    }
+  });
+}
+
+// Snorlax
+if (game.map.mapVars["paint_snorlax"] === 1) {
+  game.trigger("mapvar[paint_snorlax]=2&with&freeze");
+  console.log("Started painting a Snorlax!");
+
+  var painting = paintingGame(game, {
+    width: 200,
+    height: 246,
+    maskPattern: ["painting-mask-snorlax"],
+    initialBrushSize: game.map.mapVars["brush_size"] && game.map.mapVars["brush_size"] > 0 ? game.map.mapVars["brush_size"] : 30,
+    initialBrushShape: game.map.mapVars["brush_shape"] === 2 ? "circle" : "square",
+    showBrushSizePicker: true,
+    showBrushShapePicker: true,
+    showDoneButton: true,
+    completenessThreshold: 0.98,
+    forgivenessRatio: 0.08,
+    onWin: function (stats) { 
+      console.log("Winner!", stats); 
+      painting.destroy(); 
+      game.trigger("mapvar[paint_snorlax]=100&unfreeze"); 
+    },
+    onLose: function (stats) { 
+      console.log("Too messy! You lose!", stats); 
+      painting.destroy(); 
+      if (stats.completeness < stats.threshold) game.trigger("mapvar[paint_snorlax]=50&unfreeze"); 
+      else game.trigger("mapvar[paint_snorlax]=60&unfreeze"); 
     }
   });
 }
