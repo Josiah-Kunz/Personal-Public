@@ -43,7 +43,36 @@ Example usage:
  - You can have follow-up conversations based on the performance. In this case:
 	-> mapvar[paint_snorlax]=50 means the painting was incomplete (too much whitespace)
 	-> mapvar[paint_snorlax]=60 means the painting was too messy (outside the outlines)
-	
+ - Finally, inject the JavaScript in Mapbuilder -> Settings -> Raw Code:
+
+	game => {
+
+		let scriptUrls = [
+			"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/0cd4d32682156be1862265c7e5c11bf4f76b7e9e/paint-minigame.js",
+
+		];
+
+		if (game.map.id != game.map.__cachedid) {
+			game.map.__jsScripts = "";
+			game.map.__cachedid = game.map.id;
+			game.map.__scriptsLoading = true;
+
+			Promise.all(scriptUrls.map(url => 
+			  fetch(url)
+				.then(response => response.text())
+				.catch(e => {
+					console.error(`Failed to load ${url.split('/').pop()}:`, e);
+					return "";
+				})
+			)).then(scripts => {
+				game.map.__jsScripts = scripts.join('\n');
+				game.map.__scriptsLoading = false;
+				eval(game.map.__jsScripts);
+			});
+			} else if (game.map && game.map.__jsScripts && !game.map.__scriptsLoading) {
+			eval(game.map.__jsScripts);
+		}
+	} 
 
 Author: JosiahKunz
 Consulting AI:
