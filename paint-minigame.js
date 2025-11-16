@@ -193,9 +193,6 @@ function paintingGame(game, config) {
 		maskImage = source;
 		maskWidth = source.width;
 		maskHeight = source.height;
-		x0 = Math.floor((canvas.width - maskWidth) / 2);
-		y0 = Math.floor((canvas.height - maskHeight) / 2);
-
 
 		maskIndexMap = new Array(maskWidth * maskHeight);
 		let colorList = [];
@@ -279,7 +276,9 @@ function paintingGame(game, config) {
     }
 
     tctx.putImageData(imgData, 0, 0);
-    oCtx.drawImage(tcanvas, x0, y0); // use centered offset
+	let maskX = Math.floor((canvas.width - maskWidth) / 2);
+	let maskY = Math.floor((canvas.height - maskHeight) / 2);
+	oCtx.drawImage(tcanvas, maskX, maskY);
    }
 
 
@@ -294,11 +293,15 @@ function paintingGame(game, config) {
 
   // Convert canvas to mask coordinates
   function canvasToMaskXY(x, y) {
-    let relX = x - x0;
-    let relY = y - y0;
+    let maskX = Math.floor((canvas.width - maskWidth) / 2);
+    let maskY = Math.floor((canvas.height - maskHeight) / 2);
+
+    let relX = x - maskX;
+    let relY = y - maskY;
     if (relX < 0 || relX >= maskWidth || relY < 0 || relY >= maskHeight) return null;
     return { mx: relX, my: relY };
-   }
+  }
+
 
   // Get mask color at canvas position
   function getMaskColorAtCanvasXY(x, y) {
