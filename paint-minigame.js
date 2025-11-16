@@ -427,18 +427,19 @@ function paintingGame(game, config) {
 		  var py = y + dy;
 
 		  // Don't paint outside the canvas
-		  var maskXY = canvasToMaskXY(px, py);
-		  if (!maskXY) continue;
-		  
+		  if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
+		  console.log(`px: ${px} canvas.x: ${canvas.x} canvas width: ${canvas.width}`);
 		  
 
 		  // First, check if this pixel is an ignored (black) pixel.
 		  // We only can check ignoredPixels when the pixel maps into the mask.
+		  var maskXY = canvasToMaskXY(px, py);
+		  if (maskXY) {
 			var maskIdx = maskXY.my * maskWidth + maskXY.mx;
 			if (ignoredPixels.has(maskIdx)) {
 			  continue;
 			}
-			
+		  }
 		  // Get the mask "color" for this canvas position. This function
 		  // now returns "__OUTSIDE__" for pixels outside the mask.
 		  var maskHex = getMaskColorAtCanvasXY(px, py);
