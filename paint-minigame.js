@@ -18,6 +18,8 @@ function findSpritesWithPattern(patterns, reference) {
       }
     }
   }
+  console.log("Found matches:");
+  console.log(matches);
   return matches;
 }
 
