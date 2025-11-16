@@ -18,8 +18,6 @@ function findSpritesWithPattern(patterns, reference) {
       }
     }
   }
-  console.log("Found matches:");
-  console.log(matches);
   return matches;
 }
 
@@ -195,6 +193,9 @@ function paintingGame(game, config) {
 		maskImage = source;
 		maskWidth = source.width;
 		maskHeight = source.height;
+		x0 = Math.floor((canvas.width - maskWidth) / 2);
+		y0 = Math.floor((canvas.height - maskHeight) / 2);
+
 
 		maskIndexMap = new Array(maskWidth * maskHeight);
 		let colorList = [];
@@ -262,12 +263,12 @@ function paintingGame(game, config) {
 
     oCtx.clearRect(0, 0, outlineCanvas.width, outlineCanvas.height);
 
-    // Draw each black pixel from the mask
     let tcanvas = document.createElement("canvas");
     tcanvas.width = maskWidth;
     tcanvas.height = maskHeight;
     let tctx = tcanvas.getContext("2d");
     tctx.drawImage(maskImage, 0, 0);
+
     let imgData = tctx.getImageData(0, 0, maskWidth, maskHeight);
     let data = imgData.data;
 
@@ -278,9 +279,9 @@ function paintingGame(game, config) {
     }
 
     tctx.putImageData(imgData, 0, 0);
-    // Draw at natural size (top-left corner)
-    oCtx.drawImage(tcanvas, x0, y0);
+    oCtx.drawImage(tcanvas, x0, y0); // use centered offset
    }
+
 
 
   // Convert client coordinates to canvas
@@ -293,12 +294,11 @@ function paintingGame(game, config) {
 
   // Convert canvas to mask coordinates
   function canvasToMaskXY(x, y) {
-    if (x < x0 || x >= x0 + maskWidth || y < y0 || y >= y0 + maskHeight) return null;
-    let mx = x - x0;
-    let my = y - y0;
-    return { mx, my };
-  }
-
+    let relX = x - x0;
+    let relY = y - y0;
+    if (relX < 0 || relX >= maskWidth || relY < 0 || relY >= maskHeight) return null;
+    return { mx: relX, my: relY };
+   }
 
   // Get mask color at canvas position
   function getMaskColorAtCanvasXY(x, y) {
