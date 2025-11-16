@@ -177,8 +177,8 @@ function paintingGame(game, config) {
   // Paintable canvas (below outline)
   var canvas = document.createElement("canvas");
   canvas.id = "game-painting";
-  canvas.width = game.width;
-  canvas.height = game.height;
+  canvas.width = width;
+  canvas.height = height;
   Object.assign(canvas.style, {
     position: "absolute",
     top: "0",
