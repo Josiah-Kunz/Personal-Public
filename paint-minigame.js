@@ -426,7 +426,8 @@ function paintingGame(game, config) {
 		  var px = x + dx;
 		  var py = y + dy;
 
-		  if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
+		  // Don't paint outside the canvas
+		  if (px < canvas.x || px >= canvas.width + canvas.x || py < canvas.y || py >= canvas.height + canvas.y) continue;
 		  console.log(`x: ${px}, y: ${py}`);
 		  
 
