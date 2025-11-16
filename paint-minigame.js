@@ -624,7 +624,7 @@ function paintingGame(game, config) {
       inputRange.type = "range";
       inputRange.id = "brushSizeSlider";
       inputRange.min = 1;
-      inputRange.max = 50;
+      inputRange.max = 40;
       inputRange.value = brushSize;
       inputRange.style.width = "120px";
       inputRange.addEventListener("input", function (ev) {
