@@ -168,9 +168,6 @@ function paintingGame(game, config) {
   var brushSize = initialBrushSize;
   var brushShape = initialBrushShape;
 
-  var x0 = Math.floor((game.width - width) / 2);
-  var y0 = Math.floor((game.height - height) / 2);
-
   var lastX = null;
   var lastY = null;
 
@@ -237,11 +234,14 @@ function paintingGame(game, config) {
   var isDrawing = false;
   var currentColor = null;
 
-  // Mask structures
+  // Mask structures - NOW IN CANVAS COORDINATES!
   var maskImage = null;
   var maskWidth = 0;
   var maskHeight = 0;
-  var maskIndexMap = null;
+  var maskOffsetX = 0; // Where mask starts on canvas
+  var maskOffsetY = 0;
+  var canvasIndexMap = null; // Maps canvas coords to colors
+  var ignoredPixels = null; // Set of canvas indices
   var palette = [];
   var regions = {};
 
@@ -250,102 +250,118 @@ function paintingGame(game, config) {
   var paintedOutside = new Set();
 
   // ----- Load mask directly from Pixi sprite -----
-	function loadMaskFromSprite(sprite, callback) {
-		if (!sprite || !sprite._texture || !sprite._texture.baseTexture) {
-			callback(new Error("Invalid Pixi sprite"));
-			return;
-		}
+  function loadMaskFromSprite(sprite, callback) {
+    if (!sprite || !sprite._texture || !sprite._texture.baseTexture) {
+      callback(new Error("Invalid Pixi sprite"));
+      return;
+    }
 
-		// Access the underlying image or canvas
-		let source = sprite._texture.baseTexture.resource?.source;
-		if (!source) {
-			callback(new Error("Cannot access underlying image of sprite"));
-			return;
-		}
+    // Access the underlying image or canvas
+    let source = sprite._texture.baseTexture.resource?.source;
+    if (!source) {
+      callback(new Error("Cannot access underlying image of sprite"));
+      return;
+    }
 
-		// Create a temporary canvas to read pixels
-		let tcanvas = document.createElement("canvas");
-		tcanvas.width = source.width;
-		tcanvas.height = source.height;
-		let tctx = tcanvas.getContext("2d");
-		tctx.drawImage(source, 0, 0);
+    // Create a temporary canvas to read pixels
+    let tcanvas = document.createElement("canvas");
+    tcanvas.width = source.width;
+    tcanvas.height = source.height;
+    let tctx = tcanvas.getContext("2d");
+    tctx.drawImage(source, 0, 0);
 
-		let imgData = tctx.getImageData(0, 0, tcanvas.width, tcanvas.height).data;
+    let imgData = tctx.getImageData(0, 0, tcanvas.width, tcanvas.height).data;
 
-		// Initialize mask structures
-		maskImage = source;
-		maskWidth = source.width;
-		maskHeight = source.height;
+    // Initialize mask structures
+    maskImage = source;
+    maskWidth = source.width;
+    maskHeight = source.height;
+    
+    // Calculate where mask is positioned on canvas (centered)
+    maskOffsetX = Math.floor((canvas.width - maskWidth) / 2);
+    maskOffsetY = Math.floor((canvas.height - maskHeight) / 2);
 
-		maskIndexMap = new Array(maskWidth * maskHeight);
-		let colorList = [];
-		let colorToIndex = {};
-		ignoredPixels = new Set();
-		regions = {};
+    // Build index map in CANVAS coordinates
+    canvasIndexMap = new Array(canvas.width * canvas.height);
+    ignoredPixels = new Set();
+    let colorList = [];
+    let colorToIndex = {};
+    regions = {};
 
-		for (let my = 0; my < maskHeight; my++) {
-			for (let mx = 0; mx < maskWidth; mx++) {
-				let i = (my * maskWidth + mx) * 4;
-				let r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3];
+    // Fill entire canvas with "__OUTSIDE__" by default
+    for (let i = 0; i < canvasIndexMap.length; i++) {
+      canvasIndexMap[i] = "__OUTSIDE__";
+    }
 
-				// Transparent is bad
-				if (a === 0) {
-					maskIndexMap[my * maskWidth + mx] = "__OUTSIDE__";
-					continue;
-				}
+    // Now map mask pixels to canvas coordinates
+    for (let my = 0; my < maskHeight; my++) {
+      for (let mx = 0; mx < maskWidth; mx++) {
+        let maskIdx = (my * maskWidth + mx) * 4;
+        let r = imgData[maskIdx], g = imgData[maskIdx + 1], b = imgData[maskIdx + 2], a = imgData[maskIdx + 3];
 
-				let hex = rgbToHex(r, g, b).toUpperCase();
-				
-				// Black is ignored
-				if (hex === "#000000"){
-					ignoredPixels.add(my * maskWidth + mx);
-					continue;
-				}
-				
-				// White is bad
-				if (hex === "#FFFFFF") {
-					maskIndexMap[my * maskWidth + mx] = "__OUTSIDE__";
-					continue;
-				}
+        // Calculate canvas position
+        let canvasX = maskOffsetX + mx;
+        let canvasY = maskOffsetY + my;
+        let canvasIdx = canvasY * canvas.width + canvasX;
 
-				// Color gets assigned to a "region"
-				if (!(hex in colorToIndex)) {
-					colorToIndex[hex] = colorList.length;
-					colorList.push(hex);
-					regions[hex] = { total: 0, painted: 0, pixels: new Set() };
-				}
+        // Transparent is outside
+        if (a === 0) {
+          canvasIndexMap[canvasIdx] = "__OUTSIDE__";
+          continue;
+        }
 
-				maskIndexMap[my * maskWidth + mx] = hex;
-				regions[hex].total += 1;
-				regions[hex].pixels.add(my * maskWidth + mx);
-			}
-		}
+        let hex = rgbToHex(r, g, b).toUpperCase();
+        
+        // Black is ignored (outline)
+        if (hex === "#000000") {
+          ignoredPixels.add(canvasIdx);
+          canvasIndexMap[canvasIdx] = "__IGNORED__";
+          continue;
+        }
+        
+        // White is outside
+        if (hex === "#FFFFFF") {
+          canvasIndexMap[canvasIdx] = "__OUTSIDE__";
+          continue;
+        }
 
-		palette = sortColorsByHue(colorList);
-		callback(null);
-	}
+        // Color gets assigned to a "region"
+        if (!(hex in colorToIndex)) {
+          colorToIndex[hex] = colorList.length;
+          colorList.push(hex);
+          regions[hex] = { total: 0, painted: 0, pixels: new Set() };
+        }
 
-	// ----- Locate and load mask -----
-	function locateAndLoadMask(callback) {
-		if (maskSprite) {
-			loadMaskFromSprite(maskSprite, callback);
-		} else if (maskPattern && maskPattern.length > 0) {
-			let sprites = findSpritesWithPattern(maskPattern, "skin");
-			if (sprites && sprites.length > 0) {
-				loadMaskFromSprite(sprites[0], callback);
-			} else {
-				callback(new Error(`No sprite found matching pattern ${maskPattern}`));
-			}
-		} else {
-			callback(new Error("No mask configured - maskPattern or maskSprite required"));
-		}
-	}
+        canvasIndexMap[canvasIdx] = hex;
+        regions[hex].total += 1;
+        regions[hex].pixels.add(canvasIdx);
+      }
+    }
 
+    palette = sortColorsByHue(colorList);
+    callback(null);
+  }
+
+  // ----- Locate and load mask -----
+  function locateAndLoadMask(callback) {
+    if (maskSprite) {
+      loadMaskFromSprite(maskSprite, callback);
+    } else if (maskPattern && maskPattern.length > 0) {
+      let sprites = findSpritesWithPattern(maskPattern, "skin");
+      if (sprites && sprites.length > 0) {
+        loadMaskFromSprite(sprites[0], callback);
+      } else {
+        callback(new Error(`No sprite found matching pattern ${maskPattern}`));
+      }
+    } else {
+      callback(new Error("No mask configured - maskPattern or maskSprite required"));
+    }
+  }
 
   // Draw white background
   function drawBackground() {
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(x0, y0, width, height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   // Draw the mask outline (black lines only)
@@ -364,18 +380,14 @@ function paintingGame(game, config) {
     let data = imgData.data;
 
     for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-        let hex = rgbToHex(r, g, b).toUpperCase();
-        data[i + 3] = (hex === "#000000" && a > 0) ? 255 : 0;
+      let r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+      let hex = rgbToHex(r, g, b).toUpperCase();
+      data[i + 3] = (hex === "#000000" && a > 0) ? 255 : 0;
     }
 
     tctx.putImageData(imgData, 0, 0);
-	let maskX = Math.floor((canvas.width - maskWidth) / 2);
-	let maskY = Math.floor((canvas.height - maskHeight) / 2);
-	oCtx.drawImage(tcanvas, maskX, maskY);
-   }
-
-
+    oCtx.drawImage(tcanvas, maskOffsetX, maskOffsetY);
+  }
 
   // Convert client coordinates to canvas
   function clientToCanvas(clientX, clientY, cvs) {
@@ -385,93 +397,64 @@ function paintingGame(game, config) {
     return { x: x, y: y };
   }
 
-  // Convert canvas to mask coordinates
-  function canvasToMaskXY(x, y) {
-    let maskX = Math.floor((canvas.width - maskWidth) / 2);
-    let maskY = Math.floor((canvas.height - maskHeight) / 2);
-
-    let relX = x - maskX;
-    let relY = y - maskY;
-    if (relX < 0 || relX >= maskWidth || relY < 0 || relY >= maskHeight) return null;
-    return { mx: relX, my: relY };
-  }
-
-
-  // Get mask color at canvas position
-  // If we're outside the canvas, return "__OUTSIDE__" so it's truthy, but not a legit color
-  function getMaskColorAtCanvasXY(x, y) {
-    let mx = x - x0;
-    let my = y - y0;
-    
-    // Outside the mask → always outside the shape
-    if (mx < 0 || mx >= maskWidth || my < 0 || my >= maskHeight) {
-        return "__OUTSIDE__";
+  // Get mask color at canvas position - NOW JUST A SIMPLE LOOKUP!
+  function getMaskColorAt(x, y) {
+    if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) {
+      return "__OUTSIDE__";
     }
-
-    let idx = my * maskWidth + mx;
-    return maskIndexMap[idx] ?? "__OUTSIDE__";
+    let idx = y * canvas.width + x;
+    return canvasIndexMap[idx] || "__OUTSIDE__";
   }
-
 
   // Draw brush point
   function applyBrushPoint(x, y) {
-	  var half = Math.floor(brushSize / 2);
+    var half = Math.floor(brushSize / 2);
 
-	  for (var dx = -half; dx <= half; dx++) {
-		for (var dy = -half; dy <= half; dy++) {
-		  if (brushShape === "circle") {
-			if (dx * dx + dy * dy > (brushSize / 2) * (brushSize / 2)) continue;
-		  }
+    for (var dx = -half; dx <= half; dx++) {
+      for (var dy = -half; dy <= half; dy++) {
+        if (brushShape === "circle") {
+          if (dx * dx + dy * dy > (brushSize / 2) * (brushSize / 2)) continue;
+        }
 
-		  var px = x + dx;
-		  var py = y + dy;
+        var px = x + dx;
+        var py = y + dy;
 
-		  // Don't paint outside the canvas (white area)
-		  if (px < x0 || px >= x0 + width || py < y0 || py >= y0 + height) continue;
-		  
+        // Don't paint outside canvas bounds
+        if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
 
-		  // First, check if this pixel is an ignored (black) pixel.
-		  // We only can check ignoredPixels when the pixel maps into the mask.
-		  var maskXY = canvasToMaskXY(px, py);
-		  if (maskXY) {
-			var maskIdx = maskXY.my * maskWidth + maskXY.mx;
-			if (ignoredPixels.has(maskIdx)) {
-			  continue;
-			}
-		  }
-		  // Get the mask "color" for this canvas position. This function
-		  // now returns "__OUTSIDE__" for pixels outside the mask.
-		  var maskHex = getMaskColorAtCanvasXY(px, py);
-		  var key = px + "," + py;
+        let canvasIdx = py * canvas.width + px;
+        
+        // Skip ignored (black outline) pixels
+        if (ignoredPixels.has(canvasIdx)) {
+          continue;
+        }
 
-		  // maskHex can be:
-		  //  - a real hex color string (region)
-		  //  - "__OUTSIDE__" for outside or transparent/white
-		  //  - or possibly null/undefined in some broken case (we handle defensively)
-		  if (maskHex && maskHex === currentColor) {
-			// Correct color in region
-			ctx.fillStyle = currentColor;
-			ctx.fillRect(px, py, 1, 1);
+        // Get what this pixel should be
+        var maskColor = getMaskColorAt(px, py);
+        var key = px + "," + py;
 
-			if (!paintedInside.has(key)) {
-			  paintedInside.add(key);
-			  if (regions[maskHex]) {
-				regions[maskHex].painted += 1;
-			  }
-			}
-		  } else if (maskHex) {
-			// Any other truthy maskHex (including "__OUTSIDE__") counts as outside
-			ctx.fillStyle = currentColor;
-			ctx.fillRect(px, py, 1, 1);
-			if (!paintedOutside.has(key)) paintedOutside.add(key);
-		  } else {
-			// Defensive fallback: if maskHex is falsy (shouldn't happen now),
-			// paint but don't count it as outside/inside and don't paint it (for visual bug indication).
-		  }
-		}
-	  }
-	}
+        if (maskColor === currentColor) {
+          // Correct color in region
+          ctx.fillStyle = currentColor;
+          ctx.fillRect(px, py, 1, 1);
 
+          if (!paintedInside.has(key)) {
+            paintedInside.add(key);
+            if (regions[maskColor]) {
+              regions[maskColor].painted += 1;
+            }
+          }
+        } else if (maskColor === "__OUTSIDE__") {
+          // Painting outside the lines
+          ctx.fillStyle = currentColor;
+          ctx.fillRect(px, py, 1, 1);
+          if (!paintedOutside.has(key)) paintedOutside.add(key);
+        }
+        // If maskColor is a different region color, we could count it as outside too
+        // For now, just don't paint it
+      }
+    }
+  }
 
   // Draw line between points
   function drawLinePoints(x1, y1, x2, y2) {
@@ -629,9 +612,9 @@ function paintingGame(game, config) {
         brushSize = parseInt(ev.target.value, 10);
         var el = document.getElementById("brushSizeValue");
         if (el) el.textContent = brushSize;
-		if (game.map.mapVars["brush_size"] != brushSize){
-			game.trigger("mapvar[brush_size]=" + brushSize);
-		}
+        if (game.map.mapVars["brush_size"] != brushSize) {
+          game.trigger("mapvar[brush_size]=" + brushSize);
+        }
       });
       brushDiv.appendChild(inputRange);
       uiContainer.appendChild(brushDiv);
@@ -653,10 +636,10 @@ function paintingGame(game, config) {
       select.value = brushShape;
       select.addEventListener("change", function (ev) {
         brushShape = ev.target.value;
-		var brushIdx = brushShape === "circle" ? 2 : 1;
-		if (game.map.mapVars["brush_shape"] != brushIdx){
-			game.trigger("mapvar[brush_shape]=" + brushIdx);
-		}
+        var brushIdx = brushShape === "circle" ? 2 : 1;
+        if (game.map.mapVars["brush_shape"] != brushIdx) {
+          game.trigger("mapvar[brush_shape]=" + brushIdx);
+        }
       });
       shapeDiv.appendChild(select);
       uiContainer.appendChild(shapeDiv);
