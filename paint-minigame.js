@@ -599,7 +599,7 @@ function paintingGame(game, config) {
       gap: "4px",
       alignItems: "center",
       flexWrap: "wrap",
-      maxWidth: "150%",
+      width: "266px",
 	  overflow: "visible"
     });
 
