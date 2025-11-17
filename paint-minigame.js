@@ -599,7 +599,8 @@ function paintingGame(game, config) {
       gap: "4px",
       alignItems: "center",
       flexWrap: "wrap",
-      maxWidth: "100%"
+      maxWidth: "150%",
+	  overflow: "visible"
     });
 
     if (showBrushSizePicker) {
