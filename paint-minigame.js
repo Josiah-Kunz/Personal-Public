@@ -592,11 +592,11 @@ function paintingGame(game, config) {
       transform: "translateX(-50%)",
       zIndex: "2000",
       backgroundColor: "rgba(255,255,255,0.95)",
-      padding: "8px",
+      padding: "2px",
       borderRadius: "6px",
       border: "2px solid black",
       display: "flex",
-      gap: "8px",
+      gap: "4px",
       alignItems: "center",
       flexWrap: "wrap",
       maxWidth: "90%"
@@ -604,14 +604,14 @@ function paintingGame(game, config) {
 
     if (showBrushSizePicker) {
       var brushDiv = document.createElement("div");
-      brushDiv.innerHTML = '<label style="display:block;margin-bottom:3px;font-size:12px;font-weight:bold;color:black">Brush Size: <span id="brushSizeValue">' + brushSize + '</span></label>';
+      brushDiv.innerHTML = '<label style="display:block;margin-bottom:2px;font-size:10px;font-weight:bold;color:black">Brush Size: <span id="brushSizeValue">' + brushSize + '</span></label>';
       var inputRange = document.createElement("input");
       inputRange.type = "range";
       inputRange.id = "brushSizeSlider";
       inputRange.min = 1;
       inputRange.max = 40;
       inputRange.value = brushSize;
-      inputRange.style.width = "120px";
+      inputRange.style.width = "100px";
       inputRange.addEventListener("input", function (ev) {
         brushSize = parseInt(ev.target.value, 10);
         var el = document.getElementById("brushSizeValue");
@@ -626,7 +626,7 @@ function paintingGame(game, config) {
 
     if (showBrushShapePicker) {
       var shapeDiv = document.createElement("div");
-      shapeDiv.innerHTML = '<label style="display:block;margin-bottom:3px;font-size:12px;font-weight:bold;color:black">Brush Shape:</label>';
+      shapeDiv.innerHTML = '<label style="display:block;margin-bottom:2px;font-size:10px;font-weight:bold;color:black">Brush Shape:</label>';
       var select = document.createElement("select");
       select.id = "brushShapeSelect";
       var optSquare = document.createElement("option");
@@ -652,14 +652,14 @@ function paintingGame(game, config) {
     var paletteHolder = document.createElement("div");
     paletteHolder.id = "paletteHolder";
     paletteHolder.style.display = "flex";
-    paletteHolder.style.gap = "6px";
+    paletteHolder.style.gap = "4px";
     paletteHolder.style.alignItems = "center";
     uiContainer.appendChild(paletteHolder);
 
     if (showDoneButton) {
       var doneBtn = document.createElement("button");
       doneBtn.textContent = "Done";
-      Object.assign(doneBtn.style, { padding: "8px 14px", fontSize: "14px", fontWeight: "bold", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" });
+      Object.assign(doneBtn.style, { padding: "4px 4px", fontSize: "10px", fontWeight: "bold", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" });
       doneBtn.addEventListener("click", function () { checkResult(); });
       uiContainer.appendChild(doneBtn);
     }
@@ -689,12 +689,12 @@ function paintingGame(game, config) {
           currentColor = hex;
           var children = holder.children;
           for (var k = 0; k < children.length; k++) children[k].style.boxShadow = "";
-          btn.style.boxShadow = "0 0 0 3px rgba(0,0,0,0.25) inset";
+          btn.style.boxShadow = "0 0 0 2px rgba(0,0,0,0.25) inset";
         });
         holder.appendChild(btn);
         if (i === 0) {
           currentColor = hex;
-          setTimeout(function () { btn.style.boxShadow = "0 0 0 3px rgba(0,0,0,0.25) inset"; }, 0);
+          setTimeout(function () { btn.style.boxShadow = "0 0 0 2px rgba(0,0,0,0.25) inset"; }, 0);
         }
       })(palette[i]);
     }
