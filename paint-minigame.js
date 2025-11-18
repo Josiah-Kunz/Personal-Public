@@ -437,25 +437,22 @@ function paintingGame(game, config) {
         var maskColor = getMaskColorAt(px, py);
         var key = px + "," + py;
 
-        if (maskColor === currentColor) {
-          // Correct color in region
-          ctx.fillStyle = currentColor;
-          ctx.fillRect(px, py, 1, 1);
+        // Always paint the current color
+        ctx.fillStyle = currentColor;
+        ctx.fillRect(px, py, 1, 1);
 
+        if (maskColor === currentColor) {
+          // Correct color in correct region
           if (!paintedInside.has(key)) {
             paintedInside.add(key);
             if (regions[maskColor]) {
               regions[maskColor].painted += 1;
             }
           }
-        } else if (maskColor === "__OUTSIDE__") {
-          // Painting outside the lines
-          ctx.fillStyle = currentColor;
-          ctx.fillRect(px, py, 1, 1);
+        } else if (maskColor === "__OUTSIDE__" || (maskColor !== "__IGNORED__" && maskColor !== currentColor)) {
+          // Painting outside the lines OR wrong color in a region
           if (!paintedOutside.has(key)) paintedOutside.add(key);
         }
-        // If maskColor is a different region color, we could count it as outside too
-        // For now, just don't paint it
       }
     }
   }
