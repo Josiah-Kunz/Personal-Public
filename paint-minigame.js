@@ -668,37 +668,112 @@ function paintingGame(game, config) {
     gameContainer.appendChild(uiContainer);
   }
 
-  // Render palette buttons
+  // Render palette as swatch dropdown
   function renderPalette() {
     var holder = document.getElementById("paletteHolder");
     if (!holder) return;
     holder.innerHTML = "";
     if (!palette || palette.length === 0) return;
     
+    var dropdownWrapper = document.createElement("div");
+    Object.assign(dropdownWrapper.style, {
+      position: "relative",
+      display: "inline-block"
+    });
+    
+    // Current color button
+    var currentBtn = document.createElement("button");
+    currentBtn.id = "currentColorBtn";
+    Object.assign(currentBtn.style, {
+      width: "32px",
+      height: "32px",
+      border: "2px solid black",
+      borderRadius: "4px",
+      background: palette[0],
+      cursor: "pointer",
+      padding: "0",
+      position: "relative"
+    });
+    
+    // Dropdown arrow indicator
+    var arrow = document.createElement("div");
+    Object.assign(arrow.style, {
+      position: "absolute",
+      bottom: "2px",
+      right: "2px",
+      width: "0",
+      height: "0",
+      borderLeft: "3px solid transparent",
+      borderRight: "3px solid transparent",
+      borderTop: "4px solid black",
+      pointerEvents: "none"
+    });
+    currentBtn.appendChild(arrow);
+    
+    // Swatch panel
+    var swatchPanel = document.createElement("div");
+    swatchPanel.id = "swatchPanel";
+    Object.assign(swatchPanel.style, {
+      position: "absolute",
+      bottom: "36px",
+      left: "0",
+      backgroundColor: "white",
+      border: "2px solid black",
+      borderRadius: "4px",
+      padding: "4px",
+      display: "none",
+      gap: "4px",
+      flexWrap: "wrap",
+      width: "fit-content",
+      maxWidth: "140px",
+      zIndex: "3000"
+    });
+    
+    // Create color swatches
     for (var i = 0; i < palette.length; i++) {
-      (function (hex) {
-        var btn = document.createElement("button");
-        btn.title = hex;
-        btn.style.width = "26px";
-        btn.style.height = "26px";
-        btn.style.border = "2px solid black";
-        btn.style.background = hex;
-        btn.style.cursor = "pointer";
-        btn.style.padding = "0";
-        btn.style.outline = "none";
-        btn.addEventListener("click", function () {
-          currentColor = hex;
-          var children = holder.children;
-          for (var k = 0; k < children.length; k++) children[k].style.boxShadow = "";
-          btn.style.boxShadow = "0 0 0 2px rgba(0,0,0,0.25) inset";
+      (function(hex) {
+        var swatch = document.createElement("button");
+        Object.assign(swatch.style, {
+          width: "24px",
+          height: "24px",
+          border: "2px solid black",
+          borderRadius: "3px",
+          background: hex,
+          cursor: "pointer",
+          padding: "0",
+          margin: "0"
         });
-        holder.appendChild(btn);
-        if (i === 0) {
+        
+        swatch.addEventListener("click", function() {
           currentColor = hex;
-          setTimeout(function () { btn.style.boxShadow = "0 0 0 2px rgba(0,0,0,0.25) inset"; }, 0);
-        }
+          currentBtn.style.background = hex;
+          swatchPanel.style.display = "none";
+        });
+        
+        swatchPanel.appendChild(swatch);
       })(palette[i]);
     }
+    
+    // Toggle dropdown
+    var isOpen = false;
+    currentBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      isOpen = !isOpen;
+      swatchPanel.style.display = isOpen ? "flex" : "none";
+    });
+    
+    // Close when clicking outside
+    document.addEventListener("click", function() {
+      isOpen = false;
+      swatchPanel.style.display = "none";
+    });
+    
+    dropdownWrapper.appendChild(currentBtn);
+    dropdownWrapper.appendChild(swatchPanel);
+    holder.appendChild(dropdownWrapper);
+    
+    // Set initial color
+    currentColor = palette[0];
   }
 
   // API functions
