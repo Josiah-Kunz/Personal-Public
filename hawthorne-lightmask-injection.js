@@ -60,7 +60,7 @@ game => {
 // potential scope and "hoisting" problems, but probably not in this case since
 // injected scripts are meant to be self-contained.
 
-let targetPatterns = ["overlay_", "_overlay", "vignette", "_waterfall_"];
+let targetPatterns = ["overlay_", "_overlay", "vignette"];
 let cutoutPatterns = ["lm_", "-cutout"];
 let forePatterns = ["fore+_", "banner_", "_banner"];
 let lmContainerLayer = "overlay";
