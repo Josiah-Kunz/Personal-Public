@@ -248,6 +248,12 @@ function startSwimming(monEntry, difficulty){
 		/* Update the fish position */
 		updateVelocity(npc, difficulty, true, dt);
 		
+		/* Update the ring to catch it */
+		updateRingPosition(dt);
+		
+		/* Update everything's position */
+		game.camera.moveGluedObjects();
+		
 		/* Continue the loop */
 		requestAnimationFrame(swimLoop);
 	};
@@ -275,8 +281,6 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 		npc.offset.glue.x += 2 * npc.velocity * dt;
 	}
 	
-	/* Update the actual sprite */
-	//game.camera.moveGluedObjects();
 }
 
 /* Returns the swim or struggle speed in pixels per second based on how hard the fish is to catch */
@@ -295,6 +299,21 @@ function getSpeed(difficulty, isSwimming){
 		default:
 			return isSwimming ? 1 : 1;
 	}
+}
+
+function updateRingPosition(){
+	
+	/* Get inputs */
+	if (game.input.keyPressed("left")){
+		game.oceanFishing.hookring.offset.glue.x -= RING_SPEED * dt;
+	}
+	if (game.input.keyPressed("right")){
+		game.oceanFishing.hookring.offset.glue.x += RING_SPEED * dt;
+	}
+	
+	/* Respect bounds */
+	game.oceanFishing.hookring.offset.glue.x = Math.min(RING_EXTENT, Math.max(-RING_EXTENT, game.oceanFishing.hookring.offset.glue.x));
+	
 }
 
 function createBackground(target){
