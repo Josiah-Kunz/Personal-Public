@@ -60,7 +60,7 @@ if (!game.oceanFishing){
 const RING_EXTENT = 84;
 
 /* How far away the npc swims */
-SWIM_EXTENT = 80;
+SWIM_EXTENT = 86;
 
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
@@ -276,7 +276,7 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 	}
 	
 	/* Update the actual sprite */
-	game.camera.moveGluedObjects();
+	//game.camera.moveGluedObjects();
 }
 
 /* Returns the swim or struggle speed in pixels per second based on how hard the fish is to catch */
