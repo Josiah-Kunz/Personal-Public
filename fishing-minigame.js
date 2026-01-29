@@ -207,6 +207,7 @@ function startEncounter(target, monEntry, difficulty, cb = null){
 				monEntry.npc.sprite.alpha = 1;
 				game.objects.ids["hookedbg"].sprite.alpha = 1;
 				game.objects.ids["hookring"].sprite.alpha = 1;
+				startSwimming(monEntry, difficulty);
 			} else {
 				console.warn("No monEntry NPC!");
 				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
