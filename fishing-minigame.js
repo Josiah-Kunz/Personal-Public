@@ -197,11 +197,11 @@ function tryHookFish(target, encounter, cb = null){
 	/* Mon */
 	} else if (encounter.uid.startsWith("00")) {
 		game.textbox.say(`Fished up ${aOrAn(encounter.name) + " " + encounter.name}!`, () => {
-			showBackground(target);
 			game.oceanFishing.hookeduid = encounter.uid;
 			if (!encounter.npc) encounter.npc = game.objects.ids[getUID(encounter)];
 			if (encounter.npc?.sprite){
 				encounter.npc.sprite.alpha = 1;
+				game.objects.ids["hookedbg"].sprite.alpha = 1;
 			} else {
 				console.log("No encounter NPC!");
 			}
@@ -298,7 +298,8 @@ function glueSprite(target, obj, cb){
 /* Cleans up sprites and unfreezes the player */
 function stopFishing(target){
 	game.oceanFishing.fishingSprite.remove();
-	if (game.oceanFishing.background) game.oceanFishing.background.remove();
+	game.oceanFishing.background = game.objects.ids["hookedbg"];
+	if (game.oceanFishing.background) game.oceanFishing.background.sprite.alpha = 0;
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			if (monEntry.npc?.sprite) monEntry.npc.sprite.alpha = 0;
