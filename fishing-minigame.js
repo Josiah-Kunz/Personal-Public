@@ -59,9 +59,12 @@ if (!game.oceanFishing){
 /* The half-width of the ring's travel */
 const RING_EXTENT = 84;
 
+/* How far away the npc swims */
+SWIM_EXTENT = 80;
+
 /* Function to select a mon to hook */
-/* Returns a structure with {difficulty: string, name: string, uid: string} */
-function getRandomEncounter() {
+/* Returns {monEntry, difficulty} */
+function getRandomMonEntry() {
 	
 	/* Percentages probably add to 100%, but can't be too sure */
 	let roll = Math.random();
@@ -79,11 +82,7 @@ function getRandomEncounter() {
 			
 			/* Pick random mon from this tier */
 			const randomMon = encounter.mons[Math.floor(Math.random() * encounter.mons.length)];
-			return {
-				difficulty: encounter.difficulty,
-				name: randomMon.name,
-				uid: randomMon.uid
-			};
+			return {monEntry: randomMon, difficulty: encounter.difficulty};
 		}
 	}
 	
@@ -139,16 +138,18 @@ function startFishing(target, tiles=2){
 		setTimeout(() => {
 			
 			/* Fish up something */
-			const encounter = getRandomEncounter();
+			const encounterInfo = getRandomMonEntry();
+			const monEntry = encounterInfo.monEntry;
+			const difficulty = encounterInfo.difficulty;
 			
 			/* Got nothing */
-			if (encounter.difficulty === "Nothing" || encounter.uid === ""){
+			if (difficulty === "Nothing" || monEntry.uid === ""){
 				game.textbox.say("Not even a nibble...", () => stopFishing(target));
 			
 			/* Mon/item */
 			} else {
 				playSpotAnimation(target, () => {
-					startEncounter(target, encounter);
+					startEncounter(target, monEntry, difficulty);
 				});
 			}
 		}, waitTime);
@@ -190,24 +191,24 @@ function playSpotAnimation(target, cb = null){
 }
 
 /* Selects an encounter and executes */
-function startEncounter(target, encounter, cb = null){
+function startEncounter(target, monEntry, difficulty, cb = null){
 	
 	/* Item */
-	if (encounter.uid.startsWith("06")) {
-		game.trigger(`item=${encounter.uid}`);
+	if (monEntry.uid.startsWith("06")) {
+		game.trigger(`item=${monEntry.uid}`);
 		stopFishing(target);
 	
 	/* Mon */
-	} else if (encounter.uid.startsWith("00")) {
-		game.textbox.say(`Fished up ${aOrAn(encounter.name) + " " + encounter.name}!`, () => {
-			game.oceanFishing.hookeduid = encounter.uid;
-			if (!encounter.npc) encounter.npc = game.objects.ids[getUID(encounter)];
-			if (encounter.npc?.sprite){
-				encounter.npc.sprite.alpha = 1;
+	} else if (monEntry.uid.startsWith("00")) {
+		game.textbox.say(`Fished up ${aOrAn(monEntry.name) + " " + monEntry.name}!`, () => {
+			game.oceanFishing.hookeduid = monEntry.uid;
+			if (!monEntry.npc) monEntry.npc = game.objects.ids[getUID(monEntry)];
+			if (monEntry.npc?.sprite){
+				monEntry.npc.sprite.alpha = 1;
 				game.objects.ids["hookedbg"].sprite.alpha = 1;
 				game.objects.ids["hookring"].sprite.alpha = 1;
 			} else {
-				console.warn("No encounter NPC!");
+				console.warn("No monEntry NPC!");
 				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
 			}
 			/*stopFishing(target);*/
@@ -215,8 +216,78 @@ function startEncounter(target, encounter, cb = null){
 	
 	/* Nothing or unsupported type */
 	} else {
-		console.warn("Encounter not supported:", encounter);
+		console.warn("monEntry not supported:", monEntry);
 		game.textbox.say("Not even a nibble...", () => stopFishing(target));
+	}
+}
+
+/* Makes the npc associated with the monEntry swim back and forth until the action key is pressed */
+function startSwimming(monEntry, difficulty){
+    
+    /* Establish the thing that's moving (glued to the screen) */
+    let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
+    if (!npc) return;
+    
+	/* Cache time */
+    let lastTime = Date.now();
+    
+    const swimLoop = () => {
+        /* Check for action key press to stop */
+        if (game.input.keyPressed("action")) {
+            return;
+        }
+        
+        /* Calculate delta time */
+        const now = Date.now();
+        const dt = (now - lastTime) / 1000; // Convert to seconds
+        lastTime = now;
+        
+        /* Update the fish position */
+        updateVelocity(npc, difficulty, true, dt);
+        
+        /* Continue the loop */
+        requestAnimationFrame(swimLoop);
+    };
+    
+    /* Start the loop */
+    requestAnimationFrame(swimLoop);
+}
+
+function updateVelocity(npc, difficulty, isSwimming, dt){
+    
+    const speed = getSpeed(difficulty, isSwimming);
+    
+    /* Not set */
+    if (!npc.velocity){
+        npc.velocity = npc.offset.glue.x > 0 ? -speed : speed;
+        return;
+    }
+    
+    /* Take a step in the current direction */
+    npc.offset.glue.x += npc.velocity * dt;
+    
+    /* Prevent overstepping */
+    if (npc.offset.glue.x > SWIM_EXTENT || npc.offset.glue.x < -SWIM_EXTENT){
+        npc.velocity *= -1;
+        npc.offset.glue.x += 2 * npc.velocity * dt;
+    }
+}
+
+/* Returns the swim or struggle speed in pixels per second based on how hard the fish is to catch */
+function getSpeed(difficulty, isSwimming){
+	switch(difficulty){
+		case "Easy":
+			return isSwimming ? 30 : 30;
+		case "Medium":
+			return isSwimming ? 50 : 70;
+		case "Hard":
+			return isSwimming ? 70 : 80;
+		case "Expert":
+			return isSwimming ? 80 : 100;
+		case "Super Expert":
+			return isSwimming ? 90 : 120;
+		default:
+			return isSwimming ? 1 : 1;
 	}
 }
 
@@ -333,6 +404,7 @@ function stopFishing(target){
 	game.trigger("with&unfreeze&icon&fish&mapvar[fishing]=0");
 }
 
+/* Gets the standardized UID like you'd use for an NPC (not the mon's UID) */
 function getUID(monEntry){
 	return "hookedmon_" + monEntry.name;
 }
