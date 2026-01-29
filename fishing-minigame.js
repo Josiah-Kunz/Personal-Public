@@ -191,10 +191,8 @@ function tryHookFish(target, encounter, cb = null){
 	
 	/* Item */
 	if (encounter.uid.startsWith("06")) {
-		game.textbox.say(`Fished up ${aOrAn(encounter.name) + " " + encounter.name}!`, () => {
-			game.trigger(`item=${encounter.uid}`);
-			stopFishing(target);
-		});
+		game.trigger(`item=${encounter.uid}`);
+		stopFishing(target);
 	
 	/* Mon */
 	} else if (encounter.uid.startsWith("00")) {
@@ -203,9 +201,7 @@ function tryHookFish(target, encounter, cb = null){
 			game.oceanFishing.hookeduid = encounter.uid;
 			if (!encounter.npc) encounter.npc = game.objects.ids[getUID(encounter)];
 			if (encounter.npc?.sprite){
-				game.objects.sort("hud");
 				encounter.npc.sprite.alpha = 1;
-				game.trigger("update");
 			} else {
 				console.log("No encounter NPC!");
 			}
@@ -283,7 +279,7 @@ function glueSprite(target, obj, cb){
 				x: 0,
 				y: -200 - obj.sprite._texture.baseTexture.height/2
 			};
-			console.log(`glue height/2 = ${obj.sprite._texture.baseTexture.height/2}`);
+			console.log(`glue height/2 = ${obj.sprite._texture.baseTexture.height}`);
 			game.camera.glueObject(obj);
 			
 			if (cb) cb();
@@ -334,6 +330,8 @@ if (!game.oceanFishing.initialized){
 			});
 		}
 	}
+	game.objects.sort("hud");
+	game.trigger("update");
 }
 
 /* Refreshing the map re-adds the relevant sprites */
