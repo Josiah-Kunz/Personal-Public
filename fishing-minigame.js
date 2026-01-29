@@ -306,7 +306,7 @@ function getSpeed(difficulty, isSwimming){
 	}
 }
 
-function updateRingPosition(){
+function updateRingPosition(dt){
 	
 	/* Get inputs */
 	if (game.input.keyHeld("left")){
