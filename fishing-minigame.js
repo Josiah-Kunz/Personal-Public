@@ -277,7 +277,10 @@ function createHookRing(target){
 	
 	game.oceanFishing.hookring.sprite.alpha = 0;
 	
-	glueSprite(target, game.oceanFishing.hookring);
+	glueSprite(target, game.oceanFishing.hookring, 2, () => {
+		game.oceanFishing.hookring.offset.glue.x = -game.oceanFishing.background.sprite.width/2;
+		console.log(`BG width: ${game.oceanFishing.background.sprite.width}`);
+	});
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
