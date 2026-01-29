@@ -357,7 +357,7 @@ function createHookRing(target){
 	
 	game.oceanFishing.hookring.sprite.alpha = 0;
 	
-	glueSprite(target, game.oceanFishing.hookring, RING_EXTENT, -2);
+	glueSprite(target, game.oceanFishing.hookring, 0, -2);
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
@@ -454,10 +454,10 @@ for (let entry of game.oceanFishing.encounters){
 if (game.oceanFishing?.background){
 	game.oceanFishing.background.uid = "hookedbg";
 	game.oceanFishing.background.addToMap();
-	game.oceanFishing.background.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 0 : 1);
+	game.oceanFishing.background.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 1 : 0);
 }
 if (game.oceanFishing?.hookring){
 	game.oceanFishing.hookring.uid = "hookring";
 	game.oceanFishing.hookring.addToMap();
-	game.oceanFishing.hookring.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 0 : 1);
+	game.oceanFishing.hookring.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 1 : 0);
 }
