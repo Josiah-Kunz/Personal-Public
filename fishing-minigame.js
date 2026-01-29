@@ -355,6 +355,7 @@ if (!game.oceanFishing.initialized){
 			});
 		}
 	}
+	createHookRing(game.player);
 	game.objects.sort("hud");
 	game.trigger("update");
 }
@@ -368,8 +369,12 @@ for (let entry of game.oceanFishing.encounters){
 		}
 	}
 }
-/* Refreshing also adds the background */
+/* Refreshing also adds the background and ring */
 if (game.oceanFishing?.background){
 	game.oceanFishing.background.uid = "hookedbg";
 	game.oceanFishing.background.addToMap();
+}
+if (game.oceanFishing?.hookring){
+	game.oceanFishing.hookring.uid = "hookring";
+	game.oceanFishing.hookring.addToMap();
 }
