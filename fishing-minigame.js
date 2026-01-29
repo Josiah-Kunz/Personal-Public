@@ -223,54 +223,59 @@ function startEncounter(target, monEntry, difficulty, cb = null){
 
 /* Makes the npc associated with the monEntry swim back and forth until the action key is pressed */
 function startSwimming(monEntry, difficulty){
-    
-    /* Establish the thing that's moving (glued to the screen) */
-    let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
-    if (!npc) return;
-    
+
+	/* Establish the thing that's moving (glued to the screen) */
+	let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
+	if (!npc) return;
+
 	/* Cache time */
-    let lastTime = Date.now();
-    
-    const swimLoop = () => {
-        /* Check for action key press to stop */
-        if (game.input.keyPressed("action")) {
-            return;
-        }
-        
-        /* Calculate delta time */
-        const now = Date.now();
-        const dt = (now - lastTime) / 1000; // Convert to seconds
-        lastTime = now;
-        
-        /* Update the fish position */
-        updateVelocity(npc, difficulty, true, dt);
-        
-        /* Continue the loop */
-        requestAnimationFrame(swimLoop);
-    };
-    
-    /* Start the loop */
-    requestAnimationFrame(swimLoop);
+	let lastTime = Date.now();
+
+	const swimLoop = () => {
+		/* Check for action key press to stop */
+		if (game.input.keyPressed("action")) {
+			console.log("Stopped!");
+			return;
+		}
+		
+		/* Calculate delta time */
+		const now = Date.now();
+		const dt = (now - lastTime) / 1000; // Convert to seconds
+		lastTime = now;
+		console.log("Swimmin!");
+		
+		/* Update the fish position */
+		updateVelocity(npc, difficulty, true, dt);
+		
+		/* Continue the loop */
+		requestAnimationFrame(swimLoop);
+	};
+
+	/* Start the loop */
+	requestAnimationFrame(swimLoop);
 }
 
 function updateVelocity(npc, difficulty, isSwimming, dt){
-    
-    const speed = getSpeed(difficulty, isSwimming);
-    
-    /* Not set */
-    if (!npc.velocity){
-        npc.velocity = npc.offset.glue.x > 0 ? -speed : speed;
-        return;
-    }
-    
-    /* Take a step in the current direction */
-    npc.offset.glue.x += npc.velocity * dt;
-    
-    /* Prevent overstepping */
-    if (npc.offset.glue.x > SWIM_EXTENT || npc.offset.glue.x < -SWIM_EXTENT){
-        npc.velocity *= -1;
-        npc.offset.glue.x += 2 * npc.velocity * dt;
-    }
+
+	const speed = getSpeed(difficulty, isSwimming);
+
+	/* Not set */
+	if (!npc.velocity){
+		npc.velocity = npc.offset.glue.x > 0 ? -speed : speed;
+		return;
+	}
+
+	/* Take a step in the current direction */
+	npc.offset.glue.x += npc.velocity * dt;
+
+	/* Prevent overstepping */
+	if (npc.offset.glue.x > SWIM_EXTENT || npc.offset.glue.x < -SWIM_EXTENT){
+		npc.velocity *= -1;
+		npc.offset.glue.x += 2 * npc.velocity * dt;
+	}
+	
+	/* Update the actual sprite */
+	game.camera.moveGluedObjects();
 }
 
 /* Returns the swim or struggle speed in pixels per second based on how hard the fish is to catch */
