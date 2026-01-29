@@ -202,6 +202,7 @@ function startEncounter(target, encounter, cb = null){
 			if (encounter.npc?.sprite){
 				encounter.npc.sprite.alpha = 1;
 				game.objects.ids["hookedbg"].sprite.alpha = 1;
+				game.objects.ids["hookring"].sprite.alpha = 1;
 			} else {
 				console.warn("No encounter NPC!");
 				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
@@ -258,6 +259,25 @@ function createHookedmon(target, monEntry, cb = null){
 	});
 	
 	return hookedmon;
+}
+
+function createHookRing(target){
+	
+	game.oceanFishing.hookring = game.objects.add({
+		type: "sprite",
+		uid: "hookring",
+		texture: window.CDN_BASE + "images/sprites/186753/fm-ring",
+		x: 0,
+		y: 0,
+		solid: false,
+		depth: 4000,
+		map: game.map.current,
+		addToMap: true
+	});
+	
+	game.oceanFishing.hookring.sprite.alpha = 0;
+	
+	glueSprite(target, game.oceanFishing.background);
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
