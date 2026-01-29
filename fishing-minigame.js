@@ -59,8 +59,11 @@ if (!game.oceanFishing){
 /* The half-width of the ring's travel */
 const RING_EXTENT = 84;
 
+/* How fast the ring moves in pixels per second */
+const RING_SPEED = 100; 
+
 /* How far away the npc swims */
-SWIM_EXTENT = 86;
+const SWIM_EXTENT = 86;
 
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
