@@ -446,6 +446,7 @@ for (let entry of game.oceanFishing.encounters){
 		if (monEntry.npc){
 			monEntry.npc.uid = getUID(monEntry);
 			monEntry.npc.addToMap();
+			monEntry.npc.sprite.alpha = (game.oceanFishing.hookeduid === monEntry.uid ? 1 : 0)
 		}
 	}
 }
@@ -453,8 +454,10 @@ for (let entry of game.oceanFishing.encounters){
 if (game.oceanFishing?.background){
 	game.oceanFishing.background.uid = "hookedbg";
 	game.oceanFishing.background.addToMap();
+	game.oceanFishing.background.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 0 : 1);
 }
 if (game.oceanFishing?.hookring){
 	game.oceanFishing.hookring.uid = "hookring";
 	game.oceanFishing.hookring.addToMap();
+	game.oceanFishing.hookring.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 0 : 1);
 }
