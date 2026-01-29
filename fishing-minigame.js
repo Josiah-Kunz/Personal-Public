@@ -203,6 +203,8 @@ function startEncounter(target, encounter, cb = null){
 				encounter.npc.sprite.alpha = 1;
 				game.objects.ids["hookedbg"].sprite.alpha = 1;
 				game.objects.ids["hookring"].sprite.alpha = 1;
+				game.objects.ids["hookring"].offset.glue.x = -game.objects.ids["hookedbg"].sprite.width/2;
+				console.log(`BG width: ${game.objects.ids["hookedbg"].sprite.width}`);
 			} else {
 				console.warn("No encounter NPC!");
 				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
@@ -277,10 +279,7 @@ function createHookRing(target){
 	
 	game.oceanFishing.hookring.sprite.alpha = 0;
 	
-	glueSprite(target, game.oceanFishing.hookring, 2, () => {
-		game.oceanFishing.hookring.offset.glue.x = -game.oceanFishing.background.sprite.width/2;
-		console.log(`BG width: ${game.oceanFishing.background.sprite.width}`);
-	});
+	glueSprite(target, game.oceanFishing.hookring, -2);
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
