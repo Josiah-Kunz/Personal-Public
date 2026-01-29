@@ -145,7 +145,7 @@ function startFishing(target, tiles=2){
 			/* Mon/item */
 			} else {
 				playSpotAnimation(target, () => {
-					tryHookFish(target, encounter);
+					startEncounter(target, encounter);
 				});
 			}
 		}, waitTime);
@@ -186,8 +186,8 @@ function playSpotAnimation(target, cb = null){
 	game.sound.play("trainerspot.ogg");
 }
 
-/* Starts the minigame to hook the fish */
-function tryHookFish(target, encounter, cb = null){
+/* Selects an encounter and executes */
+function startEncounter(target, encounter, cb = null){
 	
 	/* Item */
 	if (encounter.uid.startsWith("06")) {
@@ -203,7 +203,8 @@ function tryHookFish(target, encounter, cb = null){
 				encounter.npc.sprite.alpha = 1;
 				game.objects.ids["hookedbg"].sprite.alpha = 1;
 			} else {
-				console.log("No encounter NPC!");
+				console.warn("No encounter NPC!");
+				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
 			}
 			/*stopFishing(target);*/
 		});
