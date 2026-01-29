@@ -57,7 +57,7 @@ if (!game.oceanFishing){
 }
 
 /* The half-width of the ring's travel */
-const RING_EXTENT = 113;
+const RING_EXTENT = 84;
 
 /* Function to select a mon to hook */
 /* Returns a structure with {difficulty: string, name: string, uid: string} */
@@ -305,7 +305,6 @@ function glueSprite(target, obj, xoffset=0, yoffset=0, cb=null){
 				x: 0 - xoffset,
 				y: -200 - yoffset
 			};
-			console.log(`glue height/2 = ${obj.sprite._texture.baseTexture.height}`);
 			game.camera.glueObject(obj);
 			
 			if (cb) cb();
