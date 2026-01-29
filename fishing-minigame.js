@@ -233,6 +233,10 @@ function startSwimming(monEntry, difficulty){
 	let lastTime = Date.now();
 
 	const swimLoop = () => {
+		
+		/* Check all inputs */
+		game.input.update();
+		
 		/* Check for action key press to stop */
 		if (game.input.keyPressed("action")) {
 			console.log("Stopped!");
@@ -243,7 +247,6 @@ function startSwimming(monEntry, difficulty){
 		const now = Date.now();
 		const dt = (now - lastTime) / 1000; // Convert to seconds
 		lastTime = now;
-		console.log("Swimmin!");
 		
 		/* Update the fish position */
 		updateVelocity(npc, difficulty, true, dt);
