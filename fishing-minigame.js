@@ -215,7 +215,7 @@ function tryHookFish(target, encounter, cb = null){
 	}
 }
 
-function showBackground(target){
+function createBackground(target){
 	/* Create the sprite */
 	game.oceanFishing.background = game.objects.add({
 		type: "sprite",
@@ -228,6 +228,8 @@ function showBackground(target){
 		map: game.map.current,
 		addToMap: true
 	});
+	
+	game.oceanFishing.background.sprite.alpha = 0;
 	
 	glueSprite(target, game.oceanFishing.background);
 }
@@ -324,6 +326,7 @@ if (game.map.getVar("fishing")===1 && game.oceanFishing){
 /* This is done here after all the functions are defined */
 if (!game.oceanFishing.initialized){
 	game.oceanFishing.initialized = true;
+	createBackground(game.player);
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			monEntry.npc = createHookedmon(game.player, monEntry, (hookedmon) => {
