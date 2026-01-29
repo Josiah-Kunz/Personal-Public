@@ -238,7 +238,7 @@ function startSwimming(monEntry, difficulty){
 		game.input.update();
 		
 		/* Check for action key press to stop */
-		if (game.input.keyPressed("action")) {
+		if (game.input.keyHeld("action")) {
 			console.log("Stopped!");
 			return;
 		}
@@ -307,10 +307,10 @@ function getSpeed(difficulty, isSwimming){
 function updateRingPosition(){
 	
 	/* Get inputs */
-	if (game.input.keyPressed("left")){
+	if (game.input.keyHeld("left")){
 		game.oceanFishing.hookring.offset.glue.x -= RING_SPEED * dt;
 	}
-	if (game.input.keyPressed("right")){
+	if (game.input.keyHeld("right")){
 		game.oceanFishing.hookring.offset.glue.x += RING_SPEED * dt;
 	}
 	
