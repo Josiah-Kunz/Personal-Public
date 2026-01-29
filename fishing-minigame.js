@@ -281,8 +281,9 @@ function glueSprite(target, obj, cb){
 			obj.offset.glue = {
 				active: true,
 				x: 0,
-				y: -200 - obj.sprite.height/2
+				y: -200 - obj.sprite._texture.baseTexture.height/2
 			};
+			console.log(`glue height/2 = ${obj.sprite._texture.baseTexture.height/2}`);
 			game.camera.glueObject(obj);
 			
 			if (cb) cb();
