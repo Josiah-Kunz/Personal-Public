@@ -224,21 +224,20 @@ function startEncounter(target, monEntry, difficulty, cb = null){
 
 /* Makes the npc associated with the monEntry swim back and forth until the action key is pressed */
 function startSwimming(monEntry, difficulty){
-
+	
 	/* Establish the thing that's moving (glued to the screen) */
 	let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
 	if (!npc) return;
-
+	
 	/* Cache time */
 	let lastTime = Date.now();
-
+	const startTime = Date.now();
+	const gracePeriod = 500; // 0.5 seconds in milliseconds
+	
 	const swimLoop = () => {
 		
-		/* Check all inputs */
-		game.input.update();
-		
-		/* Check for action key press to stop */
-		if (game.input.keyHeld("action")) {
+		/* Check for action key press to stop (only after grace period) */
+		if (Date.now() - startTime > gracePeriod && game.input.keyHeld("action")) {
 			console.log("Stopped!");
 			return;
 		}
@@ -260,7 +259,7 @@ function startSwimming(monEntry, difficulty){
 		/* Continue the loop */
 		requestAnimationFrame(swimLoop);
 	};
-
+	
 	/* Start the loop */
 	requestAnimationFrame(swimLoop);
 }
