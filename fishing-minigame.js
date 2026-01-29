@@ -277,7 +277,7 @@ function createHookRing(target){
 	
 	game.oceanFishing.hookring.sprite.alpha = 0;
 	
-	glueSprite(target, game.oceanFishing.background);
+	glueSprite(target, game.oceanFishing.hookring);
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
