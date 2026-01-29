@@ -251,7 +251,7 @@ function createHookedmon(target, monEntry, cb = null){
 		addToMap: true
 	});
 	
-	glueSprite(target, hookedmon, () => {
+	glueSprite(target, hookedmon, 3, () => {
 		game.trigger("with="+hookedmon.uid+"&animate=100");
 		if (cb) cb(hookedmon);
 	});
@@ -260,7 +260,7 @@ function createHookedmon(target, monEntry, cb = null){
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
-function glueSprite(target, obj, cb){
+function glueSprite(target, obj, yoffset=0, cb=null){
 	let attemptTime = 0;
 	const maxTime = 1000; /* 1 second */
 	let lastTime = Date.now();
@@ -279,7 +279,7 @@ function glueSprite(target, obj, cb){
 			obj.offset.glue = {
 				active: true,
 				x: 0,
-				y: -200 - obj.sprite._texture.baseTexture.height/2
+				y: -200 - yoffset
 			};
 			console.log(`glue height/2 = ${obj.sprite._texture.baseTexture.height}`);
 			game.camera.glueObject(obj);
