@@ -56,6 +56,9 @@ if (!game.oceanFishing){
 	];
 }
 
+/* The half-width of the ring's travel */
+const RING_EXTENT = 113;
+
 /* Function to select a mon to hook */
 /* Returns a structure with {difficulty: string, name: string, uid: string} */
 function getRandomEncounter() {
@@ -203,8 +206,6 @@ function startEncounter(target, encounter, cb = null){
 				encounter.npc.sprite.alpha = 1;
 				game.objects.ids["hookedbg"].sprite.alpha = 1;
 				game.objects.ids["hookring"].sprite.alpha = 1;
-				game.objects.ids["hookring"].offset.glue.x = -game.objects.ids["hookedbg"].sprite.width/2;
-				console.log(`BG width: ${game.objects.ids["hookedbg"].sprite.width}`);
 			} else {
 				console.warn("No encounter NPC!");
 				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
@@ -255,7 +256,7 @@ function createHookedmon(target, monEntry, cb = null){
 		addToMap: true
 	});
 	
-	glueSprite(target, hookedmon, 3, () => {
+	glueSprite(target, hookedmon, 0, 3, () => {
 		game.trigger("with="+hookedmon.uid+"&animate=100");
 		if (cb) cb(hookedmon);
 	});
@@ -279,11 +280,11 @@ function createHookRing(target){
 	
 	game.oceanFishing.hookring.sprite.alpha = 0;
 	
-	glueSprite(target, game.oceanFishing.hookring, -2);
+	glueSprite(target, game.oceanFishing.hookring, RING_EXTENT, -2);
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
-function glueSprite(target, obj, yoffset=0, cb=null){
+function glueSprite(target, obj, xoffset=0, yoffset=0, cb=null){
 	let attemptTime = 0;
 	const maxTime = 1000; /* 1 second */
 	let lastTime = Date.now();
@@ -301,7 +302,7 @@ function glueSprite(target, obj, yoffset=0, cb=null){
 			
 			obj.offset.glue = {
 				active: true,
-				x: 0,
+				x: 0 - xoffset,
 				y: -200 - yoffset
 			};
 			console.log(`glue height/2 = ${obj.sprite._texture.baseTexture.height}`);
