@@ -499,6 +499,7 @@ function stopFishing(target){
 			if (monEntry.npc?.sprite) disappear(monEntry.npc);
 		}
 	}
+	game.camera.moveGluedObjects();
 	game.trigger("with&unfreeze&icon&fish&mapvar[fishing]=0");
 }
 
