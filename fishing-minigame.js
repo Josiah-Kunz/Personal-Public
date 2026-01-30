@@ -232,6 +232,9 @@ function startSwimming(monEntry, difficulty){
 	let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
 	if (!npc) return;
 	
+	/* Position npc all the way to the left */
+	setNPCPos(npc, -SWIM_EXTENT);
+	
 	/* Cache time */
 	let lastTime = Date.now();
 	const startTime = Date.now();
@@ -270,22 +273,36 @@ function startSwimming(monEntry, difficulty){
 function updateVelocity(npc, difficulty, isSwimming, dt){
 
 	const speed = getSpeed(difficulty, isSwimming);
+	const x0 = getNPCPos(npc);
 
 	/* Not set */
 	if (!npc.velocity){
-		npc.velocity = npc.offset.glue.x > 0 ? -speed : speed;
+		npc.velocity = x0 > 0 ? -speed : speed;
 		return;
 	}
 
 	/* Take a step in the current direction */
-	npc.offset.glue.x += npc.velocity * dt;
+	setNPCPos(npc, x0 + npc.velocity * dt);
 
 	/* Prevent overstepping */
-	if (npc.offset.glue.x > SWIM_EXTENT || npc.offset.glue.x < -SWIM_EXTENT){
+	const x1 = getNPCPos(npc);
+	if (x1 > SWIM_EXTENT || x1 < -SWIM_EXTENT){
 		npc.velocity *= -1;
-		npc.offset.glue.x += 2 * npc.velocity * dt;
+		setNPCPos(npc, x0 + npc.velocity * dt)
 	}
 	
+}
+
+function setNPCPos(npc, x){
+	npc.offset.glue.x = x;
+}
+
+function changeNPCPos(npc, dx){
+	npc.offset.glue.x += x;
+}
+
+function getNPCPos(npc){
+	return npc.offset.glue.x;
 }
 
 /* Returns the swim or struggle speed in pixels per second based on how hard the fish is to catch */
@@ -309,33 +326,39 @@ function getSpeed(difficulty, isSwimming){
 /* Positions the ring depending on inputs */
 function updateRingPosition(dt){
 	
+	const npc = game.oceanFishing.hookring;
+	
 	/* Get inputs */
 	if (game.input.keyHeld("left")){
-		game.oceanFishing.hookring.offset.glue.x -= RING_SPEED * dt;
+		changeNPCPos(npc, -RING_SPEED * dt);
 	}
 	if (game.input.keyHeld("right")){
-		game.oceanFishing.hookring.offset.glue.x += RING_SPEED * dt;
+		changeNPCPos(npc, RING_SPEED * dt);
 	}
 	
 	/* Respect bounds */
-	game.oceanFishing.hookring.offset.glue.x = Math.min(RING_EXTENT, Math.max(-RING_EXTENT, game.oceanFishing.hookring.offset.glue.x));
+	setNPCPos(npc, Math.min(RING_EXTENT, Math.max(-RING_EXTENT, getNPCPos(npc)));
 	
 }
 
 function checkHookedResult(monEntry){
 	
-	const hookPos = game.oceanFishing.hookring.offset.glue.x;
-	const monPos = monEntry.npc.offset.glue.x;
+	const hookPos = getNPCPos(game.oceanFishing.hookring);
+	const monPos = getNPCPos(monEntry.npc);
 	const posDiff = Math.abs(hookPos - monPos);
 	
 	if (posDiff < 2){
 		console.log("Perfect!");
+		stopFishing(game.player);
 	} else if (posDiff < 10){
 		console.log("Excellent!");
+		stopFishing(game.player);
 	} else if (posdiff < 20){
 		console.log("Good!");
+		stopFishing(game.player);
 	} else if (posDiff < 26) {
 		console.log("Barely!");
+		stopFishing(game.player);
 	} else {
 		game.textbox.say("It got away...", () => stopFishing(game.player));
 	}
@@ -345,9 +368,9 @@ function checkHookedResult(monEntry){
 function getHookCoverage(monEntry){
 	
 	/* Geometry */
-	const hookPos = game.oceanFishing.hookring.offset.glue.x;
+	const hookPos = getNPCPos(game.oceanFishing.hookring);
 	const hookWidth = game.oceanFishing.hookring.sprite.width;
-	const monPos = monEntry.npc.offset.glue.x;
+	const monPos = getNPCPos(monEntry.npc);
 	const monWidth = monEntry.npc.sprite.width;
 	
 	/* Extents */
