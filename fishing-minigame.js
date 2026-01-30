@@ -246,11 +246,11 @@ function startSwimming(monEntry, difficulty){
 	let lastTime = Date.now();
 	let elapsedTime = 0;
 	const startTime = Date.now();
-	const gracePeriod = 500; // 0.5 seconds in milliseconds
+	const gracePeriod = 0.5; // Seconds
 	
 	const swimLoop = () => {
 		
-		elapsedTime = Date.now() - startTime;
+		elapsedTime = (Date.now() - startTime)/1000;
 		
 		/* Check for action key press to stop (only after grace period) */
 		if (elapsedTime > gracePeriod && game.input.keyHeld("action")) {
