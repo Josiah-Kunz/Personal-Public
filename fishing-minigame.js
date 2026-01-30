@@ -65,6 +65,9 @@ const RING_SPEED = 100;
 /* How far away the npc swims */
 const SWIM_EXTENT = 86;
 
+/* When alpha reaches this, the fish goes away */
+const MIN_HOOK_ALPHA = 0.5;
+
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
 function getRandomMonEntry() {
@@ -253,7 +256,7 @@ function startSwimming(monEntry, difficulty){
 		elapsedTime = (Date.now() - startTime)/1000;
 		
 		/* Check for action key press to stop (only after grace period) */
-		if (elapsedTime > gracePeriod && game.input.keyHeld("action")) {
+		if (elapsedTime > gracePeriod && game.input.keyHeld("action") || npc.sprite.alpha < MIN_HOOK_ALPHA) {
 			checkHookedResult(monEntry);
 			return;
 		}
@@ -284,7 +287,7 @@ function getAlphaDuringHook(time){
 	const graceTime = 0.5;
 	const fadeTime = 3;
 	if (time<graceTime) return 1;
-	return -1/fadeTime * (time - graceTime) + 1;
+	return -1/fadeTime * (time - graceTime) + 1 + MIN_HOOK_ALPHA;
 }
 
 function updateVelocity(npc, difficulty, isSwimming, dt){
