@@ -259,9 +259,6 @@ function startSwimming(monEntry, difficulty){
 		/* Update the ring to catch it */
 		updateRingPosition(dt);
 		
-		/* Update everything's position */
-		game.camera.moveGluedObjects();
-		
 		/* Continue the loop */
 		requestAnimationFrame(swimLoop);
 	};
@@ -295,10 +292,12 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 
 function setNPCPos(npc, x){
 	npc.offset.glue.x = x;
+	movedGluedObject(npc);
 }
 
 function changeNPCPos(npc, dx){
 	npc.offset.glue.x += dx;
+	movedGluedObject(npc);
 }
 
 function getNPCPos(npc){
@@ -499,7 +498,6 @@ function stopFishing(target){
 			if (monEntry.npc?.sprite) disappear(monEntry.npc);
 		}
 	}
-	game.camera.moveGluedObjects();
 	game.trigger("with&unfreeze&icon&fish&mapvar[fishing]=0");
 }
 
@@ -510,12 +508,15 @@ function getUID(monEntry){
 
 function disappear(npc){
 	setNPCPos(npc, -5000);
-	//game.trigger("with="+npc.uid+"&opacity=0");
 }
 
 function appear(npc){
 	setNPCPos(npc, 0);
-	//game.trigger("with="+npc.uid+"&opacity=100");
+}
+
+function moveGluedObject(npc){
+	npc.sprite.x = -game.camera.x + (game.width / 2) + npc.offset.glue.x;
+	npc.sprite.y = -game.camera.y + game.height + npc.offset.glue.y;
 }
 
 /* Main execution trigger */
