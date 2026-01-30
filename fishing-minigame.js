@@ -513,12 +513,12 @@ function getUID(monEntry){
 
 function disappear(npc){
 	setNPCPos(npc, -5000);
-	game.trigger("with="+npc.uid+"&opacity=0");
+	//game.trigger("with="+npc.uid+"&opacity=0");
 }
 
 function appear(npc){
 	setNPCPos(npc, 0);
-	game.trigger("with="+npc.uid+"&opacity=100");
+	//game.trigger("with="+npc.uid+"&opacity=100");
 }
 
 /* Main execution trigger */
