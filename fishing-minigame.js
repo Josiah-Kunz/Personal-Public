@@ -207,9 +207,9 @@ function startEncounter(target, monEntry, difficulty, cb = null){
 			game.oceanFishing.hookeduid = monEntry.uid;
 			if (!monEntry.npc) monEntry.npc = game.objects.ids[getUID(monEntry)];
 			if (monEntry.npc?.sprite){
-				monEntry.npc.sprite.alpha = 1;
-				game.objects.ids["hookedbg"].sprite.alpha = 1;
-				game.objects.ids["hookring"].sprite.alpha = 1;
+				appear(monEntry.npc);
+				appear(game.oceanFishing.background);
+				appear(game.oceanFishing.hookring);
 				startSwimming(monEntry, difficulty);
 			} else {
 				console.warn("No monEntry NPC!");
@@ -406,7 +406,7 @@ function createBackground(target){
 		addToMap: true
 	});
 	
-	game.oceanFishing.background.sprite.alpha = 0;
+	disappear(game.oceanFishing.background)
 	
 	glueSprite(target, game.oceanFishing.background);
 }
@@ -450,7 +450,7 @@ function createHookRing(target){
 		addToMap: true
 	});
 	
-	game.oceanFishing.hookring.sprite.alpha = 0;
+	disappear(game.oceanFishing.hookring);
 	
 	glueSprite(target, game.oceanFishing.hookring, 0, -2);
 }
@@ -494,12 +494,13 @@ function glueSprite(target, obj, xoffset=0, yoffset=0, cb=null){
 
 /* Cleans up sprites and unfreezes the player */
 function stopFishing(target){
+	game.oceanFishing.hookeduid = "";
 	game.oceanFishing.fishingSprite.remove();
-	if (game.oceanFishing.background) game.oceanFishing.background.sprite.alpha = 0;
-	if (game.oceanFishing.hookring) game.oceanFishing.hookring.sprite.alpha = 0;
+	if (game.oceanFishing.background) disappear(game.oceanFishing.background)
+	if (game.oceanFishing.hookring) disappear(game.oceanFishing.hookring)
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
-			if (monEntry.npc?.sprite) monEntry.npc.sprite.alpha = 0;
+			if (monEntry.npc?.sprite) disappear(monEntry.npc);
 		}
 	}
 	game.trigger("with&unfreeze&icon&fish&mapvar[fishing]=0");
@@ -508,6 +509,14 @@ function stopFishing(target){
 /* Gets the standardized UID like you'd use for an NPC (not the mon's UID) */
 function getUID(monEntry){
 	return "hookedmon_" + monEntry.name;
+}
+
+function disappear(npc){
+	game.trigger("with="+npc.uid+"&opacity=0");
+}
+
+function appear(npc){
+	game.trigger("with="+npc.uid+"&opacity=100");
 }
 
 /* Main execution trigger */
@@ -526,7 +535,11 @@ if (!game.oceanFishing.initialized){
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			monEntry.npc = createHookedmon(game.player, monEntry, (hookedmon) => {
-				hookedmon.sprite.alpha = (game.oceanFishing.hookeduid === monEntry.uid ? 1 : 0);
+				if (game.oceanFishing.hookeduid === monEntry.uid){
+					appear(hookedmon);
+				} else {
+					disappear(hookedmon);
+				}
 			});
 		}
 	}
@@ -541,7 +554,11 @@ for (let entry of game.oceanFishing.encounters){
 		if (monEntry.npc){
 			monEntry.npc.uid = getUID(monEntry);
 			monEntry.npc.addToMap();
-			monEntry.npc.sprite.alpha = (game.oceanFishing.hookeduid === monEntry.uid ? 1 : 0)
+			if (game.oceanFishing.hookeduid === monEntry.uid){
+				appear(hookedmon);
+			} else {
+				disappear(hookedmon);
+			}
 		}
 	}
 }
@@ -549,10 +566,18 @@ for (let entry of game.oceanFishing.encounters){
 if (game.oceanFishing?.background){
 	game.oceanFishing.background.uid = "hookedbg";
 	game.oceanFishing.background.addToMap();
-	game.oceanFishing.background.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 1 : 0);
+	if (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== ""){
+		appear(game.oceanFishing.background);
+	} else {
+		disappear(game.oceanFishing.background);
+	}
 }
 if (game.oceanFishing?.hookring){
 	game.oceanFishing.hookring.uid = "hookring";
 	game.oceanFishing.hookring.addToMap();
-	game.oceanFishing.hookring.sprite.alpha = (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== "" ? 1 : 0);
+	if (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== ""){
+		appear(game.oceanFishing.hookring);
+	} else {
+		disappear(game.oceanFishing.hookring);
+	}
 }
