@@ -298,7 +298,7 @@ function setNPCPos(npc, x){
 }
 
 function changeNPCPos(npc, dx){
-	npc.offset.glue.x += x;
+	npc.offset.glue.x += dx;
 }
 
 function getNPCPos(npc){
