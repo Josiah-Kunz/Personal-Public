@@ -282,7 +282,7 @@ function startSwimming(monEntry, difficulty){
 
 function getAlphaDuringHook(time){
 	const graceTime = 0.5;
-	const fadeTime = 1;
+	const fadeTime = 3;
 	if (time<graceTime) return 1;
 	return -1/fadeTime * (time - graceTime) + 1;
 }
