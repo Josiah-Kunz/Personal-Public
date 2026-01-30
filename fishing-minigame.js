@@ -57,7 +57,7 @@ if (!game.oceanFishing){
 }
 
 /* The half-width of the ring's travel */
-const RING_EXTENT = 84;
+const RING_EXTENT = 85;
 
 /* How fast the ring moves in pixels per second */
 const RING_SPEED = 100; 
@@ -306,6 +306,7 @@ function getSpeed(difficulty, isSwimming){
 	}
 }
 
+/* Positions the ring depending on inputs */
 function updateRingPosition(dt){
 	
 	/* Get inputs */
@@ -319,6 +320,53 @@ function updateRingPosition(dt){
 	/* Respect bounds */
 	game.oceanFishing.hookring.offset.glue.x = Math.min(RING_EXTENT, Math.max(-RING_EXTENT, game.oceanFishing.hookring.offset.glue.x));
 	
+}
+
+function checkHookedResult(monEntry){
+	
+	const coverage = getHookCoverage(monEntry);
+	const posDiff = Math.abs(hookPos - monPos);
+	
+	/* Print message depending on how well it's hooked */
+	if (coverage > 0.99 and posDiff < 2){
+		console.log("Perfect!");
+	} else if (coverage > 0.99 and posDiff < 10){
+		console.log("Excellent!");
+	} else if (coverage > 0.99 and posdiff < 20){
+		console.log("Good!");
+	} else if (posDiff < 26) {
+		console.log("Barely!");
+	} else {
+		game.textbox.say("It got away...", () => stopFishing(game.player));
+	}
+	
+}
+
+function getHookCoverage(monEntry){
+	
+	/* Geometry */
+	const hookPos = game.oceanFishing.hookring.offset.glue.x;
+	const hookWidth = game.oceanFishing.hookring.sprite.width;
+	const monPos = monEntry.npc.offset.glue.x;
+	const monWidth = monEntry.npc.sprite.width;
+	
+	/* Extents */
+	const hookLeft = hookPos;
+	const hookRight = hookPos + hookWidth;
+	const monLeft = monPos;
+	const monRight = monPos + monWidth;
+	
+	/* Check overlap at all */
+	const overlapping = hookLeft < monRight && hookRight > monLeft;
+	if (!overlapping) return 0;
+	
+	/* Quantify overlap amount via coverage (0 to 1) */
+	const overlapLeft = Math.max(hookLeft, monLeft);
+	const overlapRight = Math.min(hookRight, monRight);
+	const overlapWidth = Math.max(0, overlapRight - overlapLeft);
+	const coverage = overlapWidth / monWidth;
+	
+	return coverage;
 }
 
 function createBackground(target){
