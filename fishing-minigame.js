@@ -325,7 +325,7 @@ function updateRingPosition(dt){
 function checkHookedResult(monEntry){
 	
 	const hookPos = game.oceanFishing.hookring.offset.glue.x;
-	const hookWidth = game.oceanFishing.hookring.sprite.width;
+	const monPos = monEntry.npc.offset.glue.x;
 	const posDiff = Math.abs(hookPos - monPos);
 	
 	if (posDiff < 2){
