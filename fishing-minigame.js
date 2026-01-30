@@ -235,6 +235,9 @@ function startSwimming(monEntry, difficulty){
 	/* Position npc all the way to the left */
 	setNPCPos(npc, -SWIM_EXTENT);
 	
+	/* Tint the mon if unseen */
+	npc.sprite.tint = 0;
+	
 	/* Cache time */
 	let lastTime = Date.now();
 	const startTime = Date.now();
