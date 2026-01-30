@@ -337,7 +337,7 @@ function updateRingPosition(dt){
 	}
 	
 	/* Respect bounds */
-	setNPCPos(npc, Math.min(RING_EXTENT, Math.max(-RING_EXTENT, getNPCPos(npc)));
+	setNPCPos(npc, Math.min(RING_EXTENT, Math.max(-RING_EXTENT, getNPCPos(npc))));
 	
 }
 
