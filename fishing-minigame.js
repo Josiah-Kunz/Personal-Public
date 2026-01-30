@@ -406,9 +406,7 @@ function createBackground(target){
 		addToMap: true
 	});
 	
-	glueSprite(target, game.oceanFishing.background);
-	
-	disappear(game.oceanFishing.background)
+	glueSprite(target, game.oceanFishing.background, () => disappear(game.oceanFishing.background));
 }
 
 /* Creates the "npc" of the mon, or fails if the mon's sprite doesn't load after 1 second */
@@ -450,9 +448,7 @@ function createHookRing(target){
 		addToMap: true
 	});
 	
-	glueSprite(target, game.oceanFishing.hookring, 0, -2);
-	
-	disappear(game.oceanFishing.hookring);
+	glueSprite(target, game.oceanFishing.hookring, 0, -2, () => disappear(game.oceanFishing.hookring));
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
