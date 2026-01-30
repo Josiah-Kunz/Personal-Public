@@ -292,12 +292,12 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 
 function setNPCPos(npc, x){
 	npc.offset.glue.x = x;
-	movedGluedObject(npc);
+	moveGluedObject(npc);
 }
 
 function changeNPCPos(npc, dx){
 	npc.offset.glue.x += dx;
-	movedGluedObject(npc);
+	moveGluedObject(npc);
 }
 
 function getNPCPos(npc){
