@@ -353,7 +353,7 @@ function checkHookedResult(monEntry){
 	} else if (posDiff < 10){
 		console.log("Excellent!");
 		stopFishing(game.player);
-	} else if (posdiff < 20){
+	} else if (posDiff < 20){
 		console.log("Good!");
 		stopFishing(game.player);
 	} else if (posDiff < 26) {
@@ -495,8 +495,8 @@ function glueSprite(target, obj, xoffset=0, yoffset=0, cb=null){
 /* Cleans up sprites and unfreezes the player */
 function stopFishing(target){
 	game.oceanFishing.fishingSprite.remove();
-	game.oceanFishing.background = game.objects.ids["hookedbg"];
 	if (game.oceanFishing.background) game.oceanFishing.background.sprite.alpha = 0;
+	if (game.oceanFishing.hookring) game.oceanFishing.hookring.sprite.alpha = 0;
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			if (monEntry.npc?.sprite) monEntry.npc.sprite.alpha = 0;
