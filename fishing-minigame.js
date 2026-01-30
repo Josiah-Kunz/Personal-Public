@@ -236,7 +236,7 @@ function startSwimming(monEntry, difficulty){
 	setNPCPos(npc, -SWIM_EXTENT);
 	
 	/* Tint the mon if unseen */
-	if (game.player.pokedex[monEntry.uid]?.seen){
+	if (game.player.dex.hasSeen(monEntry.uid)){
 		npc.sprite.tint = 0xffffff;
 	} else {
 		npc.sprite.tint = 0x333333;
