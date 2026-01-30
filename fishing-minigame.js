@@ -244,13 +244,16 @@ function startSwimming(monEntry, difficulty){
 	
 	/* Cache time */
 	let lastTime = Date.now();
+	let elapsedTime = 0;
 	const startTime = Date.now();
 	const gracePeriod = 500; // 0.5 seconds in milliseconds
 	
 	const swimLoop = () => {
 		
+		elapsedTime = Date.now() - startTime;
+		
 		/* Check for action key press to stop (only after grace period) */
-		if (Date.now() - startTime > gracePeriod && game.input.keyHeld("action")) {
+		if (elapsedTime > gracePeriod && game.input.keyHeld("action")) {
 			checkHookedResult(monEntry);
 			return;
 		}
@@ -266,12 +269,22 @@ function startSwimming(monEntry, difficulty){
 		/* Update the ring to catch it */
 		updateRingPosition(dt);
 		
+		/* Update fish alpha */
+		npc.sprite.alpha = getAlphaDuringHook(elapsedTime);
+		
 		/* Continue the loop */
 		requestAnimationFrame(swimLoop);
 	};
 	
 	/* Start the loop */
 	requestAnimationFrame(swimLoop);
+}
+
+function getAlphaDuringHook(time){
+	const graceTime = 0.5;
+	const fadeTime = 1;
+	if (time<graceTime) return 1;
+	return -1/fadeTime * (time - graceTime) + 1;
 }
 
 function updateVelocity(npc, difficulty, isSwimming, dt){
