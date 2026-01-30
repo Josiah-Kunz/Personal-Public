@@ -324,15 +324,15 @@ function updateRingPosition(dt){
 
 function checkHookedResult(monEntry){
 	
-	const coverage = getHookCoverage(monEntry);
+	const hookPos = game.oceanFishing.hookring.offset.glue.x;
+	const hookWidth = game.oceanFishing.hookring.sprite.width;
 	const posDiff = Math.abs(hookPos - monPos);
 	
-	/* Print message depending on how well it's hooked */
-	if (coverage > 0.99 and posDiff < 2){
+	if (posDiff < 2){
 		console.log("Perfect!");
-	} else if (coverage > 0.99 and posDiff < 10){
+	} else if (posDiff < 10){
 		console.log("Excellent!");
-	} else if (coverage > 0.99 and posdiff < 20){
+	} else if (posdiff < 20){
 		console.log("Good!");
 	} else if (posDiff < 26) {
 		console.log("Barely!");
