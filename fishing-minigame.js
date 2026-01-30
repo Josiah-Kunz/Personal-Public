@@ -555,9 +555,9 @@ for (let entry of game.oceanFishing.encounters){
 			monEntry.npc.uid = getUID(monEntry);
 			monEntry.npc.addToMap();
 			if (game.oceanFishing.hookeduid === monEntry.uid){
-				appear(hookedmon);
+				appear(monEntry.npc);
 			} else {
-				disappear(hookedmon);
+				disappear(monEntry.npc);
 			}
 		}
 	}
