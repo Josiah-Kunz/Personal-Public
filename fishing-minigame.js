@@ -241,7 +241,7 @@ function startSwimming(monEntry, difficulty){
 		
 		/* Check for action key press to stop (only after grace period) */
 		if (Date.now() - startTime > gracePeriod && game.input.keyHeld("action")) {
-			console.log("Stopped!");
+			checkHookedResult(monEntry);
 			return;
 		}
 		
