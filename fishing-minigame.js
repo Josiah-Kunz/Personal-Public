@@ -255,8 +255,14 @@ function startSwimming(monEntry, difficulty){
 		
 		elapsedTime = (Date.now() - startTime)/1000;
 		
+		/* Ran out of time */
+		if (npc.sprite.alpha < MIN_HOOK_ALPHA){
+			fishGotAway();
+			return;
+		}
+		
 		/* Check for action key press to stop (only after grace period) */
-		if (elapsedTime > gracePeriod && game.input.keyHeld("action") || npc.sprite.alpha < MIN_HOOK_ALPHA) {
+		if (elapsedTime > gracePeriod && game.input.keyHeld("action")) {
 			checkHookedResult(monEntry);
 			return;
 		}
@@ -382,9 +388,14 @@ function checkHookedResult(monEntry){
 		console.log("Barely!");
 		stopFishing(game.player);
 	} else {
-		game.textbox.say("It got away...", () => stopFishing(game.player));
+		fishGotAway();
 	}
 	
+}
+
+function fishGotAway(){
+	stopFishing(game.player);
+	game.textbox.say("It got away...");
 }
 
 function getHookCoverage(monEntry){
