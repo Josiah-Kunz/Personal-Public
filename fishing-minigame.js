@@ -66,7 +66,7 @@ const RING_SPEED = 100;
 const SWIM_EXTENT = 86;
 
 /* When alpha reaches this, the fish goes away */
-const MIN_HOOK_ALPHA = 0.5;
+const MIN_HOOK_ALPHA = 0.25;
 
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
