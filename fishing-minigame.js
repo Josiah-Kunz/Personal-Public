@@ -475,14 +475,13 @@ function fadeOverTime(npc, fadeTime, graceTime, minAlpha=0, cb=null){
 	let lastTime = Date.now();
 	let elapsedTime = 0;
 	const startTime = Date.now();
-	const gracePeriod = 0.5; // Seconds
 	
 	const fadeLoop = () => {
 		
 		elapsedTime = (Date.now() - startTime)/1000;
 		
 		/* Ran out of time */
-		if (npc.sprite.alpha < minAlpha){
+		if (npc.sprite.alpha <= minAlpha){
 			npc.sprite.alpha = 0;
 			disappear(npc);
 			if (cb) cb();
@@ -495,8 +494,9 @@ function fadeOverTime(npc, fadeTime, graceTime, minAlpha=0, cb=null){
 		lastTime = now;
 		
 		/* Update alpha */
-		if (time<graceTime) return;
-		npc.sprite.alpha = -1/fadeTime * (time - graceTime) + 1 + minAlpha;
+		if (elapsedTime>=graceTime){
+			npc.sprite.alpha = -1/fadeTime * (elapsedTime - graceTime) + 1 + minAlpha;
+		}
 		
 		/* Continue the loop */
 		requestAnimationFrame(fadeLoop);
@@ -504,7 +504,6 @@ function fadeOverTime(npc, fadeTime, graceTime, minAlpha=0, cb=null){
 	
 	/* Start the loop */
 	requestAnimationFrame(fadeLoop);
-	
 	
 }
 
