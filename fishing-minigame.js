@@ -122,7 +122,7 @@ if (!game.oceanFishing){
 				addToMap: true
 			}),
 			gluexoffset: 0,
-			glueyoffset: -42,
+			glueyoffset: -8,
 		},
 		
 	};
