@@ -83,7 +83,7 @@ if (!game.oceanFishing){
 				x: 0,
 				y: 0,
 				solid: false,
-				depth: 5000,
+				depth: 4000,
 				map: game.map.current,
 				addToMap: true
 			}),
@@ -100,7 +100,7 @@ if (!game.oceanFishing){
 				x: 0,
 				y: 0,
 				solid: false,
-				depth: 3000,
+				depth: 3500,
 				map: game.map.current,
 				addToMap: true
 			}),
