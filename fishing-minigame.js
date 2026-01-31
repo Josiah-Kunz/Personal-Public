@@ -105,7 +105,7 @@ if (!game.oceanFishing){
 				addToMap: true
 			}),
 			gluexoffset: 0,
-			glueyoffset: 8,
+			glueyoffset: 32,
 		},
 		
 		textexcellent: {
@@ -122,7 +122,7 @@ if (!game.oceanFishing){
 				addToMap: true
 			}),
 			gluexoffset: 0,
-			glueyoffset: 8,
+			glueyoffset: 32,
 		},
 		
 	};
@@ -493,7 +493,6 @@ function fadeOverTime(npc, fadeTime, graceTime, minAlpha=0, cb=null){
 		const now = Date.now();
 		const dt = (now - lastTime) / 1000; // Convert to seconds
 		lastTime = now;
-		updateVelocity(npc, difficulty, true, dt);
 		
 		/* Update alpha */
 		if (time<graceTime) return;
