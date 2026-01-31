@@ -7,13 +7,12 @@ Roadmap:
 	5. a callback in playSpotAnimation() 
 */
 
-/* Settings */
-/* ======== */
-
-/* Things you'll fish up! */
-/* Can also add egg move mons or HA mons */
+/* Initialization of data (before functions are defined) */
 if (!game.oceanFishing){
 	game.oceanFishing = {};
+	
+	/* Things you'll fish up! */
+	/* Can also add egg move mons or HA mons */
 	game.oceanFishing.encounters = [
 
 		/* Nothing! */
@@ -54,6 +53,45 @@ if (!game.oceanFishing){
 			{ name: "Vaporeon", uid: "00b6z8gi" }
 		]}
 	];
+	
+	/* Assets for the UI */
+	game.oceanFishing.assets = {
+		
+		background: {
+			uid: "hookedbg",
+			npc: game.objects.add({
+				type: "sprite",
+				uid: "hookedbg",
+				texture: window.CDN_BASE + "images/sprites/186753/fm-background",
+				x: 0,
+				y: 0,
+				solid: false,
+				depth: 5000,
+				map: game.map.current,
+				addToMap: true
+			}),
+			gluexoffset: 0,
+			glueyoffset: 0,
+		},
+		
+		hookring: {
+			uid: "hookring",
+			npc: game.objects.add({
+				type: "sprite",
+				uid: "hookring",
+				texture: window.CDN_BASE + "images/sprites/186753/fm-ring",
+				x: 0,
+				y: 0,
+				solid: false,
+				depth: 5000,
+				map: game.map.current,
+				addToMap: true
+			}),
+			gluexoffset: 0,
+			glueyoffset: -2,
+		},
+		
+	};
 }
 
 /* The half-width of the ring's travel */
@@ -211,8 +249,8 @@ function startEncounter(target, monEntry, difficulty, cb = null){
 			if (!monEntry.npc) monEntry.npc = game.objects.ids[getUID(monEntry)];
 			if (monEntry.npc?.sprite){
 				appear(monEntry.npc);
-				appear(game.oceanFishing.background);
-				appear(game.oceanFishing.hookring);
+				appear(game.oceanFishing.assets.background.npc);
+				appear(game.oceanFishing.assets.hookring.npc);
 				startSwimming(monEntry, difficulty);
 			} else {
 				console.warn("No monEntry NPC!");
@@ -337,15 +375,15 @@ function getNPCPos(npc){
 function getSpeed(difficulty, isSwimming){
 	switch(difficulty){
 		case "Easy":
-			return isSwimming ? 30 : 30;
+			return isSwimming ? 50 : 60;
 		case "Medium":
-			return isSwimming ? 50 : 70;
-		case "Hard":
 			return isSwimming ? 70 : 80;
+		case "Hard":
+			return isSwimming ? 90 : 100;
 		case "Expert":
-			return isSwimming ? 80 : 100;
+			return isSwimming ? 100 : 110;
 		case "Super Expert":
-			return isSwimming ? 90 : 120;
+			return isSwimming ? 120 : 140;
 		default:
 			return isSwimming ? 1 : 1;
 	}
@@ -354,7 +392,7 @@ function getSpeed(difficulty, isSwimming){
 /* Positions the ring depending on inputs */
 function updateRingPosition(dt){
 	
-	const npc = game.oceanFishing.hookring;
+	const npc = game.oceanFishing.assets.hookring.npc;
 	
 	/* Get inputs */
 	if (game.input.keyHeld("left")){
@@ -371,7 +409,7 @@ function updateRingPosition(dt){
 
 function checkHookedResult(monEntry){
 	
-	const hookPos = getNPCPos(game.oceanFishing.hookring);
+	const hookPos = getNPCPos(game.oceanFishing.assets.hookring.npc);
 	const monPos = getNPCPos(monEntry.npc);
 	const posDiff = Math.abs(hookPos - monPos);
 	
@@ -401,8 +439,8 @@ function fishGotAway(){
 function getHookCoverage(monEntry){
 	
 	/* Geometry */
-	const hookPos = getNPCPos(game.oceanFishing.hookring);
-	const hookWidth = game.oceanFishing.hookring.sprite.width;
+	const hookPos = getNPCPos(game.oceanFishing.assets.hookring.npc);
+	const hookWidth = game.oceanFishing.assets.hookring.npc.sprite.width;
 	const monPos = getNPCPos(monEntry.npc);
 	const monWidth = monEntry.npc.sprite.width;
 	
@@ -423,23 +461,6 @@ function getHookCoverage(monEntry){
 	const coverage = overlapWidth / monWidth;
 	
 	return coverage;
-}
-
-function createBackground(target){
-	/* Create the sprite */
-	game.oceanFishing.background = game.objects.add({
-		type: "sprite",
-		uid: "hookedbg",
-		texture: window.CDN_BASE + "images/sprites/186753/fm-background",
-		x: 0,
-		y: 0,
-		solid: false,
-		depth: 5000,
-		map: game.map.current,
-		addToMap: true
-	});
-	
-	glueSprite(target, game.oceanFishing.background, () => disappear(game.oceanFishing.background));
 }
 
 /* Creates the "npc" of the mon, or fails if the mon's sprite doesn't load after 1 second */
@@ -465,23 +486,6 @@ function createHookedmon(target, monEntry, cb = null){
 	});
 	
 	return hookedmon;
-}
-
-function createHookRing(target){
-	
-	game.oceanFishing.hookring = game.objects.add({
-		type: "sprite",
-		uid: "hookring",
-		texture: window.CDN_BASE + "images/sprites/186753/fm-ring",
-		x: 0,
-		y: 0,
-		solid: false,
-		depth: 4000,
-		map: game.map.current,
-		addToMap: true
-	});
-	
-	glueSprite(target, game.oceanFishing.hookring, 0, -2, () => disappear(game.oceanFishing.hookring));
 }
 
 /* Poll until sprite is ready, then glue it to the screen */
@@ -525,8 +529,9 @@ function glueSprite(target, obj, xoffset=0, yoffset=0, cb=null){
 function stopFishing(target){
 	game.oceanFishing.hookeduid = "";
 	game.oceanFishing.fishingSprite.remove();
-	if (game.oceanFishing.background) disappear(game.oceanFishing.background)
-	if (game.oceanFishing.hookring) disappear(game.oceanFishing.hookring)
+	for (let asset of Object.values(game.oceanFishing.assets)) {
+		disappear(asset.npc);
+	}
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			if (monEntry.npc?.sprite) disappear(monEntry.npc);
@@ -565,7 +570,13 @@ if (game.map.getVar("fishing")===1 && game.oceanFishing){
 /* This is done here after all the functions are defined */
 if (!game.oceanFishing.initialized){
 	game.oceanFishing.initialized = true;
-	createBackground(game.player);
+	
+	/* Glue all the assets to the screen */
+	for (let asset of Object.values(game.oceanFishing.assets)) {
+		glueSprite(game.player, asset.npc, asset.gluexoffset, asset.glueyoffset, () => disappear(asset.npc));
+	}
+	
+	/* Show/hide mons */
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			monEntry.npc = createHookedmon(game.player, monEntry, (hookedmon) => {
@@ -577,12 +588,13 @@ if (!game.oceanFishing.initialized){
 			});
 		}
 	}
-	createHookRing(game.player);
+	
+	/* Sort + update */
 	game.objects.sort("hud");
 	game.trigger("update");
 }
 
-/* Refreshing the map re-adds the relevant sprites */
+/* Refreshing the map re-adds the mons */
 for (let entry of game.oceanFishing.encounters){
 	for (let monEntry of entry.mons){
 		if (monEntry.npc){
@@ -596,22 +608,22 @@ for (let entry of game.oceanFishing.encounters){
 		}
 	}
 }
+
 /* Refreshing also adds the background and ring */
-if (game.oceanFishing?.background){
-	game.oceanFishing.background.uid = "hookedbg";
-	game.oceanFishing.background.addToMap();
-	if (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== ""){
-		appear(game.oceanFishing.background);
-	} else {
-		disappear(game.oceanFishing.background);
+if (game.oceanFishing?.assets){
+	
+	/* Add assets to the map */
+	for (let asset of Object.values(game.oceanFishing.assets)) {
+		asset.npc.uid = asset.uid; /* IDK why these are forgotten sometimes */
+		asset.npc.addToMap();
 	}
-}
-if (game.oceanFishing?.hookring){
-	game.oceanFishing.hookring.uid = "hookring";
-	game.oceanFishing.hookring.addToMap();
+	
+	/* If we're fishing, don't hide the bg or hook */
 	if (game.oceanFishing.hookeduid && game.oceanFishing.hookeduid !== ""){
-		appear(game.oceanFishing.hookring);
+		appear(game.oceanFishing.assets.background.npc);
+		appear(game.oceanFishing.assets.hookring.npc);
 	} else {
-		disappear(game.oceanFishing.hookring);
+		disappear(game.oceanFishing.assets.background.npc);
+		disappear(game.oceanFishing.assets.hookring.npc);
 	}
 }
