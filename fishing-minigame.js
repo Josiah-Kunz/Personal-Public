@@ -91,6 +91,40 @@ if (!game.oceanFishing){
 			glueyoffset: -2,
 		},
 		
+		textperfect: {
+			uid: "textperfect",
+			npc: game.objects.add({
+				type: "sprite",
+				uid: "textperfect",
+				texture: window.CDN_BASE + "images/sprites/186753/fm-text-perfect",
+				x: 0,
+				y: 0,
+				solid: false,
+				depth: 3000,
+				map: game.map.current,
+				addToMap: true
+			}),
+			gluexoffset: 0,
+			glueyoffset: 8,
+		},
+		
+		textexcellent: {
+			uid: "textexcellent",
+			npc: game.objects.add({
+				type: "sprite",
+				uid: "textexcellent",
+				texture: window.CDN_BASE + "images/sprites/186753/fm-text-excellent",
+				x: 0,
+				y: 0,
+				solid: false,
+				depth: 3000,
+				map: game.map.current,
+				addToMap: true
+			}),
+			gluexoffset: 0,
+			glueyoffset: 8,
+		},
+		
 	};
 }
 
@@ -415,10 +449,14 @@ function checkHookedResult(monEntry){
 	
 	if (posDiff < 2){
 		console.log("Perfect!");
-		stopFishing(game.player);
+		appear(game.oceanFishing.assets.textperfect.npc);
+		fadeOverTime(game.oceanFishing.assets.textperfect.npc, 1, 0.25, 0, () => stopFishing(game.player));
+		//stopFishing(game.player);
 	} else if (posDiff < 10){
 		console.log("Excellent!");
-		stopFishing(game.player);
+		appear(game.oceanFishing.assets.textexcellent.npc);
+		fadeOverTime(game.oceanFishing.assets.textexcellent.npc, 1, 0.25, 0, () => stopFishing(game.player));
+		//stopFishing(game.player);
 	} else if (posDiff < 20){
 		console.log("Good!");
 		stopFishing(game.player);
@@ -428,6 +466,46 @@ function checkHookedResult(monEntry){
 	} else {
 		fishGotAway();
 	}
+	
+}
+
+function fadeOverTime(npc, fadeTime, graceTime, minAlpha=0, cb=null){
+	
+	/* Cache time */
+	let lastTime = Date.now();
+	let elapsedTime = 0;
+	const startTime = Date.now();
+	const gracePeriod = 0.5; // Seconds
+	
+	const fadeLoop = () => {
+		
+		elapsedTime = (Date.now() - startTime)/1000;
+		
+		/* Ran out of time */
+		if (npc.sprite.alpha < minAlpha){
+			npc.sprite.alpha = 0;
+			disappear(npc);
+			if (cb) cb();
+			return;
+		}
+		
+		/* Calculate delta time */
+		const now = Date.now();
+		const dt = (now - lastTime) / 1000; // Convert to seconds
+		lastTime = now;
+		updateVelocity(npc, difficulty, true, dt);
+		
+		/* Update alpha */
+		if (time<graceTime) return;
+		npc.sprite.alpha = -1/fadeTime * (time - graceTime) + 1 + minAlpha;
+		
+		/* Continue the loop */
+		requestAnimationFrame(fadeLoop);
+	};
+	
+	/* Start the loop */
+	requestAnimationFrame(fadeLoop);
+	
 	
 }
 
@@ -550,6 +628,7 @@ function disappear(npc){
 }
 
 function appear(npc){
+	npc.sprite.alpha = 1;
 	setNPCPos(npc, 0);
 }
 
