@@ -130,6 +130,40 @@ if (!game.oceanFishing){
 			glueyoffset: -12,
 		},
 		
+		textgood: {
+			uid: "textgood",
+			npc: game.objects.add({
+				type: "sprite",
+				uid: "textgood",
+				texture: window.CDN_BASE + "images/sprites/186753/fm-text-good",
+				x: 0,
+				y: 0,
+				solid: false,
+				depth: 3000,
+				map: game.map.current,
+				addToMap: true
+			}),
+			gluexoffset: 0,
+			glueyoffset: -12,
+		},
+		
+		textgood: {
+			uid: "textbarely",
+			npc: game.objects.add({
+				type: "sprite",
+				uid: "textbarely",
+				texture: window.CDN_BASE + "images/sprites/186753/fm-text-barely",
+				x: 0,
+				y: 0,
+				solid: false,
+				depth: 3000,
+				map: game.map.current,
+				addToMap: true
+			}),
+			gluexoffset: 0,
+			glueyoffset: -12,
+		},
+		
 	};
 }
 
@@ -454,24 +488,26 @@ function checkHookedResult(monEntry){
 	const monPos = getNPCPos(monEntry.npc);
 	const posDiff = Math.abs(hookPos - monPos);
 	
+	let textnpc = null;
 	if (posDiff < 2){
 		console.log("Perfect!");
-		appear(game.oceanFishing.assets.textperfect.npc);
-		fadeOverTime(game.oceanFishing.assets.textperfect.npc, 1, 0.25, 0, () => stopFishing(game.player));
-		//stopFishing(game.player);
-	} else if (posDiff < 10){
+		textnpc = game.oceanFishing.assets.textperfect.npc;
+	} else if (posDiff < 6){
 		console.log("Excellent!");
-		appear(game.oceanFishing.assets.textexcellent.npc);
-		fadeOverTime(game.oceanFishing.assets.textexcellent.npc, 1, 0.25, 0, () => stopFishing(game.player));
-		//stopFishing(game.player);
-	} else if (posDiff < 20){
+		textnpc = game.oceanFishing.assets.textexcellent.npc;
+	} else if (posDiff < 12){
 		console.log("Good!");
-		stopFishing(game.player);
+		textnpc = game.oceanFishing.assets.textgood.npc;
 	} else if (posDiff < 26) {
 		console.log("Barely!");
-		stopFishing(game.player);
+		textnpc = game.oceanFishing.assets.textbarely.npc;
 	} else {
 		fishGotAway();
+	}
+	
+	if (textnpc){
+		appear(textnpc);
+		fadeOverTime(textnpc, 1, 0.25, 0, () => stopFishing(game.player));
 	}
 	
 }
