@@ -476,14 +476,14 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 		/* To the left of the hook */
 		if (x0 < hookPos){
 			/* Can go further left */
-			if (x0 > -SWIM_EXTENT + hookWidth){
+			if (x0 > -SWIM_EXTENT){
 				dir = -1;
 			} else {
 				dir = 1;
 			}
 		} /* To the right of the hook */
 		else {
-			if (x0 < SWIM_EXTENT - hookWidth){
+			if (x0 < SWIM_EXTENT){
 				dir = 1;
 			} else {
 				dir = -1;
