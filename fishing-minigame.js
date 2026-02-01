@@ -80,7 +80,7 @@ if (!game.oceanFishing){
 				type: "animation",
 				uid: "hookring",
 				texture: {
-					window.CDN_BASE + "images/sprites/186753/fm-ring",
+					file: window.CDN_BASE + "images/sprites/186753/fm-ring",
 					frames: 8,
 					fps: 100,
 					loop: -1,
