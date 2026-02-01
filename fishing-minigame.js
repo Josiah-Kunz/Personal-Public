@@ -491,13 +491,13 @@ function updateRingFillGraphic(progress){
 
 	/* Now position is relative to parent (hookRing), so use 0,0 as center */
 	const centerX = 0;
-	const centerY = -16;
+	const centerY = -17;
 
 	/* Ring dimensions */
 	const width = 54;
 	const height = 28;
 	const cornerRadius = 16;
-	const thickness = 3; // Line thickness
+	const thickness = 4;
 
 	/* Calculate perimeter */
 	const straightWidth = width - 2 * cornerRadius;
