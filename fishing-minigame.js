@@ -444,7 +444,7 @@ function startReelIn(monEntry, difficulty){
 		/* Update ring fill in state */
 		
 		/* Continue the loop */
-		requestAnimationFrame(swimLoop);
+		requestAnimationFrame(reelinLoop);
 	};
 	
 	/* Start the loop */
@@ -467,9 +467,34 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 		npc.velocity = x0 > 0 ? -speed : speed;
 		return;
 	}
+	
+	/* If not swimming, the mon should run away from the hook */
+	if (!isSwimming){
+		const hookPos = getNPCPos(game.oceanFishing.assets.hookring.npc);
+		const hookWidth = game.oceanFishing.assets.hookring.npc.sprite.width;
+		
+		/* To the left of the hook */
+		if (x0 < hookPos){
+			/* Can go further left */
+			if (x0 > -SWIM_EXTENT + hookWidth){
+				dir = -1;
+			} else {
+				dir = 1;
+			}
+		} /* To the right of the hook */
+		else {
+			if (x0 < SWIM_EXTENT - hookWidth){
+				dir = 1;
+			} else {
+				dir = -1;
+			}
+		}
+		
+		npc.velocity = speed * dir;
+	}
 
 	/* Take a step in the current direction */
-	setNPCPos(npc, x0 + npc.velocity * dt * (3 * Math.random() - 1.5));
+	setNPCPos(npc, x0 + npc.velocity * dt);
 
 	/* Prevent overstepping */
 	const x1 = getNPCPos(npc);
