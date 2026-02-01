@@ -143,7 +143,10 @@ const RING_SPEED = 100;
 const SWIM_EXTENT = 86;
 
 /* When alpha reaches this, the fish goes away */
-const MIN_HOOK_ALPHA = 0.25;
+const MIN_HOOK_ALPHA = 0.1;
+
+/* When trying to hook a mon, it takes this long for it to "get away" (plus the grace period) */
+const HOOK_FADE_TIME = 5;
 
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
@@ -368,9 +371,8 @@ function startSwimming(monEntry, difficulty){
 
 function getAlphaDuringHook(time){
 	const graceTime = 0.5;
-	const fadeTime = 3;
 	if (time<graceTime) return 1;
-	return -1/fadeTime * (time - graceTime) + 1 + MIN_HOOK_ALPHA;
+	return -1/HOOK_FADE_TIME * (time - graceTime) + 1 + MIN_HOOK_ALPHA;
 }
 
 function updateVelocity(npc, difficulty, isSwimming, dt){
@@ -414,17 +416,17 @@ function getNPCPos(npc){
 function getSpeed(difficulty, isSwimming){
 	switch(difficulty){
 		case "Easy":
-			return isSwimming ? 50 : 60;
+			return isSwimming ? 80 : 90;
 		case "Medium":
-			return isSwimming ? 70 : 80;
-		case "Hard":
-			return isSwimming ? 90 : 100;
-		case "Expert":
 			return isSwimming ? 100 : 110;
+		case "Hard":
+			return isSwimming ? 120 : 130;
+		case "Expert":
+			return isSwimming ? 140 : 160;
 		case "Super Expert":
-			return isSwimming ? 120 : 140;
+			return isSwimming ? 160 : 180;
 		default:
-			return isSwimming ? 1 : 1;
+			return isSwimming ? 50 : 50;
 	}
 }
 
