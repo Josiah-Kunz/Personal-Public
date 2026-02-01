@@ -416,7 +416,7 @@ function startSwimming(monEntry, difficulty){
 	requestAnimationFrame(swimLoop);
 }
 
-function startReelIn(monEntry, difficulty){
+function startReelIn(monEntry, difficulty, fillProgress = 0){
 	
 	/* Establish the thing that's moving (glued to the screen) */
 	let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
@@ -429,7 +429,6 @@ function startReelIn(monEntry, difficulty){
 	let lastTime = Date.now();
 	let elapsedTime = 0;
 	const startTime = Date.now();
-	let fillProgress = 0; /* 0-1 */
 	
 	const reelinLoop = () => {
 		
@@ -456,7 +455,6 @@ function startReelIn(monEntry, difficulty){
 		const coverage = getHookCoverage(monEntry);
 		if (coverage > 0) {
 			fillProgress += coverage * 1/REELIN_FILL_TIME * dt;
-			console.log(fillProgress);
 		}
 		fillProgress = Math.max(0, Math.min(1, fillProgress));
 		
@@ -465,7 +463,6 @@ function startReelIn(monEntry, difficulty){
 
 		/* Check if caught */
 		if (fillProgress >= 1) {
-			console.log("You win!");
 			stopFishing(game.player);
 			return;
 		}
@@ -497,7 +494,7 @@ function updateRingFillGraphic(progress){
 	const width = 54;
 	const height = 28;
 	const cornerRadius = 15;
-	const thickness = 4;
+	const thickness = 5;
 
 	/* Calculate perimeter */
 	const straightWidth = width - 2 * cornerRadius;
@@ -738,18 +735,20 @@ function checkHookedResult(monEntry, difficulty){
 	const posDiff = Math.abs(hookPos - monPos);
 	
 	let textnpc = null;
+	let fillProgress = 0;
+	
 	if (posDiff < 2){
-		console.log("Perfect!");
 		textnpc = game.oceanFishing.assets.textperfect.npc;
+		fillProgress = 0.25;
 	} else if (posDiff < 6){
-		console.log("Excellent!");
 		textnpc = game.oceanFishing.assets.textexcellent.npc;
+		fillProgress = 0.15;
 	} else if (posDiff < 12){
-		console.log("Good!");
 		textnpc = game.oceanFishing.assets.textgood.npc;
+		fillProgress = 0.10;
 	} else if (posDiff < 26) {
-		console.log("Barely!");
 		textnpc = game.oceanFishing.assets.textbarely.npc;
+		fillProgress = 0.05;
 	} else {
 		fishGotAway();
 	}
