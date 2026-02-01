@@ -188,6 +188,9 @@ const MAX_REELIN_TIME = 10;
 /* At 100% coverage, the hook bar will take this many seconds to fill */
 const REELIN_FILL_TIME = 3;
 
+/* Number of pixels wide the ring capture area is */
+const COVERAGE_WIDTH = 50;
+
 /* The struggling mon will change directions randomly between these two times */
 const STRUGGLE_DT_MIN = 0.1;
 const STRUGGLE_DT_MAX = 0.4;
@@ -488,7 +491,7 @@ function updateRingFillGraphic(progress){
 
 	/* Now position is relative to parent (hookRing), so use 0,0 as center */
 	const centerX = 0;
-	const centerY = 0;
+	const centerY = hookRing.height/2;
 
 	/* Ring dimensions */
 	const width = 54;
@@ -805,7 +808,7 @@ function getHookCoverage(monEntry){
 	
 	/* Geometry */
 	const hookPos = getNPCPos(game.oceanFishing.assets.hookring.npc);
-	const hookWidth = game.oceanFishing.assets.hookring.npc.sprite.width;
+	const hookWidth = COVERAGE_WIDTH;
 	const monPos = getNPCPos(monEntry.npc);
 	const monWidth = monEntry.npc.sprite.width;
 	
@@ -892,11 +895,20 @@ function glueSprite(target, obj, xoffset=0, yoffset=0, cb=null){
 
 /* Cleans up sprites and unfreezes the player */
 function stopFishing(target){
+	
+	if (game.oceanFishing.ringFillGraphics) {
+		game.oceanFishing.ringFillGraphics.clear();
+		game.oceanFishing.ringFillGraphics.destroy();
+		game.oceanFishing.ringFillGraphics = null;
+	}
+	
 	game.oceanFishing.hookeduid = "";
 	game.oceanFishing.fishingSprite.remove();
+	
 	for (let asset of Object.values(game.oceanFishing.assets)) {
 		disappear(asset.npc);
 	}
+	
 	for (let entry of game.oceanFishing.encounters){
 		for (let monEntry of entry.mons){
 			if (monEntry.npc?.sprite) disappear(monEntry.npc);
