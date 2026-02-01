@@ -755,7 +755,7 @@ function checkHookedResult(monEntry, difficulty){
 	
 	if (textnpc){
 		appear(textnpc);
-		fadeOverTime(textnpc, 1, 0.25, 0, () => startReelIn(monEntry, difficulty));
+		fadeOverTime(textnpc, 1, 0.25, 0, () => startReelIn(monEntry, difficulty, fillProgress));
 	}
 	
 }
