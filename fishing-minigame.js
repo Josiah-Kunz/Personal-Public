@@ -380,7 +380,7 @@ function startSwimming(monEntry, difficulty){
 		
 		/* Check for action key press to stop (only after grace period) */
 		if (elapsedTime > gracePeriod && game.input.keyHeld("action")) {
-			checkHookedResult(monEntry);
+			checkHookedResult(monEntry, difficulty);
 			return;
 		}
 		
@@ -530,7 +530,7 @@ function updateRingPosition(dt){
 	
 }
 
-function checkHookedResult(monEntry){
+function checkHookedResult(monEntry, difficulty){
 	
 	const hookPos = getNPCPos(game.oceanFishing.assets.hookring.npc);
 	const monPos = getNPCPos(monEntry.npc);
@@ -555,7 +555,7 @@ function checkHookedResult(monEntry){
 	
 	if (textnpc){
 		appear(textnpc);
-		fadeOverTime(textnpc, 1, 0.25, 0, () => stopFishing(game.player));
+		fadeOverTime(textnpc, 1, 0.25, 0, () => startReelIn(monEntry, difficulty));
 	}
 	
 }
