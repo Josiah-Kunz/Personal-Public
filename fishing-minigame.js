@@ -147,7 +147,7 @@ if (!game.oceanFishing){
 			glueyoffset: -12,
 		},
 		
-		textgood: {
+		textbarely: {
 			uid: "textbarely",
 			npc: game.objects.add({
 				type: "sprite",
