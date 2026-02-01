@@ -458,51 +458,60 @@ function getAlphaDuringHook(time){
 }
 
 function updateVelocity(npc, difficulty, isSwimming, dt){
+	if (isSwimming) {
+		updateSwimmingVelocity(npc, difficulty, dt);
+	} else {
+		updateStrugglingVelocity(npc, difficulty, dt);
+	}
+}
 
-	const speed = getSpeed(difficulty, isSwimming);
+/* Swimming: fish moves back and forth at constant speed */
+function updateSwimmingVelocity(npc, difficulty, dt){
+	const speed = getSpeed(difficulty, true);
 	const x0 = getNPCPos(npc);
 
-	/* Not set */
+	/* Initialize velocity */
 	if (!npc.velocity){
 		npc.velocity = x0 > 0 ? -speed : speed;
-		return;
-	}
-	
-	/* If not swimming, the mon should run away from the hook */
-	if (!isSwimming){
-		const hookPos = getNPCPos(game.oceanFishing.assets.hookring.npc);
-		const hookWidth = game.oceanFishing.assets.hookring.npc.sprite.width;
-		
-		/* To the left of the hook */
-		if (x0 < hookPos){
-			/* Can go further left */
-			if (x0 > -SWIM_EXTENT){
-				dir = -1;
-			} else {
-				dir = 1;
-			}
-		} /* To the right of the hook */
-		else {
-			if (x0 < SWIM_EXTENT){
-				dir = 1;
-			} else {
-				dir = -1;
-			}
-		}
-		
-		npc.velocity = speed * dir;
 	}
 
 	/* Take a step in the current direction */
 	setNPCPos(npc, x0 + npc.velocity * dt);
 
-	/* Prevent overstepping */
+	/* Bounce at boundaries */
 	const x1 = getNPCPos(npc);
 	if (x1 > SWIM_EXTENT || x1 < -SWIM_EXTENT){
 		npc.velocity *= -1;
-		setNPCPos(npc, x0 + npc.velocity * dt)
+		setNPCPos(npc, x0 + npc.velocity * dt);
 	}
-	
+}
+
+/* Struggling: fish randomly changes direction at intervals */
+function updateStrugglingVelocity(npc, difficulty, dt){
+	const speed = getSpeed(difficulty, false);
+	const x0 = getNPCPos(npc);
+
+	/* Initialize */
+	if (!npc.velocity){
+		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
+		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700; // 0.3-1s
+	}
+
+	/* Randomly change direction at intervals */
+	if (Date.now() >= npc.nextDirectionChange){
+		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
+		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700;
+	}
+
+	/* Take a step in the current direction */
+	setNPCPos(npc, x0 + npc.velocity * dt);
+
+	/* Bounce at boundaries */
+	const x1 = getNPCPos(npc);
+	if (x1 > SWIM_EXTENT || x1 < -SWIM_EXTENT){
+		npc.velocity *= -1;
+		setNPCPos(npc, x0 + npc.velocity * dt);
+	}
 }
 
 function setNPCPos(npc, x){
