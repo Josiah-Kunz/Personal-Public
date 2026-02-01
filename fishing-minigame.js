@@ -496,7 +496,7 @@ function updateRingFillGraphic(progress){
 	/* Ring dimensions */
 	const width = 54;
 	const height = 28;
-	const cornerRadius = 17;
+	const cornerRadius = 15;
 	const thickness = 4;
 
 	/* Calculate perimeter */
