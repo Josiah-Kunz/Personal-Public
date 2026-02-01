@@ -182,6 +182,9 @@ const MIN_HOOK_ALPHA = 0.1;
 /* When trying to hook a mon, it takes this long for it to "get away" (plus the grace period) */
 const HOOK_FADE_TIME = 5;
 
+/* Max time in seconds the player has to reel in the mon */
+const MAX_REELIN_TIME = 10;
+
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
 function getRandomMonEntry() {
@@ -403,6 +406,51 @@ function startSwimming(monEntry, difficulty){
 	requestAnimationFrame(swimLoop);
 }
 
+function startReelIn(monEntry, difficulty){
+	
+	/* Establish the thing that's moving (glued to the screen) */
+	let npc = monEntry.npc || game.objects.ids[getUID(monEntry)];
+	if (!npc){
+		stopFishing(game.player);
+		return;
+	}
+	
+	/* Cache time */
+	let lastTime = Date.now();
+	let elapsedTime = 0;
+	const startTime = Date.now();
+	
+	const reelinLoop = () => {
+		
+		elapsedTime = (Date.now() - startTime)/1000;
+		
+		/* Ran out of time */
+		if (elapsedTime > MAX_REELIN_TIME){
+			fishGotAway();
+			return;
+		}
+		
+		/* Calculate delta time */
+		const now = Date.now();
+		const dt = (now - lastTime) / 1000; // Convert to seconds
+		lastTime = now;
+		
+		/* Update the fish position */
+		updateVelocity(npc, difficulty, false, dt);
+		
+		/* Update the ring to catch it */
+		updateRingPosition(dt);
+		
+		/* Update ring fill in state */
+		
+		/* Continue the loop */
+		requestAnimationFrame(swimLoop);
+	};
+	
+	/* Start the loop */
+	requestAnimationFrame(reelinLoop);
+}
+
 function getAlphaDuringHook(time){
 	const graceTime = 0.5;
 	if (time<graceTime) return 1;
@@ -421,7 +469,7 @@ function updateVelocity(npc, difficulty, isSwimming, dt){
 	}
 
 	/* Take a step in the current direction */
-	setNPCPos(npc, x0 + npc.velocity * dt);
+	setNPCPos(npc, x0 + npc.velocity * dt * (3 * Math.random() - 1.5));
 
 	/* Prevent overstepping */
 	const x1 = getNPCPos(npc);
