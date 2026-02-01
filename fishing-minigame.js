@@ -497,20 +497,23 @@ function updateStrugglingVelocity(npc, difficulty, dt){
 		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700; // 0.3-1s
 	}
 
-	/* Randomly change direction at intervals */
-	if (Date.now() >= npc.nextDirectionChange){
-		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
-		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700;
-	}
-
 	/* Take a step in the current direction */
 	setNPCPos(npc, x0 + npc.velocity * dt);
 
-	/* Bounce at boundaries */
+	/* Check boundaries */
 	const x1 = getNPCPos(npc);
 	if (x1 > SWIM_EXTENT || x1 < -SWIM_EXTENT){
+		/* Hit boundary - reverse and reset timer */
 		npc.velocity *= -1;
 		setNPCPos(npc, x0 + npc.velocity * dt);
+		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700;
+		return; // Skip the random direction change this frame
+	}
+
+	/* Randomly change direction at intervals (only if not at boundary) */
+	if (Date.now() >= npc.nextDirectionChange){
+		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
+		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700;
 	}
 }
 
