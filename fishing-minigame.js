@@ -491,7 +491,7 @@ function updateRingFillGraphic(progress){
 
 	/* Now position is relative to parent (hookRing), so use 0,0 as center */
 	const centerX = 0;
-	const centerY = hookRing.height/2;
+	const centerY = 2;
 
 	/* Ring dimensions */
 	const width = 54;
