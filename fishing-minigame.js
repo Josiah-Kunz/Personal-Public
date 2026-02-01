@@ -451,13 +451,14 @@ function startReelIn(monEntry, difficulty){
 		
 		/* Update ring fill in state */
 		const coverage = getHookCoverage(monEntry);
-
 		if (coverage > 0) {
 			fillProgress += coverage * 1/REELIN_FILL_TIME * dt;
 			console.log(fillProgress);
 		}
-
 		fillProgress = Math.max(0, Math.min(1, fillProgress));
+		
+		/* Update ring fill in graphic */
+		updateRingFillGraphic(fillProgress);
 
 		/* Check if caught */
 		if (fillProgress >= 1) {
@@ -472,6 +473,140 @@ function startReelIn(monEntry, difficulty){
 	
 	/* Start the loop */
 	requestAnimationFrame(reelinLoop);
+}
+
+function updateRingFillGraphic(progress){
+	if (!game.oceanFishing.ringFillGraphics) {
+		game.oceanFishing.ringFillGraphics = new PIXI.Graphics();
+		game.containers.hud.addChild(game.oceanFishing.ringFillGraphics);
+	}
+	
+	const graphics = game.oceanFishing.ringFillGraphics;
+	graphics.clear();
+
+	/* Position to match the ring sprite */
+	const hookRing = game.oceanFishing.assets.hookring.npc;
+	const centerX = hookRing.sprite.x;
+	const centerY = hookRing.sprite.y;
+
+	/* Ring dimensions */
+	const width = 54;
+	const height = 28;
+	const cornerRadius = 16;
+	const thickness = 3; // Line thickness
+
+	/* Calculate perimeter */
+	const straightWidth = width - 2 * cornerRadius;
+	const straightHeight = height - 2 * cornerRadius;
+	const perimeter = 2 * straightWidth + 2 * straightHeight + 2 * Math.PI * cornerRadius;
+	const targetLength = perimeter * progress;
+
+	graphics.lineStyle(thickness, 0x00ff00, 1);
+
+	/* Draw the path clockwise starting from top center */
+	drawRoundedRectProgress(graphics, centerX, centerY, width, height, cornerRadius, targetLength);
+}
+
+function drawRoundedRectProgress(g, cx, cy, w, h, r, fillLength) {
+	const hw = w / 2;
+	const hh = h / 2;
+	let drawn = 0;
+
+	/* Start at top center */
+	g.moveTo(cx, cy - hh);
+
+	/* Segment 1: Top edge right half */
+	const seg1Len = hw - r;
+	if (drawn + seg1Len <= fillLength) {
+		g.lineTo(cx + hw - r, cy - hh);
+		drawn += seg1Len;
+	} else {
+		const partial = fillLength - drawn;
+		g.lineTo(cx + partial, cy - hh);
+		return;
+	}
+
+	/* Segment 2: Top-right corner */
+	const seg2Len = Math.PI * r / 2;
+	if (drawn + seg2Len <= fillLength) {
+		g.arc(cx + hw - r, cy - hh + r, r, -Math.PI/2, 0);
+		drawn += seg2Len;
+	} else {
+		const partial = (fillLength - drawn) / seg2Len;
+		g.arc(cx + hw - r, cy - hh + r, r, -Math.PI/2, -Math.PI/2 + (Math.PI/2) * partial);
+		return;
+	}
+
+	/* Segment 3: Right edge */
+	const seg3Len = h - 2 * r;
+	if (drawn + seg3Len <= fillLength) {
+		g.lineTo(cx + hw, cy + hh - r);
+		drawn += seg3Len;
+	} else {
+		const partial = fillLength - drawn;
+		g.lineTo(cx + hw, cy - hh + r + partial);
+		return;
+	}
+
+	/* Segment 4: Bottom-right corner */
+	const seg4Len = Math.PI * r / 2;
+	if (drawn + seg4Len <= fillLength) {
+		g.arc(cx + hw - r, cy + hh - r, r, 0, Math.PI/2);
+		drawn += seg4Len;
+	} else {
+		const partial = (fillLength - drawn) / seg4Len;
+		g.arc(cx + hw - r, cy + hh - r, r, 0, (Math.PI/2) * partial);
+		return;
+	}
+
+	/* Segment 5: Bottom edge */
+	const seg5Len = w - 2 * r;
+	if (drawn + seg5Len <= fillLength) {
+		g.lineTo(cx - hw + r, cy + hh);
+		drawn += seg5Len;
+	} else {
+		const partial = fillLength - drawn;
+		g.lineTo(cx + hw - r - partial, cy + hh);
+		return;
+	}
+
+	/* Segment 6: Bottom-left corner */
+	const seg6Len = Math.PI * r / 2;
+	if (drawn + seg6Len <= fillLength) {
+		g.arc(cx - hw + r, cy + hh - r, r, Math.PI/2, Math.PI);
+		drawn += seg6Len;
+	} else {
+		const partial = (fillLength - drawn) / seg6Len;
+		g.arc(cx - hw + r, cy + hh - r, r, Math.PI/2, Math.PI/2 + (Math.PI/2) * partial);
+		return;
+	}
+
+	/* Segment 7: Left edge */
+	const seg7Len = h - 2 * r;
+	if (drawn + seg7Len <= fillLength) {
+		g.lineTo(cx - hw, cy - hh + r);
+		drawn += seg7Len;
+	} else {
+		const partial = fillLength - drawn;
+		g.lineTo(cx - hw, cy + hh - r - partial);
+		return;
+	}
+
+	/* Segment 8: Top-left corner */
+	const seg8Len = Math.PI * r / 2;
+	if (drawn + seg8Len <= fillLength) {
+		g.arc(cx - hw + r, cy - hh + r, r, Math.PI, 3*Math.PI/2);
+		drawn += seg8Len;
+	} else {
+		const partial = (fillLength - drawn) / seg8Len;
+		g.arc(cx - hw + r, cy - hh + r, r, Math.PI, Math.PI + (Math.PI/2) * partial);
+		return;
+	}
+
+	/* Segment 9: Top edge left half back to start */
+	const seg9Len = hw - r;
+	const partial = Math.min(fillLength - drawn, seg9Len);
+	g.lineTo(cx - hw + r + partial, cy - hh);
 }
 
 function getAlphaDuringHook(time){
