@@ -84,8 +84,7 @@ if (!game.oceanFishing){
 					frames: 8,
 					fps: 100,
 					loop: {
-						times: -1,
-						cb: () => console.log("Looping!")
+						times: -1
 					},
 				},
 				x: 0,
