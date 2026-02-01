@@ -185,6 +185,9 @@ const HOOK_FADE_TIME = 5;
 /* Max time in seconds the player has to reel in the mon */
 const MAX_REELIN_TIME = 10;
 
+/* At 100% coverage, the hook bar will take this many seconds to fill */
+const REELIN_FILL_TIME = 3;
+
 /* The struggling mon will change directions randomly between these two times */
 const STRUGGLE_DT_MIN = 0.1;
 const STRUGGLE_DT_MAX = 0.4;
@@ -423,6 +426,7 @@ function startReelIn(monEntry, difficulty){
 	let lastTime = Date.now();
 	let elapsedTime = 0;
 	const startTime = Date.now();
+	let fillProgress = 0; /* 0-1 */
 	
 	const reelinLoop = () => {
 		
@@ -446,6 +450,21 @@ function startReelIn(monEntry, difficulty){
 		updateRingPosition(dt);
 		
 		/* Update ring fill in state */
+		const coverage = getHookCoverage(monEntry);
+
+		if (coverage > 0) {
+			fillProgress += coverage * 1/REELIN_FILL_TIME * dt;
+			console.log(fillProgress);
+		}
+
+		fillProgress = Math.max(0, Math.min(1, fillProgress));
+
+		/* Check if caught */
+		if (fillProgress >= 1) {
+			console.log("You win!");
+			stopFishing(game.player);
+			return;
+		}
 		
 		/* Continue the loop */
 		requestAnimationFrame(reelinLoop);
