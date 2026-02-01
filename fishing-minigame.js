@@ -83,7 +83,10 @@ if (!game.oceanFishing){
 					file: window.CDN_BASE + "images/sprites/186753/fm-ring",
 					frames: 8,
 					fps: 100,
-					loop: -1,
+					loop: {
+						times: -1,
+						cb: () => console.log("Looping!")
+					},
 				},
 				x: 0,
 				y: 0,
