@@ -465,7 +465,8 @@ function startReelIn(monEntry, difficulty, fillProgress = 0){
 
 		/* Check if caught */
 		if (fillProgress >= 1) {
-			stopFishing(game.player);
+			game.trigger("battle="+monEntry.uid+";level 10");
+			setTimeout(() => stopFishing(game.player), 1000);
 			return;
 		}
 		
