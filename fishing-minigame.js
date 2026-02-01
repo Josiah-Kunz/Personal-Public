@@ -476,18 +476,19 @@ function startReelIn(monEntry, difficulty){
 }
 
 function updateRingFillGraphic(progress){
+	const hookRing = game.oceanFishing.assets.hookring.npc;
+	
 	if (!game.oceanFishing.ringFillGraphics) {
 		game.oceanFishing.ringFillGraphics = new PIXI.Graphics();
-		game.containers.hud.addChild(game.oceanFishing.ringFillGraphics);
+		hookRing.sprite.addChild(game.oceanFishing.ringFillGraphics);
 	}
 	
 	const graphics = game.oceanFishing.ringFillGraphics;
 	graphics.clear();
 
-	/* Position to match the ring sprite */
-	const hookRing = game.oceanFishing.assets.hookring.npc;
-	const centerX = hookRing.sprite.x;
-	const centerY = hookRing.sprite.y;
+	/* Now position is relative to parent (hookRing), so use 0,0 as center */
+	const centerX = 0;
+	const centerY = 0;
 
 	/* Ring dimensions */
 	const width = 54;
