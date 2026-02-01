@@ -494,12 +494,13 @@ function updateSwimmingVelocity(npc, difficulty, dt){
 function updateStrugglingVelocity(npc, difficulty, dt){
 	const speed = getSpeed(difficulty, false);
 	const x0 = getNPCPos(npc);
-	const dtScale = STRUGGLE_DT_MAX - STRUGGLE_DT_MIN;
+	const dt0 = STRUGGLE_DT_MIN * 1000; /* in ms */
+	const dtScale = (STRUGGLE_DT_MAX - STRUGGLE_DT_MIN) * 1000;
 
 	/* Initialize */
 	if (!npc.velocity){
 		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
-		npc.nextDirectionChange = Date.now() + STRUGGLE_DT_MIN + Math.random() * dtScale; 
+		npc.nextDirectionChange = Date.now() + dt0 + Math.random() * dtScale; 
 	}
 
 	/* Take a step in the current direction */
@@ -511,14 +512,14 @@ function updateStrugglingVelocity(npc, difficulty, dt){
 		/* Hit boundary - reverse and reset timer */
 		npc.velocity *= -1;
 		setNPCPos(npc, x0 + npc.velocity * dt);
-		npc.nextDirectionChange = Date.now() + STRUGGLE_DT_MIN + Math.random() * dtScale;
+		npc.nextDirectionChange = Date.now() + dt0 + Math.random() * dtScale;
 		return; // Skip the random direction change this frame
 	}
 
 	/* Randomly change direction at intervals (only if not at boundary) */
 	if (Date.now() >= npc.nextDirectionChange){
 		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
-		npc.nextDirectionChange = Date.now() + STRUGGLE_DT_MIN + Math.random() * dtScale;
+		npc.nextDirectionChange = Date.now() + dt0 + Math.random() * dtScale;
 	}
 }
 
