@@ -77,9 +77,14 @@ if (!game.oceanFishing){
 		hookring: {
 			uid: "hookring",
 			npc: game.objects.add({
-				type: "sprite",
+				type: "animation",
 				uid: "hookring",
-				texture: window.CDN_BASE + "images/sprites/186753/fm-ring",
+				texture: {
+					window.CDN_BASE + "images/sprites/186753/fm-ring",
+					frames: 8,
+					fps: 100,
+					loop: -1,
+				},
 				x: 0,
 				y: 0,
 				solid: false,
