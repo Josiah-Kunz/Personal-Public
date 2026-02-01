@@ -185,6 +185,10 @@ const HOOK_FADE_TIME = 5;
 /* Max time in seconds the player has to reel in the mon */
 const MAX_REELIN_TIME = 10;
 
+/* The struggling mon will change directions randomly between these two times */
+const STRUGGLE_DT_MIN = 0.1;
+const STRUGGLE_DT_MAX = 0.4;
+
 /* Function to select a mon to hook */
 /* Returns {monEntry, difficulty} */
 function getRandomMonEntry() {
@@ -490,11 +494,12 @@ function updateSwimmingVelocity(npc, difficulty, dt){
 function updateStrugglingVelocity(npc, difficulty, dt){
 	const speed = getSpeed(difficulty, false);
 	const x0 = getNPCPos(npc);
+	const dtScale = STRUGGLE_DT_MAX - STRUGGLE_DT_MIN;
 
 	/* Initialize */
 	if (!npc.velocity){
 		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
-		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700; // 0.3-1s
+		npc.nextDirectionChange = Date.now() + STRUGGLE_DT_MIN + Math.random() * dtScale; 
 	}
 
 	/* Take a step in the current direction */
@@ -506,14 +511,14 @@ function updateStrugglingVelocity(npc, difficulty, dt){
 		/* Hit boundary - reverse and reset timer */
 		npc.velocity *= -1;
 		setNPCPos(npc, x0 + npc.velocity * dt);
-		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700;
+		npc.nextDirectionChange = Date.now() + STRUGGLE_DT_MIN + Math.random() * dtScale;
 		return; // Skip the random direction change this frame
 	}
 
 	/* Randomly change direction at intervals (only if not at boundary) */
 	if (Date.now() >= npc.nextDirectionChange){
 		npc.velocity = (Math.random() > 0.5 ? 1 : -1) * speed;
-		npc.nextDirectionChange = Date.now() + 300 + Math.random() * 700;
+		npc.nextDirectionChange = Date.now() + STRUGGLE_DT_MIN + Math.random() * dtScale;
 	}
 }
 
