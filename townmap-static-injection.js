@@ -6,6 +6,7 @@ Consulting AI: Claude
 */
 
 game => {
+	
 	if (!game.townmap.crtOverlay) {
 		
 		/* SETTINGS */
@@ -70,11 +71,10 @@ game => {
 
 		/* Animate the CRT effect */
 		const animateStatic = () => {
-			if (game.player.map !== game.townmap.staticMap) {
+			if (!game.map?.js?.toString().includes("game.townmap.crtOverlay")) {
 				pixiApp.destroy(true);
 				overlayCanvas.remove();
 				game.townmap.crtOverlay = null;
-				game.townmap.staticMap = null;
 				return;
 			}
 			
@@ -84,7 +84,6 @@ game => {
 			setTimeout(animateStatic, frameDelay);
 		};
 		
-		game.townmap.staticMap = game.player.map;
 		game.townmap.crtOverlay = { app: pixiApp, canvas: overlayCanvas };
 		animateStatic();
 	}
