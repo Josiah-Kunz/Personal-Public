@@ -335,20 +335,17 @@ function startEncounter(target, monEntry, difficulty, cb = null){
 	
 	/* Mon */
 	} else if (monEntry.uid.startsWith("00")) {
-		game.textbox.say(`Fished up ${aOrAn(monEntry.name) + " " + monEntry.name}!`, () => {
-			game.oceanFishing.hookeduid = monEntry.uid;
-			if (!monEntry.npc) monEntry.npc = game.objects.ids[getUID(monEntry)];
-			if (monEntry.npc?.sprite){
-				appear(monEntry.npc);
-				appear(game.oceanFishing.assets.background.npc);
-				appear(game.oceanFishing.assets.hookring.npc);
-				startSwimming(monEntry, difficulty);
-			} else {
-				console.warn("No monEntry NPC!");
-				game.textbox.say("...but it got away! [error]", () => stopFishing(target));
-			}
-			/*stopFishing(target);*/
-		});
+		game.oceanFishing.hookeduid = monEntry.uid;
+		if (!monEntry.npc) monEntry.npc = game.objects.ids[getUID(monEntry)];
+		if (monEntry.npc?.sprite){
+			appear(monEntry.npc);
+			appear(game.oceanFishing.assets.background.npc);
+			appear(game.oceanFishing.assets.hookring.npc);
+			startSwimming(monEntry, difficulty);
+		} else {
+			console.warn("No monEntry NPC!");
+			game.textbox.say("...but it got away! [error]", () => stopFishing(target));
+		}
 	
 	/* Nothing or unsupported type */
 	} else {
