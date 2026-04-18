@@ -132,7 +132,10 @@ function findSpritesWithPattern(patterns, reference="skin") {
 	let matches = [];
 	for (let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
-		if (!gameObject) continue;
+		if (!gameObject) {
+			console.log(`GameObject with name ${objName} has no object!`);
+			continue;
+		}
 
 		let candidate = String(reference === "uid" ? gameObject.uid : gameObject.skin);
 		console.log(`Comparing candidate ${candidate} against patterns like ${patterns[0]}`);
