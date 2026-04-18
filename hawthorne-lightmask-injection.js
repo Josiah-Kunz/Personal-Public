@@ -82,7 +82,7 @@ let desyncDelay = 1000;
 // Debug Settings
 // ============================================================================
 
-let debugHierarchy = true;
+let debugHierarchy = false;
 let debugFlicker = false;
 
 // ============================================================================
@@ -312,10 +312,7 @@ function waitForObjects(callback, maxAttempts = 50) {
 	}
 }
 waitForObjects(() => {
-    setTimeout(() => {
-        console.log("Delayed applyBlend running...");
-        applyBlend();
-    }, 20000);
+	applyBlend();
 });
 
 // ============================================================================
