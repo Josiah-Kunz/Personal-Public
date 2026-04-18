@@ -465,7 +465,7 @@ if (mapChanged || spriteCountChanged) {
 
 function detailedHierarchy(container, prefix = '', isLast = true) {
 	let connector = isLast ? '└── ' : '├── ';
-	let name = container.letructor.name;
+	let name = container.constructor.name;
 
 	let info = '';
 	if (container.name) info += ` "${container.name}"`;
