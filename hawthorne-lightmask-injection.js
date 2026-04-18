@@ -265,6 +265,18 @@ function applyBlend(){
 			addFore(item.sprite);
 		}
 	});
+	
+	// Add these temporarily at the end of applyBlend():
+
+	console.log("=== Light Mask Debug ===");
+	console.log("Object count:", Object.keys(game.objects["ids"]).length);
+	console.log("Target sprites found:", targetSprites.length);
+	console.log("Cutout sprites found:", cutoutSprites.length);
+	console.log("Fore sprites found:", foreSprites.length);
+	console.log("lmContainer exists:", !!game.lmContainer);
+	console.log("lmContainer parent:", game.lmContainer?.parent?.name);
+	console.log("parentContainer found:", !!parentContainer);
+	console.log("========================");
 }
 
 // ============================================================================
