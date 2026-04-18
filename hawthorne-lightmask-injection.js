@@ -89,20 +89,32 @@ let debugFlicker = false;
 // Performance Optimization: Caching and Detection
 // ============================================================================
 
-// Global tracking variables
-if (!game.__lightMaskCache) {
-	game.__lightMaskCache = {
-		lastMapUid: null,
-		lastObjectCount: 0,
-		cachedSprites: {
-			targets: [],
-			cutouts: [],
-			fores: [],
-			flickers: []
-		},
-		objectsHash: ""
-	};
+// Kill any previous instance
+if (game.__lightMaskCleanup) {
+    game.__lightMaskCleanup();
 }
+
+// Reset cache (don't destroy container yet - we'll reuse or recreate it later)
+game.__lightMaskCache = {
+    lastMapUid: null,
+    lastObjectCount: 0,
+    cachedSprites: {
+        targets: [],
+        cutouts: [],
+        fores: [],
+        flickers: []
+    },
+    objectsHash: ""
+};
+
+// Define cleanup for next script load
+game.__lightMaskCleanup = function() {
+    if (game.map && game.map.__originalUpdate) {
+        game.map.update = game.map.__originalUpdate;
+        game.map.__originalUpdate = null;
+    }
+    game.__lmMap = null;
+};
 
 function shouldUpdate() {
 	let currentObjectCount = Object.keys(game.objects["ids"]).length;
