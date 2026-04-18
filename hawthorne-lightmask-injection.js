@@ -135,6 +135,7 @@ function findSpritesWithPattern(patterns, reference="skin") {
 		if (!gameObject) continue;
 
 		let candidate = String(reference === "uid" ? gameObject.uid : gameObject.skin);
+		console.log(`Comparing candidate ${candidate} against patterns like ${patterns[0]}`);
 
 		for (let pattern of patterns) {
 			if (candidate.includes(pattern)) {
@@ -220,7 +221,6 @@ function applyBlend(){
 		targetSprites = findSpritesWithPattern(targetPatterns);
 		cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 		foreSprites = findSpritesWithPattern(forePatterns);
-		console.log(`Found ${foreSprites.length} fore sprites`);
 		
 		// Cache the results
 		game.__lightMaskCache.cachedSprites.targets = targetSprites;
