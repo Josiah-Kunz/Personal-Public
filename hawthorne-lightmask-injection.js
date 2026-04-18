@@ -129,6 +129,7 @@ function shouldUpdate() {
 // ============================================================================
  
 function findSpritesWithPattern(patterns, reference="skin") {
+	console.log("🔴🔴🔴 findSpritesWithPattern called with patterns:", patterns);
 	let matches = [];
 	for (let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
