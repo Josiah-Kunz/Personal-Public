@@ -1,6 +1,6 @@
 // ============================================================================
 // Custom lighting overlay and cutout script.
-// Version: Sep 25 2025
+// Version: April 17 2026
 //
 // Usage: 
 //	- Define a sprite in jCoad like normal 
@@ -128,18 +128,13 @@ function shouldUpdate() {
 // Optimized Light Mask Functions
 // ============================================================================
  
-function findSpritesWithPattern(patterns, reference="skin") {
-	console.log("🔴🔴🔴 findSpritesWithPattern called with patterns:", patterns);
+function lm_findSpritesWithPattern(patterns, reference="skin") {
 	let matches = [];
 	for (let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
-		if (!gameObject) {
-			console.log(`GameObject with name ${objName} has no object!`);
-			continue;
-		}
+		if (!gameObject) continue;
 
 		let candidate = String(reference === "uid" ? gameObject.uid : gameObject.skin);
-		console.log(`Comparing candidate ${candidate} against patterns like ${patterns[0]}`);
 
 		for (let pattern of patterns) {
 			if (candidate.includes(pattern)) {
@@ -175,7 +170,7 @@ function addFore(sprite){
 	}
 }
 
-function findGameObjectForSprite(sprite) {
+function lm_findGameObjectForSprite(sprite) {
 	for (let objName in game.objects["ids"]) {
 		let gameObject = game.objects["ids"][objName];
 		if (gameObject && gameObject.sprite === sprite) {
@@ -222,9 +217,9 @@ function applyBlend(){
 	let targetSprites, cutoutSprites, foreSprites;
 	
 	if (shouldUpdate()) {
-		targetSprites = findSpritesWithPattern(targetPatterns);
-		cutoutSprites = findSpritesWithPattern(cutoutPatterns);
-		foreSprites = findSpritesWithPattern(forePatterns);
+		targetSprites = lm_findSpritesWithPattern(targetPatterns);
+		cutoutSprites = lm_findSpritesWithPattern(cutoutPatterns);
+		foreSprites = lm_findSpritesWithPattern(forePatterns);
 		
 		// Cache the results
 		game.__lightMaskCache.cachedSprites.targets = targetSprites;
@@ -242,17 +237,17 @@ function applyBlend(){
 	let allSprites = [];
 
 	targetSprites.forEach(sprite => {
-		let gameObj = findGameObjectForSprite(sprite);
+		let gameObj = lm_findGameObjectForSprite(sprite);
 		allSprites.push({sprite, priority: getPriority(gameObj), type: 'target'});
 	});
 
 	cutoutSprites.forEach(sprite => {
-		let gameObj = findGameObjectForSprite(sprite);
+		let gameObj = lm_findGameObjectForSprite(sprite);
 		allSprites.push({sprite, priority: getPriority(gameObj), type: 'cutout'});
 	});
 
 	foreSprites.forEach(sprite => {
-		let gameObj = findGameObjectForSprite(sprite);
+		let gameObj = lm_findGameObjectForSprite(sprite);
 		allSprites.push({sprite, priority: getPriority(gameObj), type: 'fore'});
 	});
 
@@ -302,26 +297,8 @@ if (!game.__lmMap || game.__lmMap !== game.map.id) {
 	};
 }
 
-// Run at least once every time scripts are executed, but wait for game.objects["ids"] to exist
-function waitForObjects(callback, maxAttempts = 50) {
-	console.log("waitForObjects called, objects count:", Object.keys(game.objects["ids"]).length, "attempts left:", maxAttempts);
-	
-	if (Object.keys(game.objects["ids"]).length > 0) {
-		console.log("Objects found! Calling callback...");
-		callback();
-	} else if (maxAttempts > 0) {
-		setTimeout(() => waitForObjects(callback, maxAttempts - 1), 50);
-	} else {
-		console.warn("Light mask: No objects found after waiting");
-	}
-}
-
-console.log("About to call waitForObjects...");
-waitForObjects(() => {
-	console.log("Inside waitForObjects callback!");
-	applyBlend();
-});
-console.log("waitForObjects has been called");
+// Run at least once every time scripts are executed
+applyBlend();
 
 // ============================================================================
 // Flicker Functions (Optimized)
@@ -434,7 +411,7 @@ if (!game.map.__flickerTimers) {
 	game.map.__flickerTimers = new Map();
 }
 
-let currentFlickerSprites = findSpritesWithPattern(flickerPatterns, "uid");
+let currentFlickerSprites = lm_findSpritesWithPattern(flickerPatterns, "uid");
 
 if (!game.map.__numFlickerSprites) {
 	game.map.__numFlickerSprites = 0;
@@ -477,7 +454,7 @@ if (mapChanged || spriteCountChanged) {
 
 function detailedHierarchy(container, prefix = '', isLast = true) {
 	let connector = isLast ? '└── ' : '├── ';
-	let name = container.constructor.name;
+	let name = container.letructor.name;
 
 	let info = '';
 	if (container.name) info += ` "${container.name}"`;
