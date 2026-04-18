@@ -152,6 +152,7 @@ function findSpritesWithPattern(patterns, reference="skin") {
 function addTarget(sprite){
 	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
+		sprite.visible = true;
 		game.lmContainer.addChild(sprite);
 	}
 }
@@ -159,6 +160,7 @@ function addTarget(sprite){
 function addCutout(sprite){
 	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.DST_OUT;
+		sprite.visible = true;
 		game.lmContainer.addChild(sprite);
 	}
 }
@@ -166,6 +168,7 @@ function addCutout(sprite){
 function addFore(sprite){
 	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
+		sprite.visible = true;
 		game.lmContainer.addChild(sprite);
 	}
 }
@@ -265,23 +268,6 @@ function applyBlend(){
 			addFore(item.sprite);
 		}
 	});
-	
-	console.log("=== Light Mask Debug ===");
-	console.log("Object count:", Object.keys(game.objects["ids"]).length);
-	console.log("Target sprites found:", targetSprites.length);
-	console.log("Cutout sprites found:", cutoutSprites.length);
-	console.log("Fore sprites found:", foreSprites.length);
-	console.log("lmContainer exists:", !!game.lmContainer);
-	console.log("lmContainer parent:", game.lmContainer?.parent?.name);
-	console.log("lmContainer children:", game.lmContainer?.children?.length);
-	console.log("lmContainer visible:", game.lmContainer?.visible);
-	console.log("lmContainer alpha:", game.lmContainer?.alpha);
-	if (targetSprites.length > 0) {
-		console.log("First target visible:", targetSprites[0]?.visible);
-		console.log("First target alpha:", targetSprites[0]?.alpha);
-		console.log("First target parent:", targetSprites[0]?.parent?.name || targetSprites[0]?.parent);
-	}
-	console.log("========================");
 }
 
 // ============================================================================
