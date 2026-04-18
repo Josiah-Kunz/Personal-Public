@@ -312,7 +312,10 @@ function waitForObjects(callback, maxAttempts = 50) {
 	}
 }
 waitForObjects(() => {
-	applyBlend();
+    setTimeout(() => {
+        console.log("Delayed applyBlend running...");
+        applyBlend();
+    }, 500);
 });
 
 // ============================================================================
