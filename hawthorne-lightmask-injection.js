@@ -82,7 +82,7 @@ let desyncDelay = 1000;
 // Debug Settings
 // ============================================================================
 
-let debugHierarchy = false;
+let debugHierarchy = true;
 let debugFlicker = false;
 
 // ============================================================================
@@ -152,7 +152,6 @@ function findSpritesWithPattern(patterns, reference="skin") {
 function addTarget(sprite){
 	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-		sprite.visible = true;
 		game.lmContainer.addChild(sprite);
 	}
 }
@@ -160,7 +159,6 @@ function addTarget(sprite){
 function addCutout(sprite){
 	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.DST_OUT;
-		sprite.visible = true;
 		game.lmContainer.addChild(sprite);
 	}
 }
@@ -168,7 +166,6 @@ function addCutout(sprite){
 function addFore(sprite){
 	if (!game.lmContainer.children.includes(sprite)) {
 		sprite.blendMode = PIXI.BLEND_MODES.NORMAL;
-		sprite.visible = true;
 		game.lmContainer.addChild(sprite);
 	}
 }
