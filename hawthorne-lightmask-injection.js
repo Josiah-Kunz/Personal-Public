@@ -297,8 +297,19 @@ if (!game.__lmMap || game.__lmMap !== game.map.id) {
 	};
 }
 
-// Run at least once every time scripts are executed
-applyBlend();
+// Run at least once every time scripts are executed, but wait for game.objects["ids"] to exist
+function waitForObjects(callback, maxAttempts = 50) {
+	if (Object.keys(game.objects["ids"]).length > 0) {
+		callback();
+	} else if (maxAttempts > 0) {
+		setTimeout(() => waitForObjects(callback, maxAttempts - 1), 50);
+	} else {
+		console.warn("Light mask: No objects found after waiting");
+	}
+}
+waitForObjects(() => {
+	applyBlend();
+});
 
 // ============================================================================
 // Flicker Functions (Optimized)

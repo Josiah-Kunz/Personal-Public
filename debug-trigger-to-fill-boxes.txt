@@ -1,0 +1,49 @@
+
+if (i[0] === "fillboxes"){
+
+	console.log("Starting to fill boxes...");
+
+	const requestDelay = 1000;
+	const numBoxes = 10;
+	const monsPerBox = 50;
+	const collections = [
+		"104i9uwr", // Johto
+		"10eup7qc", // Harsholme
+	];
+
+	let relayCount = 0;
+	let globalBox = 1; // Track across collections
+
+	for (const collection of collections) {
+		getCollection(collection, (loadedCollection) => {
+			console.log(`Collection: ${loadedCollection.name}`);
+			const numMons = loadedCollection.content.length;
+			let monsInCollection = 0;
+
+			for (let i = 0; i < numMons; ++i) {
+				if (globalBox > numBoxes) return; // Stop when we hit 50 boxes
+
+				const slotInBox = monsInCollection % monsPerBox;
+				if (slotInBox === 0 && monsInCollection > 0) globalBox++; // Move to next box
+
+				const uid = loadedCollection.content[i];
+
+				// Can't do a simple setTimeout since box isn't properly captured
+				const createMonCallback = (box, monUid) => {
+					return () => {
+						new Mon(this, monUid, createdMon => {
+							const monDataString = compressMon(createdMon);
+							this.client.relay([47, box, monDataString, 0]);
+							console.log(`Box ${box}: Deposited ${createdMon.data.name}`);
+						});
+					};
+				};
+				setTimeout(createMonCallback(globalBox, uid), relayCount * requestDelay);
+
+				relayCount++;
+				monsInCollection++;
+			}
+		});
+	}
+	
+}
