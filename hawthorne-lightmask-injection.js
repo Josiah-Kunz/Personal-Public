@@ -315,7 +315,7 @@ waitForObjects(() => {
     setTimeout(() => {
         console.log("Delayed applyBlend running...");
         applyBlend();
-    }, 500);
+    }, 5000);
 });
 
 // ============================================================================
