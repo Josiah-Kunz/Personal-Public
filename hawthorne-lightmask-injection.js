@@ -220,6 +220,7 @@ function applyBlend(){
 		targetSprites = findSpritesWithPattern(targetPatterns);
 		cutoutSprites = findSpritesWithPattern(cutoutPatterns);
 		foreSprites = findSpritesWithPattern(forePatterns);
+		console.log(`Found ${foreSprites.length} fore sprites`);
 		
 		// Cache the results
 		game.__lightMaskCache.cachedSprites.targets = targetSprites;
