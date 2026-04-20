@@ -1,8 +1,7 @@
-if (game.skyRenderer) return;
-
 class SkyRenderer {
 	constructor(game, config = {}) {
 		this.game = game;
+		this.map = game.map;
 
 		/* ===== CONFIG ===== */
 		this.config = {
@@ -893,7 +892,9 @@ class SkyRenderer {
 }
 
 /* Create and store the renderer */
-game.skyRenderer = new SkyRenderer(game, {
-	/* Override any config here */
-	offset: { x: 0, y: 0 }
-});
+if (game.skyRenderer?.map !== game.map){
+	game.skyRenderer = new SkyRenderer(game, {
+		/* Override any config here */
+		offset: { x: 0, y: 0 }
+	});
+}

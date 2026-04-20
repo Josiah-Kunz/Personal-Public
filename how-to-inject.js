@@ -2,10 +2,7 @@ game => {
 
 
 let scriptUrls = [
-
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/233dd5956a70b0a0728735514a292968a2aeee4e/hawthorne-lightmask-injection.js",
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/78b50c7d7c445c074a827b5b6600edf15f0ed25f/custom-boulder.js",
-
+"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/642baac1cd7da7f942ad54742241231eb35f4e0c/sky-renderer.js",
 ];
 
 
@@ -30,7 +27,5 @@ if (game.map.id != game.map.__cachedid) {
 	} else if (game.map && game.map.__jsScripts && !game.map.__scriptsLoading) {
 	eval(game.map.__jsScripts);
 }
-
-
 
 }
