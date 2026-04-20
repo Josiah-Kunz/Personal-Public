@@ -895,7 +895,7 @@ class SkyRenderer {
 if (game.skyRenderer?.map !== game.map){
 	game.skyRenderer = new SkyRenderer(game, {
 		/* Override any config here */
-		offset: { x: 0, y: 0 },
-		resolution: {width: 1000},
+		offset: { x: 864, y: 0 },
+		resolution: {width: 1120},
 	});
 }
