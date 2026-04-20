@@ -34,7 +34,7 @@ class SkyRenderer {
 				height: 15,
 				thickness: 2,
 				detail: 0.5,
-				driftSpeed: 0.0028,
+				driftSpeed: 0.00003,
 				layerOffset: 31,
 				...config.clouds
 			},
@@ -87,17 +87,25 @@ class SkyRenderer {
 		this.cachedSun = null;
 		this.cachedMoon = null;
 		this.lastStaticRedraw = 0;
-		this.staticRedrawInterval = 1;
+		this.staticRedrawInterval = 5000;
 		this.lastGameTime = -1;
 
 		this.stars = [];
 		this.starSprites = new Map();
+
 		this.canvas = null;
 		this.ctx = null;
 		this.staticCanvas = null;
 		this.staticCtx = null;
 		this.texture = null;
 		this.sprite = null;
+
+		/* Cloud system */
+		this.cloudCanvas = null;
+		this.cloudTexture = null;
+		this.cloudSprite = null;
+		this.cloudShader = null;
+		this.cloudContainer = null;
 
 		this.init();
 	}
@@ -117,14 +125,21 @@ class SkyRenderer {
 		this.staticCtx = this.staticCanvas.getContext("2d", { alpha: false });
 		this.staticCtx.imageSmoothingEnabled = false;
 
-		/* PIXI texture and sprite */
+		/* PIXI texture and sprite for main sky */
 		this.texture = PIXI.Texture.from(this.canvas);
 		this.sprite = new PIXI.Sprite(this.texture);
 		this.sprite.x = this.config.offset.x;
 		this.sprite.y = this.config.offset.y;
 
-		/* Add to voidSprites */
-		this.game.containers.voidSprites.addChild(this.sprite);
+		/* Container to hold sky + clouds */
+		this.container = new PIXI.Container();
+		this.container.addChild(this.sprite);
+
+		/* Build cloud system */
+		this.buildCloudSystem();
+
+		/* Add container to voidSprites */
+		this.game.containers.voidSprites.addChild(this.container);
 
 		this.buildStarSprites();
 		this.buildStars();
@@ -133,11 +148,209 @@ class SkyRenderer {
 		console.log("SkyRenderer initialized!");
 	}
 
+	/* ===== CLOUD SYSTEM ===== */
+
+	buildCloudSystem() {
+		const cfg = this.config.clouds;
+		const width = this.config.resolution.width;
+		const cloudHeight = cfg.height + cfg.thickness + 10;
+
+		/* Create cloud canvas - make it 2x width for seamless scrolling */
+		this.cloudCanvas = document.createElement("canvas");
+		this.cloudCanvas.width = width * 2;
+		this.cloudCanvas.height = cloudHeight;
+		const ctx = this.cloudCanvas.getContext("2d", { alpha: true });
+		ctx.imageSmoothingEnabled = false;
+
+		/* Render clouds to canvas (both halves for seamless loop) */
+		this.renderCloudStrip(ctx, 0, width * 2, cloudHeight);
+
+		/* Create PIXI texture from cloud canvas */
+		this.cloudTexture = PIXI.Texture.from(this.cloudCanvas);
+		this.cloudTexture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+		this.cloudTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+
+		/* Create cloud scroll shader */
+		const vertexShader = `
+			attribute vec2 aVertexPosition;
+			attribute vec2 aTextureCoord;
+			uniform mat3 projectionMatrix;
+			varying vec2 vTextureCoord;
+			void main(void) {
+				gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
+				vTextureCoord = aTextureCoord;
+			}
+		`;
+
+		const fragmentShader = `
+			precision mediump float;
+			varying vec2 vTextureCoord;
+			uniform sampler2D uSampler;
+			uniform float uScrollX;
+			uniform float uDayness;
+			uniform vec3 uTintLight;
+			uniform vec3 uTintMid;
+			uniform vec3 uTintShadow;
+
+			void main(void) {
+				vec2 uv = vTextureCoord;
+				uv.x = fract(uv.x + uScrollX);
+				vec4 color = texture2D(uSampler, uv);
+
+				/* color.a encodes the cloud "zone": 1.0=light, 0.66=mid, 0.33=shadow, 0.0=transparent */
+				if (color.a < 0.1) {
+					discard;
+				}
+
+				vec3 tint;
+				if (color.a > 0.8) {
+					tint = uTintLight;
+				} else if (color.a > 0.5) {
+					tint = uTintMid;
+				} else {
+					tint = uTintShadow;
+				}
+
+				gl_FragColor = vec4(tint, 1.0);
+			}
+		`;
+
+		const uniforms = {
+			uScrollX: 0.0,
+			uDayness: 0.5,
+			uTintLight: [0.945, 0.949, 0.867],
+			uTintMid: [0.878, 0.906, 0.792],
+			uTintShadow: [0.761, 0.804, 0.690]
+		};
+
+		this.cloudShader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
+
+		/* Create mesh with the shader */
+		const geometry = new PIXI.Geometry()
+			.addAttribute("aVertexPosition", [
+				0, 0,
+				width, 0,
+				width, cloudHeight,
+				0, cloudHeight
+			], 2)
+			.addAttribute("aTextureCoord", [
+				0, 0,
+				1, 0,
+				1, 1,
+				0, 1
+			], 2)
+			.addIndex([0, 1, 2, 0, 2, 3]);
+
+		this.cloudMesh = new PIXI.Mesh(geometry, PIXI.MeshMaterial.from(this.cloudTexture, {
+			program: PIXI.Program.from(vertexShader, fragmentShader),
+			uniforms: uniforms
+		}));
+
+		this.cloudMesh.x = this.config.offset.x;
+		this.cloudMesh.y = this.config.offset.y + this.horizonY() - cfg.height;
+
+		this.container.addChild(this.cloudMesh);
+	}
+
+	renderCloudStrip(ctx, startX, endX, height) {
+		const cfg = this.config.clouds;
+
+		/* Clear with transparency */
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		/* We encode cloud zones in alpha:
+		   1.0 = light (top of cloud)
+		   0.66 = mid
+		   0.33 = shadow
+		*/
+
+		const baseY = cfg.height;
+
+		/* Main cloud layer */
+		for (let x = startX; x < endX; x += 2) {
+			const top = this.getCloudTopOffset(x);
+
+			for (let y = top; y < height; y++) {
+				const d = (y - top) / Math.max(1, height - top);
+
+				let alpha;
+				if (d < 0.18) alpha = 1.0;
+				else if (d < 0.6) alpha = 0.66;
+				else alpha = 0.33;
+
+				ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+				ctx.fillRect(x, y, 2, 1);
+			}
+		}
+
+		/* Shadow overlay layer */
+		for (let x = startX; x < endX; x += 2) {
+			const top = this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
+
+			for (let y = top; y < height - cfg.thickness; y++) {
+				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
+				if ((1 - d) * 0.18 > 0.05) {
+					ctx.fillStyle = `rgba(255,255,255,0.33)`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
+	}
+
+	getCloudTopOffset(x, speedMult = 1) {
+		const cfg = this.config.clouds;
+		const sx = x * speedMult;
+		const n1 = Math.sin(sx * 0.022 + 0.5) * 8 * cfg.detail;
+		const n2 = Math.sin(sx * 0.061 + 1.4) * 6 * cfg.detail;
+		const n3 = Math.sin(sx * 0.18 + 1.3) * 4 * cfg.detail;
+		const n4 = Math.sin(sx * 0.43 + 2.2) * 2 * cfg.detail;
+		const n5 = Math.sin(sx * 0.93 + 0.4) * 1.5 * cfg.detail;
+		return Math.round(n1 + n2 + n3 + n4 + n5);
+	}
+
+	updateCloudShader(t) {
+		if (!this.cloudMesh) return;
+
+		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
+
+		/* Calculate cloud colors based on time of day */
+		const shadow = {
+			r: this.lerp(120, 194, dayness) / 255,
+			g: this.lerp(128, 205, dayness) / 255,
+			b: this.lerp(142, 176, dayness) / 255
+		};
+		const mid = {
+			r: this.lerp(166, 224, dayness) / 255,
+			g: this.lerp(176, 231, dayness) / 255,
+			b: this.lerp(190, 202, dayness) / 255
+		};
+		const light = {
+			r: this.lerp(196, 241, dayness) / 255,
+			g: this.lerp(208, 242, dayness) / 255,
+			b: this.lerp(220, 221, dayness) / 255
+		};
+
+		const uniforms = this.cloudMesh.shader.uniforms;
+		uniforms.uScrollX = (this.elapsed * this.config.clouds.driftSpeed) % 1.0;
+		uniforms.uDayness = dayness;
+		uniforms.uTintLight = [light.r, light.g, light.b];
+		uniforms.uTintMid = [mid.r, mid.g, mid.b];
+		uniforms.uTintShadow = [shadow.r, shadow.g, shadow.b];
+	}
+
 	destroy() {
 		this.stop();
 
-		if (this.sprite && this.sprite.parent) {
-			this.sprite.parent.removeChild(this.sprite);
+		if (this.container && this.container.parent) {
+			this.container.parent.removeChild(this.container);
+		}
+		if (this.cloudMesh) {
+			this.cloudMesh.destroy();
+			this.cloudMesh = null;
+		}
+		if (this.cloudTexture) {
+			this.cloudTexture.destroy(true);
+			this.cloudTexture = null;
 		}
 		if (this.texture) {
 			this.texture.destroy(true);
@@ -147,12 +360,17 @@ class SkyRenderer {
 			this.sprite.destroy();
 			this.sprite = null;
 		}
+		if (this.container) {
+			this.container.destroy();
+			this.container = null;
+		}
 
 		this.starSprites.clear();
 		this.canvas = null;
 		this.ctx = null;
 		this.staticCanvas = null;
 		this.staticCtx = null;
+		this.cloudCanvas = null;
 		this.stars = [];
 	}
 
@@ -544,72 +762,6 @@ class SkyRenderer {
 		this.fillCircle(ctx, x - 2, y - 2, 1, "rgba(255,255,255,0.16)");
 	}
 
-	/* ===== DRAWING - CLOUDS ===== */
-
-	getCloudTop(x, drift) {
-		const cfg = this.config.clouds;
-		const sx = x + drift;
-		const n1 = Math.sin(sx * 0.022 + 0.5) * 8 * cfg.detail;
-		const n2 = Math.sin(sx * 0.061 + 1.4) * 6 * cfg.detail;
-		const n3 = Math.sin(sx * 0.18 + 1.3) * 4 * cfg.detail;
-		const n4 = Math.sin(sx * 0.43 + 2.2) * 2 * cfg.detail;
-		const n5 = Math.sin(sx * 0.93 + 0.4) * 1.5 * cfg.detail;
-		return Math.round((this.horizonY() - cfg.height) + n1 + n2 + n3 + n4 + n5);
-	}
-
-	drawCloudBand(ctx, t) {
-		const cfg = this.config.clouds;
-		const width = this.config.resolution.width;
-		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
-		const drift = this.elapsed * cfg.driftSpeed;
-
-		const shadow = {
-			r: Math.round(this.lerp(120, 194, dayness)),
-			g: Math.round(this.lerp(128, 205, dayness)),
-			b: Math.round(this.lerp(142, 176, dayness))
-		};
-
-		const mid = {
-			r: Math.round(this.lerp(166, 224, dayness)),
-			g: Math.round(this.lerp(176, 231, dayness)),
-			b: Math.round(this.lerp(190, 202, dayness))
-		};
-
-		const light = {
-			r: Math.round(this.lerp(196, 241, dayness)),
-			g: Math.round(this.lerp(208, 242, dayness)),
-			b: Math.round(this.lerp(220, 221, dayness))
-		};
-
-		/* Main cloud layer */
-		for (let x = 0; x < width; x += 2) {
-			const top = this.getCloudTop(x, drift);
-
-			for (let y = top; y < this.horizonY() + cfg.thickness; y++) {
-				const d = (y - top) / Math.max(1, this.horizonY() + cfg.thickness - top);
-
-				let c = shadow;
-				if (d < 0.18) c = light;
-				else if (d < 0.6) c = mid;
-
-				ctx.fillStyle = this.rgb(c);
-				ctx.fillRect(x, y, 2, 1);
-			}
-		}
-
-		/* Shadow overlay layer */
-		for (let x = 0; x < width; x += 2) {
-			const top = this.getCloudTop(x + cfg.layerOffset, drift * 0.65) + 1;
-
-			for (let y = top; y < this.horizonY() + 1; y++) {
-				const d = (y - top) / Math.max(1, this.horizonY() + 1 - top);
-				const alpha = (1 - d) * 0.18;
-				ctx.fillStyle = `rgba(${shadow.r},${shadow.g},${shadow.b},${alpha})`;
-				ctx.fillRect(x, y, 2, 1);
-			}
-		}
-	}
-
 	/* ===== DRAWING - OCEAN ===== */
 
 	drawOceanBase(ctx, t, skyPalette) {
@@ -820,7 +972,7 @@ class SkyRenderer {
 			this.drawMoon(ctx, moon.x, moon.y);
 		}
 
-		this.drawCloudBand(ctx, t);
+		/* Clouds are now handled by the shader - no drawing here */
 
 		this.cachedPalette = palette;
 		this.cachedSun = sun;
@@ -836,6 +988,9 @@ class SkyRenderer {
 
 		this.drawStars(ctx, t);
 		this.drawOceanDetail(ctx, t, this.cachedPalette, this.cachedSun, this.cachedMoon);
+
+		/* Update cloud shader uniforms */
+		this.updateCloudShader(t);
 	}
 
 	/* ===== RENDER LOOP ===== */
@@ -871,10 +1026,10 @@ class SkyRenderer {
 }
 
 /* Create and store the renderer */
-if (game.skyRenderer?.map !== game.map) {
-	if (game.skyRenderer) game.skyRenderer.destroy();
-	game.skyRenderer = new SkyRenderer(game, {
+if (GAME.skyRenderer?.map !== GAME.map) {
+	if (GAME.skyRenderer) GAME.skyRenderer.destroy();
+	GAME.skyRenderer = new SkyRenderer(GAME, {
 		offset: { x: 864, y: 0 },
 		resolution: { width: 1120, height: 1072 }
-	}); 
+	});
 }
