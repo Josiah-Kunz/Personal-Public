@@ -108,6 +108,16 @@ class SkyRenderer {
 		this.frameDuration = 1000 / this.config.timing.fps;
 		this.running = false;
 		this.animationId = null;
+		
+		/* ===== CACHING ===== */
+		this.staticCanvas = null;
+		this.staticCtx = null;
+		this.lastStaticRedraw = 0;
+		this.staticRedrawInterval = 5000; // 5 seconds
+		this.lastGameTime = -1;
+		this.cachedPalette = null;
+		this.cachedSun = null;
+		this.cachedMoon = null;
 
 		/* ===== ASSETS ===== */
 		this.stars = [];
@@ -128,6 +138,13 @@ class SkyRenderer {
 		this.canvas.height = this.config.resolution.height;
 		this.ctx = this.canvas.getContext('2d', { alpha: false });
 		this.ctx.imageSmoothingEnabled = false;
+		
+		/* Create static layer canvas */
+		this.staticCanvas = document.createElement('canvas');
+		this.staticCanvas.width = this.config.resolution.width;
+		this.staticCanvas.height = this.config.resolution.height;
+		this.staticCtx = this.staticCanvas.getContext('2d', { alpha: false });
+		this.staticCtx.imageSmoothingEnabled = false;
 
 		/* Create PIXI texture and sprite */
 		this.texture = PIXI.Texture.from(this.canvas);
@@ -170,6 +187,8 @@ class SkyRenderer {
 		/* Clear canvas */
 		this.canvas = null;
 		this.ctx = null;
+		this.staticCanvas = null;
+		this.staticCtx = null;
 
 		/* Clear star sprites */
 		this.starSprites.clear();
@@ -859,6 +878,104 @@ class SkyRenderer {
 		this.drawOceanDetail(t, palette, sun, moon);
 	}
 
+	/* ===== STATIC LAYER (redraws every 5 sec or on time change) ===== */
+
+	needsStaticRedraw(t) {
+		/* Always redraw first frame */
+		if (!this.cachedPalette) return true;
+		
+		const now = performance.now();
+		const timeDelta = now - this.lastStaticRedraw;
+		const gameTimeChanged = Math.abs(t - this.lastGameTime) > 0.001;
+		
+		return timeDelta > this.staticRedrawInterval || gameTimeChanged;
+	}
+
+	drawStaticLayer(t) {
+		const ctx = this.staticCtx;
+		const oldCtx = this.ctx;
+		this.ctx = ctx; // Temporarily swap so drawing methods use static canvas
+
+		ctx.clearRect(0, 0, this.config.resolution.width, this.config.resolution.height);
+
+		const palette = this.getSkyPalette(t);
+		
+		/* Sky gradient */
+		this.drawSkyGradient(palette);
+		
+		/* Atmospheric haze */
+		this.drawAtmosphericHaze(t);
+
+		/* Celestial bodies (sun/moon) */
+		const { sun, moon } = this.getCelestialState(t);
+		this.drawHorizonGlow(sun, moon);
+
+		if (sun && this.shouldDrawBody(sun, this.config.celestials.sunRadius)) {
+			this.drawSun(sun.x, sun.y);
+		}
+		if (moon && this.shouldDrawBody(moon, this.config.celestials.moonRadius)) {
+			this.drawMoon(moon.x, moon.y);
+		}
+
+		/* Cloud band */
+		this.drawCloudBand(t);
+
+		/* Ocean base (no shimmer/reflections - those are animated) */
+		this.drawOceanBase(t, palette);
+
+		this.ctx = oldCtx; // Swap back
+		
+		this.lastStaticRedraw = performance.now();
+		this.lastGameTime = t;
+		
+		/* Cache palette and celestials for animated layer */
+		this.cachedPalette = palette;
+		this.cachedSun = sun;
+		this.cachedMoon = moon;
+	}
+
+	/* ===== ANIMATED LAYER (every frame) ===== */
+
+	drawAnimatedLayer(t) {
+		/* Start with static layer */
+		this.ctx.drawImage(this.staticCanvas, 0, 0);
+
+		/* Stars (twinkle animation) */
+		this.drawStars(t);
+
+		/* Water reflections & shimmer */
+		this.drawAmbientWaterReflection(this.cachedPalette);
+		
+		this.drawWaterReflection(this.cachedSun, {
+			color: { r: 255, g: 226, b: 110 },
+			radius: this.config.celestials.sunRadius,
+			length: this.config.water.reflectionLengthSun,
+			widthNear: this.config.water.trailWidthSun,
+			widthFar: this.config.water.trailWidthFarSun,
+			alpha: this.config.water.sunReflectionAlpha * this.config.water.detail,
+			freqA: 0.18,
+			freqB: 0.11,
+			speed: 0.0008,
+			fadeHeight: 180
+		});
+
+		this.drawWaterReflection(this.cachedMoon, {
+			color: { r: 255, g: 255, b: 255 },
+			radius: this.config.celestials.moonRadius,
+			length: this.config.water.reflectionLengthMoon,
+			widthNear: this.config.water.trailWidthMoon,
+			widthFar: this.config.water.trailWidthFarMoon,
+			alpha: this.config.water.moonReflectionAlpha * this.config.water.detail,
+			freqA: 0.16,
+			freqB: 0.09,
+			speed: 0.0006,
+			fadeHeight: 160
+		});
+
+		this.drawWaterShimmer();
+		this.drawOceanSurfaceLines();
+	}
+
 	/* ===== RENDER LOOP ===== */
 
 	render(ts) {
@@ -881,8 +998,13 @@ class SkyRenderer {
 		this.elapsed += dt * this.config.timing.overallSpeed;
 		const t = this.getGameTimeNormalized();
 
-		this.ctx.clearRect(0, 0, this.config.resolution.width, this.config.resolution.height);
-		this.drawScene(t);
+		/* Redraw static layer if needed */
+		if (this.needsStaticRedraw(t)) {
+			this.drawStaticLayer(t);
+		}
+
+		/* Always draw animated layer */
+		this.drawAnimatedLayer(t);
 
 		/* Update PIXI texture */
 		this.texture.update();
@@ -893,9 +1015,10 @@ class SkyRenderer {
 
 /* Create and store the renderer */
 if (game.skyRenderer?.map !== game.map){
+	if (game.skyRenderer) game.skyRenderer.destroy();
 	game.skyRenderer = new SkyRenderer(game, {
 		/* Override any config here */
 		offset: { x: 864, y: 0 },
-		resolution: {width: 1120},
+		resolution: {width: 1120, height:1072},
 	});
 }
