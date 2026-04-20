@@ -174,7 +174,7 @@ class SkyRenderer {
 
 		this.cloudSprite.x = this.config.offset.x;
 		this.cloudSprite.y = this.config.offset.y + this.horizonY() - cfg.height;
-		
+
 		this.container.addChild(this.cloudSprite);
 	}
 	
@@ -184,11 +184,10 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 
 		/* Scroll the tiling sprite */
-		const scrollX = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
-		console.log("scrollX:", scrollX, "elapsed:", this.elapsed);
-		this.cloudSprite.tilePosition.x = -scrollX;
+		this.cloudSprite.tilePosition.x = -this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
 
-		/* Tint */
+		/* For tinting, we'll need to rebuild the cloud texture periodically or use a filter */
+		/* For now, just use PIXI's built-in tint as an approximation */
 		const tintR = Math.round(this.lerp(160, 220, dayness));
 		const tintG = Math.round(this.lerp(170, 228, dayness));
 		const tintB = Math.round(this.lerp(180, 210, dayness));
@@ -249,36 +248,6 @@ class SkyRenderer {
 		const n4 = Math.sin(sx * 0.43 + 2.2) * 2 * cfg.detail;
 		const n5 = Math.sin(sx * 0.93 + 0.4) * 1.5 * cfg.detail;
 		return Math.round(n1 + n2 + n3 + n4 + n5);
-	}
-
-	updateCloudShader(t) {
-		if (!this.cloudMesh) return;
-
-		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
-
-		/* Calculate cloud colors based on time of day */
-		const shadow = {
-			r: this.lerp(120, 194, dayness) / 255,
-			g: this.lerp(128, 205, dayness) / 255,
-			b: this.lerp(142, 176, dayness) / 255
-		};
-		const mid = {
-			r: this.lerp(166, 224, dayness) / 255,
-			g: this.lerp(176, 231, dayness) / 255,
-			b: this.lerp(190, 202, dayness) / 255
-		};
-		const light = {
-			r: this.lerp(196, 241, dayness) / 255,
-			g: this.lerp(208, 242, dayness) / 255,
-			b: this.lerp(220, 221, dayness) / 255
-		};
-
-		const uniforms = this.cloudMesh.shader.uniforms;
-		uniforms.uScrollX = (this.elapsed * this.config.clouds.driftSpeed) % 1.0;
-		uniforms.uDayness = dayness;
-		uniforms.uTintLight = [light.r, light.g, light.b];
-		uniforms.uTintMid = [mid.r, mid.g, mid.b];
-		uniforms.uTintShadow = [shadow.r, shadow.g, shadow.b];
 	}
 
 	destroy() {
@@ -933,7 +902,7 @@ class SkyRenderer {
 		this.drawOceanDetail(ctx, t, this.cachedPalette, this.cachedSun, this.cachedMoon);
 
 		/* Update cloud shader uniforms */
-		this.updateCloudShader(t);
+		this.updateCloudUniforms(t);
 	}
 
 	/* ===== RENDER LOOP ===== */
