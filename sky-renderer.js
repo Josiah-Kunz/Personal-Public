@@ -871,9 +871,9 @@ class SkyRenderer {
 }
 
 /* Create and store the renderer */
-if (GAME.skyRenderer?.map !== GAME.map) {
-	if (GAME.skyRenderer) GAME.skyRenderer.destroy();
-	GAME.skyRenderer = new SkyRenderer(GAME, {
+if (game.skyRenderer?.map !== game.map) {
+	if (game.skyRenderer) game.skyRenderer.destroy();
+	game.skyRenderer = new SkyRenderer(game, {
 		offset: { x: 864, y: 0 },
 		resolution: { width: 1120, height: 1072 }
 	});
