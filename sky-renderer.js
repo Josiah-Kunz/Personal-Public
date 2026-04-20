@@ -170,15 +170,11 @@ class SkyRenderer {
 		this.cloudTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 		/* Create a TilingSprite for seamless scrolling */
-		this.cloudSprite = new PIXI.TilingSprite({
-			texture: this.cloudTexture,
-			width: width,
-			height: cloudHeight
-		});
+		this.cloudSprite = new PIXI.TilingSprite(this.cloudTexture, width, cloudHeight);
 
 		this.cloudSprite.x = this.config.offset.x;
 		this.cloudSprite.y = this.config.offset.y + this.horizonY() - cfg.height;
-
+		
 		this.container.addChild(this.cloudSprite);
 	}
 	
