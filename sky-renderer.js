@@ -133,7 +133,7 @@ class SkyRenderer {
 	}
 
 	appendToDOM() {
-		const gameCanvas = document.getElementById("game-canvas");
+		const gameCanvas = document.getElementById("game");
 		if (gameCanvas && gameCanvas.parentNode) {
 			gameCanvas.parentNode.insertBefore(this.canvas, gameCanvas);
 		} else {
