@@ -876,5 +876,5 @@ if (game.skyRenderer?.map !== game.map) {
 	game.skyRenderer = new SkyRenderer(game, {
 		offset: { x: 864, y: 0 },
 		resolution: { width: 1120, height: 1072 }
-	});
+	}); 
 }
