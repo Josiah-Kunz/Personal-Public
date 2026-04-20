@@ -162,94 +162,40 @@ class SkyRenderer {
 		const ctx = this.cloudCanvas.getContext("2d", { alpha: true });
 		ctx.imageSmoothingEnabled = false;
 
-		/* Render clouds to canvas (both halves for seamless loop) */
+		/* Render clouds to canvas */
 		this.renderCloudStrip(ctx, 0, width * 2, cloudHeight);
 
 		/* Create PIXI texture from cloud canvas */
 		this.cloudTexture = PIXI.Texture.from(this.cloudCanvas);
-		this.cloudTexture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-		this.cloudTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+		this.cloudTexture.source.scaleMode = "nearest";
 
-		/* Create cloud scroll shader */
-		const vertexShader = `
-			attribute vec2 aVertexPosition;
-			attribute vec2 aTextureCoord;
-			uniform mat3 projectionMatrix;
-			varying vec2 vTextureCoord;
-			void main(void) {
-				gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
-				vTextureCoord = aTextureCoord;
-			}
-		`;
+		/* Create a TilingSprite for seamless scrolling */
+		this.cloudSprite = new PIXI.TilingSprite({
+			texture: this.cloudTexture,
+			width: width,
+			height: cloudHeight
+		});
 
-		const fragmentShader = `
-			precision mediump float;
-			varying vec2 vTextureCoord;
-			uniform sampler2D uSampler;
-			uniform float uScrollX;
-			uniform float uDayness;
-			uniform vec3 uTintLight;
-			uniform vec3 uTintMid;
-			uniform vec3 uTintShadow;
+		this.cloudSprite.x = this.config.offset.x;
+		this.cloudSprite.y = this.config.offset.y + this.horizonY() - cfg.height;
 
-			void main(void) {
-				vec2 uv = vTextureCoord;
-				uv.x = fract(uv.x + uScrollX);
-				vec4 color = texture2D(uSampler, uv);
+		this.container.addChild(this.cloudSprite);
+	}
+	
+	updateCloudUniforms(t) {
+		if (!this.cloudSprite) return;
 
-				/* color.a encodes the cloud "zone": 1.0=light, 0.66=mid, 0.33=shadow, 0.0=transparent */
-				if (color.a < 0.1) {
-					discard;
-				}
+		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 
-				vec3 tint;
-				if (color.a > 0.8) {
-					tint = uTintLight;
-				} else if (color.a > 0.5) {
-					tint = uTintMid;
-				} else {
-					tint = uTintShadow;
-				}
+		/* Scroll the tiling sprite */
+		this.cloudSprite.tilePosition.x = -this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
 
-				gl_FragColor = vec4(tint, 1.0);
-			}
-		`;
-
-		const uniforms = {
-			uScrollX: 0.0,
-			uDayness: 0.5,
-			uTintLight: [0.945, 0.949, 0.867],
-			uTintMid: [0.878, 0.906, 0.792],
-			uTintShadow: [0.761, 0.804, 0.690]
-		};
-
-		this.cloudShader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
-
-		/* Create mesh with the shader */
-		const geometry = new PIXI.Geometry()
-			.addAttribute("aVertexPosition", [
-				0, 0,
-				width, 0,
-				width, cloudHeight,
-				0, cloudHeight
-			], 2)
-			.addAttribute("aTextureCoord", [
-				0, 0,
-				1, 0,
-				1, 1,
-				0, 1
-			], 2)
-			.addIndex([0, 1, 2, 0, 2, 3]);
-
-		this.cloudMesh = new PIXI.Mesh(geometry, PIXI.MeshMaterial.from(this.cloudTexture, {
-			program: PIXI.Program.from(vertexShader, fragmentShader),
-			uniforms: uniforms
-		}));
-
-		this.cloudMesh.x = this.config.offset.x;
-		this.cloudMesh.y = this.config.offset.y + this.horizonY() - cfg.height;
-
-		this.container.addChild(this.cloudMesh);
+		/* For tinting, we'll need to rebuild the cloud texture periodically or use a filter */
+		/* For now, just use PIXI's built-in tint as an approximation */
+		const tintR = Math.round(this.lerp(160, 220, dayness));
+		const tintG = Math.round(this.lerp(170, 228, dayness));
+		const tintB = Math.round(this.lerp(180, 210, dayness));
+		this.cloudSprite.tint = (tintR << 16) | (tintG << 8) | tintB;
 	}
 
 	renderCloudStrip(ctx, startX, endX, height) {
