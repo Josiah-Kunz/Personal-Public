@@ -167,7 +167,7 @@ class SkyRenderer {
 
 		/* Create PIXI texture from cloud canvas */
 		this.cloudTexture = PIXI.Texture.from(this.cloudCanvas);
-		this.cloudTexture.source.scaleMode = "nearest";
+		this.cloudTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 		/* Create a TilingSprite for seamless scrolling */
 		this.cloudSprite = new PIXI.TilingSprite({
