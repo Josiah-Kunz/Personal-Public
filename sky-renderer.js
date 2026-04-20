@@ -184,10 +184,11 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 
 		/* Scroll the tiling sprite */
-		this.cloudSprite.tilePosition.x = -this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		const scrollX = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		console.log("scrollX:", scrollX, "elapsed:", this.elapsed);
+		this.cloudSprite.tilePosition.x = -scrollX;
 
-		/* For tinting, we'll need to rebuild the cloud texture periodically or use a filter */
-		/* For now, just use PIXI's built-in tint as an approximation */
+		/* Tint */
 		const tintR = Math.round(this.lerp(160, 220, dayness));
 		const tintG = Math.round(this.lerp(170, 228, dayness));
 		const tintB = Math.round(this.lerp(180, 210, dayness));
