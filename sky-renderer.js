@@ -87,7 +87,7 @@ class SkyRenderer {
 		this.cachedSun = null;
 		this.cachedMoon = null;
 		this.lastStaticRedraw = 0;
-		this.staticRedrawInterval = 5000;
+		this.staticRedrawInterval = 1;
 		this.lastGameTime = -1;
 
 		this.stars = [];
