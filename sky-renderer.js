@@ -40,7 +40,7 @@ class SkyRenderer {
 			},
 			stars: {
 				amount: 40,
-				twinkleSpeed: 0.001,
+				twinkleAmount: 30,
 				minSize: 1,
 				maxSize: 2,
 				fadeInStart: 0.80,
@@ -53,10 +53,20 @@ class SkyRenderer {
 				detail: 0.28,
 				shimmerDepth: 30,
 				ambientReflectionStrength: 0.45,
+				celestialReflectionStrength: 1.4,
 				reflectionLengthSun: 120,
 				reflectionLengthMoon: 105,
-				trailWidthSun: 100,
-				trailWidthMoon: 60,
+				trailWidthSun: 204,
+				trailWidthMoon: 152,
+				trailWidthFarSun: 5,
+				trailWidthFarMoon: 4,
+				trailWobble: 5,
+				trailSegmentHeight: 2,
+				trailGap: 0.3,
+				trailTaper: 0.82,
+				trailBreakup: 2.22,
+				sunReflectionAlpha: 3.00,
+				moonReflectionAlpha: 0.84,
 				...config.water
 			},
 			sky: {
@@ -81,6 +91,7 @@ class SkyRenderer {
 		this.lastGameTime = -1;
 
 		this.stars = [];
+		this.starSprites = new Map();
 		this.canvas = null;
 		this.ctx = null;
 		this.staticCanvas = null;
@@ -115,6 +126,7 @@ class SkyRenderer {
 		/* Add to voidSprites */
 		this.game.containers.voidSprites.addChild(this.sprite);
 
+		this.buildStarSprites();
 		this.buildStars();
 		this.start();
 
@@ -136,6 +148,7 @@ class SkyRenderer {
 			this.sprite = null;
 		}
 
+		this.starSprites.clear();
 		this.canvas = null;
 		this.ctx = null;
 		this.staticCanvas = null;
@@ -160,6 +173,10 @@ class SkyRenderer {
 
 	/* ===== UTILITIES ===== */
 
+	horizonY() {
+		return this.config.scene.horizonY;
+	}
+
 	clamp(v, min, max) {
 		return Math.max(min, Math.min(max, v));
 	}
@@ -182,8 +199,18 @@ class SkyRenderer {
 	}
 
 	hexToRgb(hex) {
-		const n = parseInt(hex.replace("#", ""), 16);
-		return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+		const clean = hex.replace("#", "");
+		const n = parseInt(clean, 16);
+		return {
+			r: (n >> 16) & 255,
+			g: (n >> 8) & 255,
+			b: n & 255
+		};
+	}
+
+	rgbToHex(c) {
+		const toHex = (n) => n.toString(16).padStart(2, "0");
+		return `#${toHex(c.r)}${toHex(c.g)}${toHex(c.b)}`;
 	}
 
 	mixColor(a, b, t) {
@@ -231,15 +258,30 @@ class SkyRenderer {
 
 	/* ===== STARS ===== */
 
+	buildStarSprites() {
+		this.starSprites.clear();
+		const cfg = this.config.stars;
+
+		for (let r = cfg.minSize; r <= cfg.maxSize; r++) {
+			const size = r * 2 + 3;
+			const off = document.createElement("canvas");
+			off.width = size;
+			off.height = size;
+			const offCtx = off.getContext("2d", { alpha: true });
+			offCtx.imageSmoothingEnabled = false;
+			this.fillCircle(offCtx, Math.floor(size / 2), Math.floor(size / 2), r, "#ffffff");
+			this.starSprites.set(r, off);
+		}
+	}
+
 	buildStars() {
 		this.stars = [];
 		const cfg = this.config.stars;
-		const horizonY = this.config.scene.horizonY;
 
 		for (let i = 0; i < cfg.amount; i++) {
 			this.stars.push({
 				x: Math.floor(this.rand(0, this.config.resolution.width)),
-				y: Math.floor(this.rand(8, horizonY - 26)),
+				y: Math.floor(this.rand(8, this.horizonY() - 26)),
 				r: Math.random() > 0.85 ? cfg.maxSize : cfg.minSize,
 				base: this.rand(0.45, 1),
 				speed: this.rand(0.3, 0.9),
@@ -255,12 +297,15 @@ class SkyRenderer {
 		const nightUpper = "#0b1733";
 		const nightLowerBase = "#1a2950";
 		const trueNightLower = "#0e1830";
+
 		const dawnTop = "#4e88c6";
 		const dawnUpper = "#8b99c9";
 		const dawnLower = "#e6c1a2";
+
 		const dayTop = "#4f88c7";
 		const dayUpper = "#8f97cb";
 		const dayLower = "#e7c5a6";
+
 		const duskTop = "#437db8";
 		const duskUpper = "#838dc8";
 		const duskLower = "#ddb598";
@@ -273,7 +318,7 @@ class SkyRenderer {
 			const k = this.smoothstep(0.0, 0.25, t);
 			top = this.mixColor(nightTop, dawnTop, k);
 			upper = this.mixColor(nightUpper, dawnUpper, k);
-			lower = this.mixColor(nightLower, dawnLower, k);
+			lower = this.mixColor(this.rgbToHex(nightLower), dawnLower, k);
 		} else if (t < 0.5) {
 			const k = this.smoothstep(0.25, 0.5, t);
 			top = this.mixColor(dawnTop, dayTop, k);
@@ -288,7 +333,20 @@ class SkyRenderer {
 			const k = this.smoothstep(0.75, 1.0, t);
 			top = this.mixColor(duskTop, nightTop, k);
 			upper = this.mixColor(duskUpper, nightUpper, k);
-			lower = this.mixColor(duskLower, nightLower, k);
+			lower = this.mixColor(duskLower, this.rgbToHex(nightLower), k);
+		}
+
+		const cfg = this.config.stars;
+		const nightFactor =
+			Math.max(
+				1 - this.smoothstep(cfg.fadeOutStart, cfg.fadeOutEnd, t),
+				this.smoothstep(cfg.fadeInStart, cfg.fadeInEnd, t)
+			) * this.config.sky.nightDarkness;
+
+		if (nightFactor > 0) {
+			top = this.mixColor(this.rgbToHex(top), "#040915", nightFactor * 0.45);
+			upper = this.mixColor(this.rgbToHex(upper), "#0c1631", nightFactor * 0.45);
+			lower = this.mixColor(this.rgbToHex(lower), "#121a33", nightFactor * 0.5);
 		}
 
 		return { top, upper, lower };
@@ -301,14 +359,17 @@ class SkyRenderer {
 		const night = Math.max(nightA, nightB);
 		const day = 1 - night;
 
-		const baseTop = this.mixColor("#16314b", "#4cc9d8", day * 0.85);
-		const baseMid = this.mixColor("#10253f", "#2f9fbe", day * 0.8);
+		const dawnTint = this.smoothstep(0.18, 0.30, t) * (1 - this.smoothstep(0.45, 0.55, t));
+		const duskTint = this.smoothstep(0.55, 0.68, t) * (1 - this.smoothstep(0.82, 0.95, t));
+
+		const baseTop = this.mixColor("#16314b", "#4cc9d8", day * 0.85 + dawnTint * 0.15 + duskTint * 0.10);
+		const baseMid = this.mixColor("#10253f", "#2f9fbe", day * 0.8 + dawnTint * 0.12 + duskTint * 0.08);
 		const baseBottom = this.mixColor("#0b1930", "#1f6f94", day * 0.75);
 
 		const waterCfg = this.config.water;
 		return {
-			top: this.mixColor(baseTop, skyPalette.lower, waterCfg.ambientReflectionStrength * 0.45),
-			mid: this.mixColor(baseMid, skyPalette.upper, waterCfg.ambientReflectionStrength * 0.22),
+			top: this.mixColor(this.rgbToHex(baseTop), this.rgbToHex(skyPalette.lower), waterCfg.ambientReflectionStrength * 0.45),
+			mid: this.mixColor(this.rgbToHex(baseMid), this.rgbToHex(skyPalette.upper), waterCfg.ambientReflectionStrength * 0.22),
 			bottom: baseBottom
 		};
 	}
@@ -322,7 +383,7 @@ class SkyRenderer {
 		const angle = this.lerp(start, end, progress01);
 
 		const centerX = this.config.resolution.width / 2;
-		const centerY = this.config.scene.horizonY + cfg.centerYOffset;
+		const centerY = this.horizonY() + cfg.centerYOffset;
 		const radiusX = this.config.resolution.width * cfg.widthFactor;
 		const radiusY = cfg.peakHeight;
 
@@ -341,16 +402,22 @@ class SkyRenderer {
 		const moonStartB = 0.0;
 		const moonEndB = 0.25 + pad;
 
-		let sun = null, moon = null;
+		let sun = null;
+		let moon = null;
 
 		if (t >= sunStart && t <= sunEnd) {
 			sun = this.getArcPoint((t - sunStart) / (sunEnd - sunStart));
 		}
 
 		if (t >= moonStartA && t <= moonEndA) {
-			moon = this.getArcPoint((t - moonStartA) / ((moonEndA - moonStartA) + (moonEndB - moonStartB)));
+			moon = this.getArcPoint(
+				(t - moonStartA) / ((moonEndA - moonStartA) + (moonEndB - moonStartB))
+			);
 		} else if (t >= moonStartB && t <= moonEndB) {
-			moon = this.getArcPoint(((t - moonStartB) + (moonEndA - moonStartA)) / ((moonEndA - moonStartA) + (moonEndB - moonStartB)));
+			moon = this.getArcPoint(
+				((t - moonStartB) + (moonEndA - moonStartA)) /
+				((moonEndA - moonStartA) + (moonEndB - moonStartB))
+			);
 		}
 
 		return { sun, moon };
@@ -358,209 +425,55 @@ class SkyRenderer {
 
 	shouldDrawBody(body, radius) {
 		if (!body) return false;
-		return body.y < this.config.scene.horizonY + this.config.arc.visibilityBelowHorizon + radius;
+		return body.y < this.horizonY() + this.config.arc.visibilityBelowHorizon + radius + this.config.clouds.thickness;
 	}
 
 	/* ===== DRAWING - SKY ===== */
 
 	drawSkyGradient(ctx, palette) {
-		const horizonY = this.config.scene.horizonY;
 		const width = this.config.resolution.width;
 
-		for (let y = 0; y < horizonY; y++) {
-			const t = y / Math.max(1, horizonY - 1);
+		for (let y = 0; y < this.horizonY(); y++) {
+			const t = y / Math.max(1, this.horizonY() - 1);
 			const c = t < 0.48
-				? this.mixColor(palette.top, palette.upper, t / 0.48)
-				: this.mixColor(palette.upper, palette.lower, (t - 0.48) / 0.52);
+				? this.mixColor(this.rgbToHex(palette.top), this.rgbToHex(palette.upper), t / 0.48)
+				: this.mixColor(this.rgbToHex(palette.upper), this.rgbToHex(palette.lower), (t - 0.48) / 0.52);
 
 			ctx.fillStyle = this.rgb(c);
+			ctx.fillRect(0, y, width, 1);
+		}
+	}
+
+	drawAtmosphericHaze(ctx, t) {
+		const width = this.config.resolution.width;
+		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
+
+		for (let y = this.horizonY() - 18; y < this.horizonY() + 8; y++) {
+			const d = Math.abs(y - this.horizonY()) / 26;
+			ctx.fillStyle = `rgba(255,235,200,${(1 - d) * this.lerp(0.02, 0.08, dayness)})`;
 			ctx.fillRect(0, y, width, 1);
 		}
 	}
 
 	drawHorizonGlow(ctx, sun, moon) {
-		const horizonY = this.config.scene.horizonY;
 		const width = this.config.resolution.width;
+		const sunStrength = sun ? this.clamp(1 - Math.abs(this.horizonY() - sun.y) / 90, 0, 1) : 0;
+		const moonStrength = moon ? this.clamp(1 - Math.abs(this.horizonY() - moon.y) / 90, 0, 1) * 0.28 : 0;
 
-		if (sun && sun.y < horizonY + 50) {
-			const strength = this.clamp(1 - Math.abs(horizonY - sun.y) / 90, 0, 1);
-			ctx.fillStyle = `rgba(255,218,100,${0.08 * strength})`;
-			ctx.fillRect(0, horizonY - 15, width, 30);
-		}
+		for (let y = -18; y <= 18; y++) {
+			const yy = this.horizonY() + y;
+			if (yy < 0 || yy >= this.config.resolution.height) continue;
 
-		if (moon && moon.y < horizonY + 50) {
-			const strength = this.clamp(1 - Math.abs(horizonY - moon.y) / 90, 0, 1) * 0.3;
-			ctx.fillStyle = `rgba(232,240,255,${0.04 * strength})`;
-			ctx.fillRect(0, horizonY - 10, width, 20);
-		}
-	}
+			const sAlpha = Math.max(0, 0.12 - Math.abs(y) * 0.0055) * sunStrength;
+			const mAlpha = Math.max(0, 0.04 - Math.abs(y) * 0.0022) * moonStrength;
 
-	/* ===== DRAWING - CELESTIALS ===== */
-
-	drawSun(ctx, x, y) {
-		const cfg = this.config.celestials;
-		this.fillGlow(ctx, x, y, cfg.sunRadius, cfg.sunGlowRadius, "#ffd23f", cfg.sunGlowAlpha * 0.55);
-		this.fillGlow(ctx, x, y, cfg.sunRadius, Math.round(cfg.sunGlowRadius * 0.72), "#ffea7a", cfg.sunGlowAlpha);
-		this.fillCircle(ctx, x, y, cfg.sunRadius, "#ffd23f");
-		this.fillCircle(ctx, x, y, cfg.sunRadius - 1, "#ffe76a");
-		this.fillCircle(ctx, x - 4, y - 4, 2, "rgba(255,255,255,0.18)");
-	}
-
-	drawMoon(ctx, x, y) {
-		const cfg = this.config.celestials;
-		const r = cfg.moonRadius;
-		this.fillGlow(ctx, x, y, r, cfg.moonGlowRadius, "#dfe8ff", cfg.moonGlowAlpha * 0.65);
-		this.fillGlow(ctx, x, y, r, Math.round(cfg.moonGlowRadius * 0.72), "#ffffff", cfg.moonGlowAlpha);
-		this.fillCircle(ctx, x, y, r, "#f7fbff");
-		this.fillCircle(ctx, x, y, r - 1, "#ffffff");
-		this.fillCircle(ctx, x + cfg.moonCrescentOffsetX, y + cfg.moonCrescentOffsetY, Math.max(2, r - cfg.moonCrescentRadiusOffset), "rgba(180,195,230,0.30)");
-		this.fillCircle(ctx, x - 2, y - 2, 1, "rgba(255,255,255,0.16)");
-	}
-
-	/* ===== DRAWING - CLOUDS ===== */
-
-	drawCloudBand(ctx, t) {
-		const cfg = this.config.clouds;
-		const horizonY = this.config.scene.horizonY;
-		const width = this.config.resolution.width;
-		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
-
-		const shadow = {
-			r: Math.round(this.lerp(120, 194, dayness)),
-			g: Math.round(this.lerp(128, 205, dayness)),
-			b: Math.round(this.lerp(142, 176, dayness))
-		};
-		const mid = {
-			r: Math.round(this.lerp(166, 224, dayness)),
-			g: Math.round(this.lerp(176, 231, dayness)),
-			b: Math.round(this.lerp(190, 202, dayness))
-		};
-		const light = {
-			r: Math.round(this.lerp(196, 241, dayness)),
-			g: Math.round(this.lerp(208, 242, dayness)),
-			b: Math.round(this.lerp(220, 221, dayness))
-		};
-
-		const drift = (this.elapsed * cfg.driftSpeed) % width;
-
-		for (let y = horizonY - cfg.height; y < horizonY + cfg.thickness; y++) {
-			const d = (y - (horizonY - cfg.height)) / (cfg.height + cfg.thickness);
-
-			for (let x = 0; x < width; x++) {
-				const nx = (x + drift) / 62;
-				const ny = y / 40;
-				const n = (Math.sin(nx * 1.1) * Math.cos(ny * 0.9) + Math.sin(nx * 2.3 + ny) * 0.5) * 0.5 + 0.5;
-
-				let c;
-				if (d < 0.18) {
-					c = this.mixColor(light, mid, d / 0.18 + n * 0.2);
-				} else if (d < 0.6) {
-					c = this.mixColor(mid, shadow, (d - 0.18) / 0.42 + n * 0.15);
-				} else {
-					c = shadow;
-				}
-
-				ctx.fillStyle = this.rgb(c);
-				ctx.fillRect(x, y, 1, 1);
+			if (sAlpha > 0) {
+				ctx.fillStyle = `rgba(255,218,100,${sAlpha})`;
+				ctx.fillRect(0, yy, width, 1);
 			}
-		}
-	}
-
-	/* ===== DRAWING - OCEAN ===== */
-
-	drawOceanBase(ctx, t, skyPalette) {
-		const water = this.getWaterPalette(t, skyPalette);
-		const horizonY = this.config.scene.horizonY;
-		const width = this.config.resolution.width;
-		const height = this.config.resolution.height;
-
-		for (let y = horizonY; y < height; y++) {
-			const depthT = (y - horizonY) / Math.max(1, height - horizonY - 1);
-
-			let c;
-			if (depthT < 0.28) {
-				c = this.mixColor(water.top, water.mid, depthT / 0.28);
-			} else {
-				c = this.mixColor(water.mid, water.bottom, (depthT - 0.28) / 0.72);
-			}
-
-			ctx.fillStyle = this.rgb(c);
-			ctx.fillRect(0, y, width, 1);
-		}
-	}
-
-	drawWaterShimmer(ctx) {
-		const cfg = this.config.water;
-		const horizonY = this.config.scene.horizonY;
-		const width = this.config.resolution.width;
-		const depth = Math.round(cfg.shimmerDepth * cfg.detail * 3.5);
-
-		for (let y = horizonY + 2; y < horizonY + depth; y++) {
-			for (let x = 0; x < width; x++) {
-				const wave = Math.sin(x * 0.17 + y * 1.5 + this.elapsed * 0.0012) * 0.5 + 0.5;
-				const fade = 1 - (y - horizonY) / Math.max(1, depth);
-				const alpha = wave * fade * 0.08;
-
-				if (alpha > 0.01) {
-					ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-					ctx.fillRect(x, y, 1, 1);
-				}
-			}
-		}
-	}
-
-	drawOceanSurfaceLines(ctx) {
-		const cfg = this.config.water;
-		const horizonY = this.config.scene.horizonY;
-		const width = this.config.resolution.width;
-		const maxY = horizonY + Math.round(28 * cfg.detail * 3.5);
-
-		for (let y = horizonY + 5; y < maxY; y++) {
-			for (let x = 0; x < width; x++) {
-				const n = Math.sin(x * 0.1 + y * 1.2 + this.elapsed * 0.0009) * 0.5 + 0.5;
-				const fade = 1 - (y - horizonY - 5) / Math.max(1, maxY - horizonY - 5);
-				const alpha = (n > 0.78 ? 0.06 : 0) * fade;
-
-				if (alpha > 0.005) {
-					ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-					ctx.fillRect(x, y, 1, 1);
-				}
-			}
-		}
-	}
-
-	drawWaterReflection(ctx, body, color, length, trailWidth) {
-		if (!body) return;
-
-		const horizonY = this.config.scene.horizonY;
-		if (body.y > horizonY + 30) return;
-
-		const startY = horizonY + 2;
-		const endY = Math.min(this.config.resolution.height, startY + length);
-		const strength = this.clamp(1 - (body.y - horizonY + 50) / 100, 0, 1);
-
-		const c = typeof color === "string" && color.includes(",")
-			? color.split(",").map(Number)
-			: [255, 226, 110];
-
-		for (let y = startY; y < endY; y++) {
-			const t = (y - startY) / (endY - startY);
-			const wobble = Math.sin(y * 0.3 + this.elapsed * 0.002) * (2 + t * 4);
-			const widthHere = this.lerp(trailWidth * 0.3, trailWidth * 0.08, t);
-			const alpha = (1 - t) * 0.35 * strength;
-
-			const left = Math.round(body.x - widthHere / 2 + wobble);
-			const right = Math.round(body.x + widthHere / 2 + wobble);
-
-			for (let x = left; x < right; x++) {
-				const dx = Math.abs(x - body.x - wobble) / (widthHere / 2);
-				const edgeFade = 1 - dx * dx;
-				const finalAlpha = alpha * edgeFade;
-
-				if (finalAlpha > 0.005) {
-					ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${finalAlpha})`;
-					ctx.fillRect(x, y, 1, 1);
-				}
+			if (mAlpha > 0) {
+				ctx.fillStyle = `rgba(232,240,255,${mAlpha})`;
+				ctx.fillRect(0, yy, width, 1);
 			}
 		}
 	}
@@ -576,10 +489,309 @@ class SkyRenderer {
 		if (night <= 0.01) return;
 
 		for (const star of this.stars) {
-			const twinkle = 0.7 + 0.3 * Math.sin(this.elapsed * cfg.twinkleSpeed * star.speed + star.offset);
+			const twinkle =
+				1 -
+				cfg.twinkleAmount +
+				cfg.twinkleAmount *
+					(0.76 + 0.24 * Math.sin(this.elapsed * 0.001 * star.speed + star.offset));
+
 			const alpha = this.clamp(star.base * twinkle * night, 0, 1);
-			this.fillCircle(ctx, star.x, star.y, star.r, `rgba(255,255,255,${alpha})`);
+			const sprite = this.starSprites.get(star.r);
+
+			ctx.globalAlpha = alpha;
+			ctx.drawImage(
+				sprite,
+				star.x - Math.floor(sprite.width / 2),
+				star.y - Math.floor(sprite.height / 2)
+			);
 		}
+
+		ctx.globalAlpha = 1;
+	}
+
+	/* ===== DRAWING - CELESTIALS ===== */
+
+	drawSun(ctx, x, y) {
+		const cfg = this.config.celestials;
+		const r = cfg.sunRadius;
+
+		this.fillGlow(ctx, x, y, r, cfg.sunGlowRadius, "#ffd23f", cfg.sunGlowAlpha * 0.55);
+		this.fillGlow(ctx, x, y, r, Math.round(cfg.sunGlowRadius * 0.72), "#ffea7a", cfg.sunGlowAlpha);
+
+		this.fillCircle(ctx, x, y, r, "#ffd23f");
+		this.fillCircle(ctx, x, y, r - 1, "#ffe76a");
+		this.fillCircle(ctx, x - 4, y - 4, 2, "rgba(255,255,255,0.18)");
+	}
+
+	drawMoon(ctx, x, y) {
+		const cfg = this.config.celestials;
+		const r = cfg.moonRadius;
+
+		this.fillGlow(ctx, x, y, r, cfg.moonGlowRadius, "#dfe8ff", cfg.moonGlowAlpha * 0.65);
+		this.fillGlow(ctx, x, y, r, Math.round(cfg.moonGlowRadius * 0.72), "#ffffff", cfg.moonGlowAlpha);
+
+		this.fillCircle(ctx, x, y, r, "#f7fbff");
+		this.fillCircle(ctx, x, y, r - 1, "#ffffff");
+
+		this.fillCircle(
+			ctx,
+			x + cfg.moonCrescentOffsetX,
+			y + cfg.moonCrescentOffsetY,
+			Math.max(2, r - cfg.moonCrescentRadiusOffset),
+			"rgba(180,195,230,0.30)"
+		);
+
+		this.fillCircle(ctx, x - 2, y - 2, 1, "rgba(255,255,255,0.16)");
+	}
+
+	/* ===== DRAWING - CLOUDS ===== */
+
+	getCloudTop(x, drift) {
+		const cfg = this.config.clouds;
+		const sx = x + drift;
+		const n1 = Math.sin(sx * 0.022 + 0.5) * 8 * cfg.detail;
+		const n2 = Math.sin(sx * 0.061 + 1.4) * 6 * cfg.detail;
+		const n3 = Math.sin(sx * 0.18 + 1.3) * 4 * cfg.detail;
+		const n4 = Math.sin(sx * 0.43 + 2.2) * 2 * cfg.detail;
+		const n5 = Math.sin(sx * 0.93 + 0.4) * 1.5 * cfg.detail;
+		return Math.round((this.horizonY() - cfg.height) + n1 + n2 + n3 + n4 + n5);
+	}
+
+	drawCloudBand(ctx, t) {
+		const cfg = this.config.clouds;
+		const width = this.config.resolution.width;
+		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
+		const drift = this.elapsed * cfg.driftSpeed;
+
+		const shadow = {
+			r: Math.round(this.lerp(120, 194, dayness)),
+			g: Math.round(this.lerp(128, 205, dayness)),
+			b: Math.round(this.lerp(142, 176, dayness))
+		};
+
+		const mid = {
+			r: Math.round(this.lerp(166, 224, dayness)),
+			g: Math.round(this.lerp(176, 231, dayness)),
+			b: Math.round(this.lerp(190, 202, dayness))
+		};
+
+		const light = {
+			r: Math.round(this.lerp(196, 241, dayness)),
+			g: Math.round(this.lerp(208, 242, dayness)),
+			b: Math.round(this.lerp(220, 221, dayness))
+		};
+
+		/* Main cloud layer */
+		for (let x = 0; x < width; x += 2) {
+			const top = this.getCloudTop(x, drift);
+
+			for (let y = top; y < this.horizonY() + cfg.thickness; y++) {
+				const d = (y - top) / Math.max(1, this.horizonY() + cfg.thickness - top);
+
+				let c = shadow;
+				if (d < 0.18) c = light;
+				else if (d < 0.6) c = mid;
+
+				ctx.fillStyle = this.rgb(c);
+				ctx.fillRect(x, y, 2, 1);
+			}
+		}
+
+		/* Shadow overlay layer */
+		for (let x = 0; x < width; x += 2) {
+			const top = this.getCloudTop(x + cfg.layerOffset, drift * 0.65) + 1;
+
+			for (let y = top; y < this.horizonY() + 1; y++) {
+				const d = (y - top) / Math.max(1, this.horizonY() + 1 - top);
+				const alpha = (1 - d) * 0.18;
+				ctx.fillStyle = `rgba(${shadow.r},${shadow.g},${shadow.b},${alpha})`;
+				ctx.fillRect(x, y, 2, 1);
+			}
+		}
+	}
+
+	/* ===== DRAWING - OCEAN ===== */
+
+	drawOceanBase(ctx, t, skyPalette) {
+		const water = this.getWaterPalette(t, skyPalette);
+		const width = this.config.resolution.width;
+		const height = this.config.resolution.height;
+
+		for (let y = this.horizonY(); y < height; y++) {
+			const depthT = (y - this.horizonY()) / Math.max(1, height - this.horizonY() - 1);
+
+			let c;
+			if (depthT < 0.28) {
+				c = this.mixColor(this.rgbToHex(water.top), this.rgbToHex(water.mid), depthT / 0.28);
+			} else {
+				c = this.mixColor(this.rgbToHex(water.mid), this.rgbToHex(water.bottom), (depthT - 0.28) / 0.72);
+			}
+
+			ctx.fillStyle = this.rgb(c);
+			ctx.fillRect(0, y, width, 1);
+		}
+	}
+
+	drawAmbientWaterReflection(ctx, skyPalette) {
+		const width = this.config.resolution.width;
+		const cfg = this.config.water;
+		const topReflect = this.mixColor(this.rgbToHex(skyPalette.lower), "#ffffff", 0.06);
+		const midReflect = this.mixColor(this.rgbToHex(skyPalette.upper), this.rgbToHex(skyPalette.lower), 0.25);
+		const depth = Math.max(16, Math.round(cfg.shimmerDepth * 1.4));
+
+		for (let y = this.horizonY() + 1; y < this.horizonY() + depth; y++) {
+			const t = (y - this.horizonY()) / depth;
+			const fade = 1 - t;
+			const lineColor = t < 0.35
+				? this.mixColor(this.rgbToHex(topReflect), this.rgbToHex(midReflect), t / 0.35)
+				: midReflect;
+
+			ctx.fillStyle = this.rgb(lineColor, 0.10 * fade);
+			ctx.fillRect(0, y, width, 1);
+
+			for (let x = 0; x < width; x += 4) {
+				const wave =
+					Math.sin(x * 0.11 + y * 1.35 + this.elapsed * 0.0009) * 0.5 +
+					Math.sin(x * 0.035 + this.elapsed * 0.0005 + 1.3) * 0.3 +
+					0.5;
+
+				if (wave > 0.88) {
+					ctx.fillStyle = `rgba(255,255,255,${0.028 * fade})`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
+	}
+
+	drawWaterReflection(ctx, body, options) {
+		if (!body) return;
+
+		const cfg = this.config.water;
+		const above = this.clamp(
+			(this.horizonY() - body.y + options.radius) / options.fadeHeight,
+			0,
+			1
+		);
+		if (above <= 0) return;
+
+		const startY = this.horizonY() + 1;
+		const endY = Math.min(this.config.resolution.height - 1, this.horizonY() + options.length);
+
+		for (let y = startY; y <= endY; y += cfg.trailSegmentHeight + cfg.trailGap) {
+			const ty = (y - startY) / Math.max(1, endY - startY);
+			const halfWidth = Math.max(
+				1,
+				Math.round(
+					this.lerp(options.widthNear, options.widthFar, Math.pow(ty, cfg.trailTaper)) * above
+				)
+			);
+
+			const wobble =
+				Math.sin(y * 0.18 + this.elapsed * 0.0012) * cfg.trailWobble +
+				Math.sin(y * 0.05 + 1.7) * cfg.trailWobble * 0.5;
+
+			const centerX = Math.round(body.x + wobble);
+
+			for (let x = centerX - halfWidth; x <= centerX + halfWidth; x += 2) {
+				const nx = Math.abs(x - centerX) / Math.max(1, halfWidth);
+				const edge = 1 - nx;
+
+				const breakup =
+					Math.sin(x * options.freqA + y * options.freqB + this.elapsed * options.speed) * 0.5 +
+					Math.sin(x * 0.11 + y * 0.035 + 2.1) * 0.35 +
+					0.5;
+
+				if (breakup > 1 - cfg.trailBreakup - edge * 0.28) {
+					const alpha =
+						options.alpha *
+						(1 - ty) *
+						edge *
+						above *
+						cfg.celestialReflectionStrength;
+
+					ctx.fillStyle = `rgba(${options.color.r},${options.color.g},${options.color.b},${alpha})`;
+					ctx.fillRect(x, y, 2, cfg.trailSegmentHeight);
+				}
+			}
+		}
+	}
+
+	drawWaterShimmer(ctx) {
+		const cfg = this.config.water;
+		const width = this.config.resolution.width;
+		const depth = Math.round(cfg.shimmerDepth * cfg.detail);
+
+		for (let y = this.horizonY() + 2; y < this.horizonY() + depth; y++) {
+			const fade = 1 - (y - (this.horizonY() + 2)) / Math.max(1, depth - 2);
+
+			for (let x = 0; x < width; x += 3) {
+				const wave =
+					Math.sin(x * 0.17 + y * 1.5 + this.elapsed * 0.0012 * cfg.detail) * 0.5 +
+					0.5;
+
+				if (wave > 0.94 - cfg.detail * 0.12) {
+					ctx.fillStyle = `rgba(255,255,255,${0.03 * fade})`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
+	}
+
+	drawOceanSurfaceLines(ctx) {
+		const cfg = this.config.water;
+		const width = this.config.resolution.width;
+		const maxY = this.horizonY() + Math.round(28 * cfg.detail);
+
+		for (let y = this.horizonY() + 5; y < maxY; y += 3) {
+			const fade = 1 - (y - this.horizonY()) / Math.max(1, maxY - this.horizonY());
+
+			for (let x = 0; x < width; x += 4) {
+				const n =
+					Math.sin(x * 0.1 + y * 1.2 + this.elapsed * 0.0009 * cfg.detail) * 0.5 +
+					0.5;
+
+				if (n > 0.82) {
+					ctx.fillStyle = `rgba(255,255,255,${0.022 * fade})`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
+	}
+
+	drawOceanDetail(ctx, t, skyPalette, sun, moon) {
+		const cfg = this.config.water;
+
+		this.drawOceanBase(ctx, t, skyPalette);
+		this.drawAmbientWaterReflection(ctx, skyPalette);
+
+		this.drawWaterReflection(ctx, sun, {
+			color: { r: 255, g: 226, b: 110 },
+			radius: this.config.celestials.sunRadius,
+			length: cfg.reflectionLengthSun,
+			widthNear: cfg.trailWidthSun,
+			widthFar: cfg.trailWidthFarSun,
+			alpha: cfg.sunReflectionAlpha * cfg.detail,
+			freqA: 0.18,
+			freqB: 0.11,
+			speed: 0.0008,
+			fadeHeight: 180
+		});
+
+		this.drawWaterReflection(ctx, moon, {
+			color: { r: 255, g: 255, b: 255 },
+			radius: this.config.celestials.moonRadius,
+			length: cfg.reflectionLengthMoon,
+			widthNear: cfg.trailWidthMoon,
+			widthFar: cfg.trailWidthFarMoon,
+			alpha: cfg.moonReflectionAlpha * cfg.detail,
+			freqA: 0.16,
+			freqB: 0.09,
+			speed: 0.0006,
+			fadeHeight: 160
+		});
+
+		this.drawWaterShimmer(ctx);
+		this.drawOceanSurfaceLines(ctx);
 	}
 
 	/* ===== LAYER RENDERING ===== */
@@ -598,6 +810,7 @@ class SkyRenderer {
 		const { sun, moon } = this.getCelestialState(t);
 
 		this.drawSkyGradient(ctx, palette);
+		this.drawAtmosphericHaze(ctx, t);
 		this.drawHorizonGlow(ctx, sun, moon);
 
 		if (sun && this.shouldDrawBody(sun, this.config.celestials.sunRadius)) {
@@ -608,7 +821,6 @@ class SkyRenderer {
 		}
 
 		this.drawCloudBand(ctx, t);
-		this.drawOceanBase(ctx, t, palette);
 
 		this.cachedPalette = palette;
 		this.cachedSun = sun;
@@ -623,12 +835,7 @@ class SkyRenderer {
 		ctx.drawImage(this.staticCanvas, 0, 0);
 
 		this.drawStars(ctx, t);
-
-		this.drawWaterReflection(ctx, this.cachedSun, "255,226,110", this.config.water.reflectionLengthSun, this.config.water.trailWidthSun);
-		this.drawWaterReflection(ctx, this.cachedMoon, "255,255,255", this.config.water.reflectionLengthMoon, this.config.water.trailWidthMoon);
-
-		this.drawWaterShimmer(ctx);
-		this.drawOceanSurfaceLines(ctx);
+		this.drawOceanDetail(ctx, t, this.cachedPalette, this.cachedSun, this.cachedMoon);
 	}
 
 	/* ===== RENDER LOOP ===== */
