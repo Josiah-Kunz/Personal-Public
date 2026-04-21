@@ -1,4 +1,4 @@
-class SkyGradient {
+window.SkyGradient = class SkyGradient {
 	constructor(config, starsConfig, resolution, horizonY) {
 		this.config = config;
 		this.starsConfig = starsConfig;

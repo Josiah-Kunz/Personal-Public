@@ -1,4 +1,4 @@
-class SkyRenderer {
+window.SkyRenderer = class SkyRenderer {
 	constructor(game, config = {}) {
 		this.game = game;
 		this.map = game.map;

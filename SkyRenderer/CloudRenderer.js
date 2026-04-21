@@ -1,4 +1,4 @@
-class CloudRenderer {
+window.CloudRenderer = class CloudRenderer {
 	constructor(config, container, horizonY) {
 		this.config = config;
 		this.container = container;

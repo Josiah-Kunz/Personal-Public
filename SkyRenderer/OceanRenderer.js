@@ -1,4 +1,4 @@
-class OceanRenderer {
+window.OceanRenderer = class OceanRenderer {
 	constructor(config, starsConfig, resolution, horizonY) {
 		this.config = config;
 		this.starsConfig = starsConfig;

@@ -1,4 +1,4 @@
-class CelestialRenderer {
+window.CelestialRenderer = class CelestialRenderer {
 	constructor(config, arcConfig, resolution, horizonY) {
 		this.config = config;
 		this.arcConfig = arcConfig;

@@ -1,4 +1,4 @@
-class StarRenderer {
+window.StarRenderer = class StarRenderer {
 	constructor(config, resolution, horizonY) {
 		this.config = config;
 		this.resolution = resolution;
