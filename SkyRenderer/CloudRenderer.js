@@ -78,29 +78,18 @@ window.CloudRenderer = class CloudRenderer {
 				vec3 mid    = mix(nightMid,    dayMid,    uDayness);
 				vec3 shadow = mix(nightShadow, dayShadow, uDayness);
 				
-				/* Muted colors for back layer */
-				vec3 backLight  = mix(mid, light, 0.5);
-				vec3 backMid    = mix(shadow, mid, 0.5);
-				vec3 backShadow = shadow;
-				
 				vec3 color = vec3(0.0);
 				float alpha = 0.0;
 				
-				/* Back layer (behind, only visible where front doesn't cover) */
+				/* Back layer (behind, semi-transparent shadow only) */
 				if (localY >= top2 && localY < top1) {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
-					if (d < 0.18) {
-						color = backLight;
-					} else if (d < 0.6) {
-						color = backMid;
-					} else {
-						color = backShadow;
-					}
-					alpha = 1.0;
+					color = shadow;
+					alpha = (1.0 - d) * 0.18;
 				}
 				
-				/* Front layer (on top) */
+				/* Front layer (on top, fully opaque) */
 				if (localY >= top1) {
 					float d = (localY - top1) / max(1.0, uMeshHeight - top1);
 					
