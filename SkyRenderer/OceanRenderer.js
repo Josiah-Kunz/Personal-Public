@@ -32,6 +32,7 @@ window.OceanRenderer = class OceanRenderer {
 			.addIndex([0, 1, 2, 0, 2, 3]);
 		
 		const vertexShader = `
+			precision mediump float;
 			attribute vec2 aVertexPosition;
 			attribute vec2 aTextureCoord;
 			uniform mat3 projectionMatrix;
