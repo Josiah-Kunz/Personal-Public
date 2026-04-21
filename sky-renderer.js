@@ -249,8 +249,11 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 		this.cloudShader.uniforms.uDayness = dayness;
 
-		const scroll = this.elapsed * this.config.clouds.driftSpeed;
-		this.cloudShader.uniforms.uScrollX = scroll;
+		/* Match original: elapsed * driftSpeed * screenWidth, then convert to UV */
+		const pixelScroll = this.elapsed * 0.0028 * this.config.resolution.width;
+		const uvScroll = pixelScroll / this.cloudCanvas.width;
+		
+		this.cloudShader.uniforms.uScrollX = uvScroll;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
