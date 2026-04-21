@@ -164,7 +164,10 @@ class SkyRenderer {
 
 		this.renderCloudDepthMap(ctx, 0, width * 2, cloudHeight, maxOffset);
 
-		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, { scaleMode: PIXI.SCALE_MODES.NEAREST });
+		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, {
+			scaleMode: PIXI.SCALE_MODES.LINEAR,
+			wrapMode: PIXI.WRAP_MODES.REPEAT
+		});
 		this.cloudTexture = new PIXI.Texture(baseTexture);
 
 		const cloudShader = PIXI.Shader.from(
@@ -188,8 +191,7 @@ class SkyRenderer {
 			uniform float uDayness;
 			
 			void main() {
-				vec2 uv = fract(vTextureCoord);
-				vec4 texel = texture2D(uSampler, uv);
+				vec4 texel = texture2D(uSampler, vTextureCoord);
 				
 				if (texel.a < 0.01) {
 					discard;
@@ -295,50 +297,6 @@ class SkyRenderer {
 			2 * cfg.detail +
 			1.5 * cfg.detail
 		);
-	}
-
-	renderCloudStrip(ctx, startX, endX, height, maxOffset) {
-		const cfg = this.config.clouds;
-
-		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-		const baseY = maxOffset;
-
-		/* Daytime cloud colors (will be tinted darker at night) */
-		const light = { r: 241, g: 242, b: 221 };
-		const mid = { r: 224, g: 231, b: 202 };
-		const shadow = { r: 194, g: 205, b: 176 };
-
-		/* Main cloud layer */
-		for (let x = startX; x < endX; x += 2) {
-			const top = baseY + this.getCloudTopOffset(x);
-
-			for (let y = top; y < height; y++) {
-				const d = (y - top) / Math.max(1, height - top);
-
-				let c;
-				if (d < 0.18) c = light;
-				else if (d < 0.6) c = mid;
-				else c = shadow;
-
-				ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-				ctx.fillRect(x, y, 2, 1);
-			}
-		}
-
-		/* Shadow overlay layer */
-		for (let x = startX; x < endX; x += 2) {
-			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
-
-			for (let y = top; y < height - cfg.thickness; y++) {
-				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
-				const darken = (1 - d) * 0.15;
-				if (darken > 0.03) {
-					ctx.fillStyle = `rgba(0,0,0,${darken})`;
-					ctx.fillRect(x, y, 2, 1);
-				}
-			}
-		}
 	}
 
 	getCloudTopOffset(x, speedMult = 1) {
