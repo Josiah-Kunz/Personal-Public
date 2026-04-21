@@ -34,7 +34,7 @@ class SkyRenderer {
 				height: 15,
 				thickness: 2,
 				detail: 0.5,
-				driftSpeed: 0.00003,
+				driftSpeed: 5e-6,
 				layerOffset: 31,
 				...config.clouds
 			},
@@ -153,7 +153,8 @@ class SkyRenderer {
 	buildCloudSystem() {
 		const cfg = this.config.clouds;
 		const width = this.config.resolution.width;
-		const cloudHeight = cfg.height + cfg.thickness + 10;
+		const maxOffset = this.getCloudMaxOffset();
+		const cloudHeight = cfg.height + cfg.thickness + maxOffset * 2;
 
 		/* Create cloud canvas - make it 2x width for seamless scrolling */
 		this.cloudCanvas = document.createElement("canvas");
@@ -163,19 +164,70 @@ class SkyRenderer {
 		ctx.imageSmoothingEnabled = false;
 
 		/* Render clouds to canvas */
-		this.renderCloudStrip(ctx, 0, width * 2, cloudHeight);
+		this.renderCloudStrip(ctx, 0, width * 2, cloudHeight, maxOffset);
 
 		/* Create PIXI texture from cloud canvas */
-		this.cloudTexture = PIXI.Texture.from(this.cloudCanvas);
-		this.cloudTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, { scaleMode: PIXI.SCALE_MODES.NEAREST });
+		this.cloudTexture = new PIXI.Texture(baseTexture);
 
 		/* Create a TilingSprite for seamless scrolling */
 		this.cloudSprite = new PIXI.TilingSprite(this.cloudTexture, width, cloudHeight);
 
 		this.cloudSprite.x = this.config.offset.x;
-		this.cloudSprite.y = this.config.offset.y + this.horizonY() - cfg.height;
+		this.cloudSprite.y = this.config.offset.y + this.horizonY() - cfg.height - maxOffset;
 
 		this.container.addChild(this.cloudSprite);
+	}
+	
+	getCloudMaxOffset() {
+		const cfg = this.config.clouds;
+		/* Sum of all amplitudes from getCloudTopOffset */
+		return Math.ceil(
+			8 * cfg.detail +
+			6 * cfg.detail +
+			4 * cfg.detail +
+			2 * cfg.detail +
+			1.5 * cfg.detail
+		);
+	}
+
+	renderCloudStrip(ctx, startX, endX, height, maxOffset) {
+		const cfg = this.config.clouds;
+
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		const baseY = maxOffset;
+
+		/* Main cloud layer */
+		for (let x = startX; x < endX; x += 2) {
+			const top = baseY + this.getCloudTopOffset(x);
+
+			for (let y = top; y < height; y++) {
+				const d = (y - top) / Math.max(1, height - top);
+
+				let brightness;
+				if (d < 0.18) brightness = 255;
+				else if (d < 0.6) brightness = 230;
+				else brightness = 200;
+
+				ctx.fillStyle = `rgb(${brightness},${brightness},${brightness})`;
+				ctx.fillRect(x, y, 2, 1);
+			}
+		}
+
+		/* Shadow overlay layer */
+		for (let x = startX; x < endX; x += 2) {
+			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
+
+			for (let y = top; y < height - cfg.thickness; y++) {
+				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
+				const darken = (1 - d) * 0.15;
+				if (darken > 0.03) {
+					ctx.fillStyle = `rgba(0,0,0,${darken})`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
 	}
 	
 	updateCloudUniforms(t) {
@@ -184,55 +236,50 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 
 		/* Scroll the tiling sprite */
-		this.cloudSprite.tilePosition.x = -this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		const scrollX = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		this.cloudSprite.tilePosition.x = -scrollX;
 
-		/* For tinting, we'll need to rebuild the cloud texture periodically or use a filter */
-		/* For now, just use PIXI's built-in tint as an approximation */
-		const tintR = Math.round(this.lerp(160, 220, dayness));
-		const tintG = Math.round(this.lerp(170, 228, dayness));
-		const tintB = Math.round(this.lerp(180, 210, dayness));
+		/* Tint based on time of day */
+		const tintR = Math.round(this.lerp(140, 255, dayness));
+		const tintG = Math.round(this.lerp(150, 255, dayness));
+		const tintB = Math.round(this.lerp(170, 250, dayness));
 		this.cloudSprite.tint = (tintR << 16) | (tintG << 8) | tintB;
 	}
 
 	renderCloudStrip(ctx, startX, endX, height) {
 		const cfg = this.config.clouds;
 
-		/* Clear with transparency */
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-		/* We encode cloud zones in alpha:
-		   1.0 = light (top of cloud)
-		   0.66 = mid
-		   0.33 = shadow
-		*/
-
-		const baseY = cfg.height;
+		const baseY = 15; // offset from top of canvas
 
 		/* Main cloud layer */
 		for (let x = startX; x < endX; x += 2) {
-			const top = this.getCloudTopOffset(x);
+			const top = baseY + this.getCloudTopOffset(x);
 
 			for (let y = top; y < height; y++) {
 				const d = (y - top) / Math.max(1, height - top);
 
-				let alpha;
-				if (d < 0.18) alpha = 1.0;
-				else if (d < 0.6) alpha = 0.66;
-				else alpha = 0.33;
+				/* Encode brightness in RGB, full alpha */
+				let brightness;
+				if (d < 0.18) brightness = 255;      // light
+				else if (d < 0.6) brightness = 230;  // mid
+				else brightness = 200;               // shadow
 
-				ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+				ctx.fillStyle = `rgb(${brightness},${brightness},${brightness})`;
 				ctx.fillRect(x, y, 2, 1);
 			}
 		}
 
 		/* Shadow overlay layer */
 		for (let x = startX; x < endX; x += 2) {
-			const top = this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
+			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
 
 			for (let y = top; y < height - cfg.thickness; y++) {
 				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
-				if ((1 - d) * 0.18 > 0.05) {
-					ctx.fillStyle = `rgba(255,255,255,0.33)`;
+				const darken = (1 - d) * 0.15;
+				if (darken > 0.03) {
+					ctx.fillStyle = `rgba(0,0,0,${darken})`;
 					ctx.fillRect(x, y, 2, 1);
 				}
 			}
