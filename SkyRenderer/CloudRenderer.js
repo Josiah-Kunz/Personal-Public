@@ -42,6 +42,7 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uWorldWidth;
 			uniform float uBackSpeed;
 			uniform float uBackVerticalOffset;
+			uniform float uBackAlpha;
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
