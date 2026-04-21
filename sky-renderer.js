@@ -156,7 +156,6 @@ class SkyRenderer {
 		const maxOffset = this.getCloudMaxOffset();
 		const cloudHeight = cfg.height + cfg.thickness + maxOffset * 2;
 
-		/* Create cloud canvas with depth encoded in red channel */
 		this.cloudCanvas = document.createElement("canvas");
 		this.cloudCanvas.width = width * 2;
 		this.cloudCanvas.height = cloudHeight;
@@ -168,22 +167,20 @@ class SkyRenderer {
 		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, { scaleMode: PIXI.SCALE_MODES.NEAREST });
 		this.cloudTexture = new PIXI.Texture(baseTexture);
 
-		/* Create shader */
 		const cloudShader = PIXI.Shader.from(
-			/* Vertex */
 			`
 			attribute vec2 aVertexPosition;
 			attribute vec2 aTextureCoord;
 			uniform mat3 projectionMatrix;
 			uniform mat3 translationMatrix;
+			uniform float uScrollX;
 			varying vec2 vTextureCoord;
 			
 			void main() {
-				vTextureCoord = aTextureCoord;
+				vTextureCoord = aTextureCoord + vec2(uScrollX, 0.0);
 				gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
 			}
 			`,
-			/* Fragment */
 			`
 			precision mediump float;
 			varying vec2 vTextureCoord;
@@ -191,30 +188,27 @@ class SkyRenderer {
 			uniform float uDayness;
 			
 			void main() {
-				vec4 texel = texture2D(uSampler, vTextureCoord);
+				vec2 uv = fract(vTextureCoord);
+				vec4 texel = texture2D(uSampler, uv);
 				
 				if (texel.a < 0.01) {
 					discard;
 				}
 				
-				float depth = texel.r; /* 0 = top/light, 1 = bottom/shadow */
+				float depth = texel.r;
 				
-				/* Night colors */
 				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
 				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
 				vec3 nightShadow = vec3(120.0, 128.0, 142.0) / 255.0;
 				
-				/* Day colors */
 				vec3 dayLight  = vec3(241.0, 242.0, 221.0) / 255.0;
 				vec3 dayMid    = vec3(224.0, 231.0, 202.0) / 255.0;
 				vec3 dayShadow = vec3(194.0, 205.0, 176.0) / 255.0;
 				
-				/* Interpolate night/day for each band */
 				vec3 light  = mix(nightLight,  dayLight,  uDayness);
 				vec3 mid    = mix(nightMid,    dayMid,    uDayness);
 				vec3 shadow = mix(nightShadow, dayShadow, uDayness);
 				
-				/* Pick color based on depth */
 				vec3 color;
 				if (depth < 0.18) {
 					color = light;
@@ -229,11 +223,11 @@ class SkyRenderer {
 			`,
 			{
 				uSampler: this.cloudTexture,
-				uDayness: 1.0
+				uDayness: 1.0,
+				uScrollX: 0.0
 			}
 		);
 
-		/* Create mesh with shader */
 		const geometry = new PIXI.Geometry()
 			.addAttribute('aVertexPosition', [0, 0, width, 0, width, cloudHeight, 0, cloudHeight], 2)
 			.addAttribute('aTextureCoord', [0, 0, 0.5, 0, 0.5, 1, 0, 1], 2)
@@ -245,6 +239,16 @@ class SkyRenderer {
 		this.cloudShader = cloudShader;
 
 		this.container.addChild(this.cloudMesh);
+	}
+
+	updateCloudUniforms(t) {
+		if (!this.cloudShader) return;
+
+		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
+		this.cloudShader.uniforms.uDayness = dayness;
+
+		const scroll = this.elapsed * this.config.clouds.driftSpeed;
+		this.cloudShader.uniforms.uScrollX = scroll;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
@@ -335,17 +339,6 @@ class SkyRenderer {
 				}
 			}
 		}
-	}
-	
-	updateCloudUniforms(t) {
-		if (!this.cloudShader) return;
-
-		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
-		this.cloudShader.uniforms.uDayness = dayness;
-
-		/* Handle scrolling via texture coord offset or mesh position */
-		const scrollX = (this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width) % this.config.resolution.width;
-		this.cloudMesh.x = this.config.offset.x - scrollX;
 	}
 
 	getCloudTopOffset(x, speedMult = 1) {
