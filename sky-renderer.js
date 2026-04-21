@@ -198,6 +198,48 @@ class SkyRenderer {
 
 		const baseY = maxOffset;
 
+		/* Daytime cloud colors (will be tinted darker at night) */
+		const light = { r: 241, g: 242, b: 221 };
+		const mid = { r: 224, g: 231, b: 202 };
+		const shadow = { r: 194, g: 205, b: 176 };
+
+		/* Main cloud layer */
+		for (let x = startX; x < endX; x += 2) {
+			const top = baseY + this.getCloudTopOffset(x);
+
+			for (let y = top; y < height; y++) {
+				const d = (y - top) / Math.max(1, height - top);
+
+				let c;
+				if (d < 0.18) c = light;
+				else if (d < 0.6) c = mid;
+				else c = shadow;
+
+				ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+				ctx.fillRect(x, y, 2, 1);
+			}
+		}
+
+		/* Shadow overlay layer */
+		for (let x = startX; x < endX; x += 2) {
+			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
+
+			for (let y = top; y < height - cfg.thickness; y++) {
+				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
+				const darken = (1 - d) * 0.15;
+				if (darken > 0.03) {
+					ctx.fillStyle = `rgba(0,0,0,${darken})`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
+	}
+		const cfg = this.config.clouds;
+
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		const baseY = maxOffset;
+
 		/* Main cloud layer */
 		for (let x = startX; x < endX; x += 2) {
 			const top = baseY + this.getCloudTopOffset(x);
@@ -239,51 +281,25 @@ class SkyRenderer {
 		const scrollX = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
 		this.cloudSprite.tilePosition.x = -scrollX;
 
+		/* Tint: white (0xFFFFFF) at day, darker blue-gray at night */
+		const tintR = Math.round(this.lerp(90, 255, dayness));
+		const tintG = Math.round(this.lerp(100, 255, dayness));
+		const tintB = Math.round(this.lerp(120, 255, dayness));
+		this.cloudSprite.tint = (tintR << 16) | (tintG << 8) | tintB;
+	}
+		if (!this.cloudSprite) return;
+
+		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
+
+		/* Scroll the tiling sprite */
+		const scrollX = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		this.cloudSprite.tilePosition.x = -scrollX;
+
 		/* Tint based on time of day */
 		const tintR = Math.round(this.lerp(140, 255, dayness));
 		const tintG = Math.round(this.lerp(150, 255, dayness));
 		const tintB = Math.round(this.lerp(170, 250, dayness));
 		this.cloudSprite.tint = (tintR << 16) | (tintG << 8) | tintB;
-	}
-
-	renderCloudStrip(ctx, startX, endX, height) {
-		const cfg = this.config.clouds;
-
-		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-		const baseY = 15; // offset from top of canvas
-
-		/* Main cloud layer */
-		for (let x = startX; x < endX; x += 2) {
-			const top = baseY + this.getCloudTopOffset(x);
-
-			for (let y = top; y < height; y++) {
-				const d = (y - top) / Math.max(1, height - top);
-
-				/* Encode brightness in RGB, full alpha */
-				let brightness;
-				if (d < 0.18) brightness = 255;      // light
-				else if (d < 0.6) brightness = 230;  // mid
-				else brightness = 200;               // shadow
-
-				ctx.fillStyle = `rgb(${brightness},${brightness},${brightness})`;
-				ctx.fillRect(x, y, 2, 1);
-			}
-		}
-
-		/* Shadow overlay layer */
-		for (let x = startX; x < endX; x += 2) {
-			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
-
-			for (let y = top; y < height - cfg.thickness; y++) {
-				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
-				const darken = (1 - d) * 0.15;
-				if (darken > 0.03) {
-					ctx.fillStyle = `rgba(0,0,0,${darken})`;
-					ctx.fillRect(x, y, 2, 1);
-				}
-			}
-		}
 	}
 
 	getCloudTopOffset(x, speedMult = 1) {
