@@ -86,7 +86,7 @@ window.CloudRenderer = class CloudRenderer {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
 					color = shadow;
-					alpha = (1.0 - d) * 0.18;
+					alpha = (1.0 - d) * uBackAlpha;
 				}
 				
 				/* Front layer (on top, fully opaque) */
@@ -118,7 +118,8 @@ window.CloudRenderer = class CloudRenderer {
 				uLayerOffset: cfg.layerOffset,
 				uWorldWidth: width,
 				uBackSpeed: cfg.backSpeed,
-				uBackVerticalOffset: cfg.backVerticalOffset || 4.0
+				uBackVerticalOffset: cfg.backVerticalOffset || 4.0,
+				uBackAlpha: cfg.backAlpha || 0.1
 			}
 		);
 		

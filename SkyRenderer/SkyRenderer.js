@@ -49,6 +49,7 @@ window.SkyRenderer = class SkyRenderer {
 				layerOffset: 31,
 				backSpeed: 0.65,
 				backVerticalOffset: 4,
+				backAlpha: 0.1,
 				...config.clouds
 			},
 			stars: {
