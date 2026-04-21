@@ -1,10 +1,11 @@
 window.OceanRenderer = class OceanRenderer {
-	constructor(config, starsConfig, resolution, horizonY, container) {
+	constructor(config, starsConfig, resolution, horizonY, container, offset = {x: 0, y: 0}) {
 		this.config = config;
 		this.starsConfig = starsConfig;
 		this.resolution = resolution;
 		this.horizonY = horizonY;
 		this.container = container;
+		this.offset = offset;
 
 		this.mesh = null;
 		this.shader = null;
@@ -338,7 +339,7 @@ window.OceanRenderer = class OceanRenderer {
 
 		this.shader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
 		this.mesh = new PIXI.Mesh(geometry, this.shader);
-		this.mesh.position.set(0, this.horizonY);
+		this.mesh.position.set(this.offset.x, this.offset.y + this.horizonY);
 
 		this.container.addChild(this.mesh);
 	}

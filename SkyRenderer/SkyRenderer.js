@@ -187,7 +187,8 @@ window.SkyRenderer = class SkyRenderer {
 				this.config.stars,
 				this.config.resolution,
 				this.horizonY(),
-				this.container
+				this.container,
+				this.config.offset
 			);
 		}
 		
