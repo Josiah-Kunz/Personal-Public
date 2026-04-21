@@ -193,30 +193,40 @@ class SkyRenderer {
 			uniform vec2 uTexSize;
 
 			void main() {
-				/* Sample current pixel and neighbor */
+				float texelSize = 1.0 / uTexSize.x;
+				
+				/* Base UV with whole pixel scroll */
 				vec2 uv = vTextureCoord;
-				uv.x += uScrollPixels / uTexSize.x;
+				uv.x += uScrollPixels * texelSize;
 				
+				/* Sample current and next pixel */
 				vec4 texelCur = texture2D(uSampler, uv);
-				vec4 texelPrev = texture2D(uSampler, uv - vec2(1.0 / uTexSize.x, 0.0));
+				vec4 texelNext = texture2D(uSampler, uv + vec2(texelSize, 0.0));
 				
-				/* Edge detection: if neighbor is transparent but we're not, we're a leading edge */
-				/* If we're transparent but neighbor isn't, we're a trailing edge */
-				float curAlpha = texelCur.a;
-				float prevAlpha = texelPrev.a;
+				float alpha = 0.0;
+				float depth = 0.0;
 				
-				float alpha = curAlpha;
-				float depth = texelCur.r;
+				bool curSolid = texelCur.a > 0.5;
+				bool nextSolid = texelNext.a > 0.5;
 				
-				/* Leading edge: fade in based on scroll frac */
-				if (curAlpha > 0.5 && prevAlpha < 0.5) {
-					alpha = uScrollFrac;
+				if (curSolid && nextSolid) {
+					/* Fully inside cloud */
+					alpha = 1.0;
 					depth = texelCur.r;
 				}
-				/* Trailing edge: fade out based on scroll frac */
-				else if (curAlpha < 0.5 && prevAlpha > 0.5) {
+				else if (curSolid && !nextSolid) {
+					/* Trailing edge - current pixel fading out */
 					alpha = 1.0 - uScrollFrac;
-					depth = texelPrev.r;
+					depth = texelCur.r;
+				}
+				else if (!curSolid && nextSolid) {
+					/* Leading edge - next pixel fading in */
+					alpha = uScrollFrac;
+					depth = texelNext.r;
+				}
+				else {
+					/* Empty space */
+					discard;
 				}
 				
 				if (alpha < 0.01) {
