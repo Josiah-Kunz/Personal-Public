@@ -9,7 +9,7 @@ const skyURLs = [
 	*/
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/00e6cf3747a0dc3b8330b50886e1e3d2492c241e/SkyRenderer/SkyRenderer.js",
 ];
-
+ 
 if (game.skyRenderer?.map !== game.map) {
 	
 	if (game.skyRenderer) game.skyRenderer.destroy();
