@@ -349,7 +349,7 @@ class SkyRenderer {
 	}
 
 	getCloudTopOffset(x, speedMult = 1) {
-		const cfg = this.config.clouds;
+		const cfg = this.config.clouds; 
 		const sx = x * speedMult;
 		const n1 = Math.sin(sx * 0.022 + 0.5) * 8 * cfg.detail;
 		const n2 = Math.sin(sx * 0.061 + 1.4) * 6 * cfg.detail;
