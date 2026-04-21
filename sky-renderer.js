@@ -231,8 +231,6 @@ class SkyRenderer {
 			{
 				uSampler: this.cloudTexture,
 				uDayness: 1.0,
-				uScrollPixels: 0.0,
-				uScrollFrac: 0.0,
 				uTexSize: [this.cloudCanvas.width, this.cloudCanvas.height]
 			}
 		);
@@ -257,6 +255,7 @@ class SkyRenderer {
 		this.cloudShader.uniforms.uDayness = dayness;
 
 		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		console.log('uScroll:', scrollPixels, 'elapsed:', this.elapsed);
 		this.cloudShader.uniforms.uScroll = scrollPixels;
 	}
 
