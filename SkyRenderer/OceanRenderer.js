@@ -229,7 +229,7 @@ window.OceanRenderer = class OceanRenderer {
 							if (dx <= halfWidth) {
 								float nx = dx / max(1.0, halfWidth);
 								float edge = 1.0 - nx;
-								
+								 
 								float alpha = uMoonReflectionAlpha * uDetail
 											* segmentFade
 											* (1.0 - ty)
