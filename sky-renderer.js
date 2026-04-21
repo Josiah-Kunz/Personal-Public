@@ -36,6 +36,7 @@ class SkyRenderer {
 				detail: 0.5,
 				driftSpeed: 1e-6,
 				layerOffset: 31,
+				backSpeed: 0.65,
 				...config.clouds
 			},
 			stars: {
@@ -170,52 +171,38 @@ class SkyRenderer {
 			precision mediump float;
 			varying vec2 vTextureCoord;
 			uniform float uDayness;
-			uniform float uScroll;
+			uniform float uScrollFront;
 			uniform float uDetail;
-			uniform float uCloudHeight;
-			uniform float uThickness;
 			uniform float uMeshHeight;
 			uniform float uLayerOffset;
 			uniform float uWorldWidth;
+			uniform float uBackSpeed;
 			
-			float getCloudTop(float x, float speedMult) {
-				float sx = x * speedMult;
-				float n1 = sin(sx * 0.022 + 0.5) * 8.0 * uDetail;
-				float n2 = sin(sx * 0.061 + 1.4) * 6.0 * uDetail;
-				float n3 = sin(sx * 0.18  + 1.3) * 4.0 * uDetail;
-				float n4 = sin(sx * 0.43  + 2.2) * 2.0 * uDetail;
-				float n5 = sin(sx * 0.93  + 0.4) * 1.5 * uDetail;
+			float getCloudTop(float x) {
+				float n1 = sin(x * 0.022 + 0.5) * 8.0 * uDetail;
+				float n2 = sin(x * 0.061 + 1.4) * 6.0 * uDetail;
+				float n3 = sin(x * 0.18  + 1.3) * 4.0 * uDetail;
+				float n4 = sin(x * 0.43  + 2.2) * 2.0 * uDetail;
+				float n5 = sin(x * 0.93  + 0.4) * 1.5 * uDetail;
 				return floor(n1 + n2 + n3 + n4 + n5 + 0.5);
 			}
 			
 			void main() {
-				float worldX = vTextureCoord.x * uWorldWidth + uScroll;
 				float localY = vTextureCoord.y * uMeshHeight;
-				
 				float maxOffset = ceil(21.5 * uDetail);
 				float baseY = maxOffset;
 				
+				/* Separate scroll speeds for parallax */
+				float worldXFront = vTextureCoord.x * uWorldWidth + uScrollFront;
+				float worldXBack = vTextureCoord.x * uWorldWidth + uScrollFront * uBackSpeed;
+				
 				/* Main cloud layer */
-				float top1 = baseY + getCloudTop(worldX, 1.0);
+				float top1 = baseY + getCloudTop(worldXFront);
 				
-				/* Shadow layer */
-				float top2 = baseY + getCloudTop(worldX + uLayerOffset, 0.65) + 1.0;
+				/* Back/shadow layer - slower, offset */
+				float top2 = baseY + getCloudTop(worldXBack + uLayerOffset) + 2.0;
 				
-				/* Are we inside the cloud? */
-				if (localY < top1) {
-					discard;
-				}
-				
-				/* Depth for main layer */
-				float d = (localY - top1) / max(1.0, uMeshHeight - top1);
-				
-				/* Check if shadow layer applies */
-				bool inShadow = localY >= top2 && localY < (uMeshHeight - uThickness);
-				if (inShadow) {
-					float shadowD = (localY - top2) / max(1.0, uMeshHeight - uThickness - top2);
-					d = d + (1.0 - shadowD) * 0.15;
-				}
-				
+				/* Colors */
 				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
 				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
 				vec3 nightShadow = vec3(120.0, 128.0, 142.0) / 255.0;
@@ -228,27 +215,57 @@ class SkyRenderer {
 				vec3 mid    = mix(nightMid,    dayMid,    uDayness);
 				vec3 shadow = mix(nightShadow, dayShadow, uDayness);
 				
-				vec3 color;
-				if (d < 0.18) {
-					color = light;
-				} else if (d < 0.6) {
-					color = mid;
-				} else {
-					color = shadow;
+				vec3 color = vec3(0.0);
+				float alpha = 0.0;
+				
+				/* Back layer first (behind) */
+				if (localY >= top2) {
+					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
+					
+					/* Slightly muted colors for back layer */
+					vec3 backLight  = mix(light, mid, 0.25);
+					vec3 backMid    = mix(mid, shadow, 0.25);
+					vec3 backShadow = shadow;
+					
+					if (d < 0.18) {
+						color = backLight;
+					} else if (d < 0.6) {
+						color = backMid;
+					} else {
+						color = backShadow;
+					}
+					alpha = 1.0;
 				}
 				
-				gl_FragColor = vec4(color, 1.0);
+				/* Front layer on top */
+				if (localY >= top1) {
+					float d = (localY - top1) / max(1.0, uMeshHeight - top1);
+					
+					if (d < 0.18) {
+						color = light;
+					} else if (d < 0.6) {
+						color = mid;
+					} else {
+						color = shadow;
+					}
+					alpha = 1.0;
+				}
+				
+				if (alpha < 0.01) {
+					discard;
+				}
+				
+				gl_FragColor = vec4(color, alpha);
 			}
 			`,
 			{
 				uDayness: 1.0,
-				uScroll: 0.0,
+				uScrollFront: 0.0,
 				uDetail: cfg.detail,
-				uCloudHeight: cfg.height,
-				uThickness: cfg.thickness,
 				uMeshHeight: cloudHeight,
 				uLayerOffset: cfg.layerOffset,
-				uWorldWidth: width
+				uWorldWidth: width,
+				uBackSpeed: 0.65
 			}
 		);
 
@@ -264,7 +281,7 @@ class SkyRenderer {
 
 		this.container.addChild(this.cloudMesh);
 	}
-
+	
 	updateCloudUniforms(t) {
 		if (!this.cloudShader) return;
 
@@ -272,9 +289,9 @@ class SkyRenderer {
 		this.cloudShader.uniforms.uDayness = dayness;
 
 		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
-		this.cloudShader.uniforms.uScroll = scrollPixels;
+		this.cloudShader.uniforms.uScrollFront = scrollPixels;
 	}
-
+	
 	destroy() {
 		this.stop();
 
