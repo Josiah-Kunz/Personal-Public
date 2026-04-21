@@ -24,7 +24,7 @@ window.StarRenderer = class StarRenderer {
 			canvas.width = size;
 			canvas.height = size;
 			const ctx = canvas.getContext("2d", { alpha: true });
-			fillCircle((size / 2) | 0, (size / 2) | 0, r, "#ffffff", ctx);
+			fillCircle(ctx, (size / 2) | 0, (size / 2) | 0, r, "#ffffff");
 			
 			this.sprites[r] = canvas;
 			this.spriteOffsets[r] = (size / 2) | 0;
