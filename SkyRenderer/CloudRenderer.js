@@ -45,6 +45,10 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uBackVerticalOffset;
 			uniform float uBackAlphaDay;
 			uniform float uBackAlphaNight;
+			uniform float uBackFadeStartMorning;
+			uniform float uBackFadeEndMorning;
+			uniform float uBackFadeStartEvening;
+			uniform float uBackFadeEndEvening;
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
@@ -89,10 +93,10 @@ window.CloudRenderer = class CloudRenderer {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
 					float nightFactor;
-					if (uTime < 0.25) {
-						nightFactor = 1.0 - smoothstep(0.208, 0.25, uTime);
-					} else if (uTime > 0.79) {
-						nightFactor = smoothstep(0.79, 0.875, uTime);
+					if (uTime < uBackFadeEndMorning) {
+						nightFactor = 1.0 - smoothstep(uBackFadeStartMorning, uBackFadeEndMorning, uTime);
+					} else if (uTime > uBackFadeStartEvening) {
+						nightFactor = smoothstep(uBackFadeStartEvening, uBackFadeEndEvening, uTime);
 					} else {
 						nightFactor = 0.0;
 					}
@@ -135,6 +139,10 @@ window.CloudRenderer = class CloudRenderer {
 				uBackVerticalOffset: cfg.backVerticalOffset || 4.0,
 				uBackAlphaDay: cfg.backAlphaDay || 0.05,
 				uBackAlphaNight: cfg.backAlphaNight || 0.5,
+				uBackFadeStartMorning: (cfg.backFadeStartMorning || 3) / 24,
+				uBackFadeEndMorning: (cfg.backFadeEndMorning || 4) / 24,
+				uBackFadeStartEvening: (cfg.backFadeStartEvening || 19) / 24,
+				uBackFadeEndEvening: (cfg.backFadeEndEvening || 21) / 24,
 			}
 		);
 		
