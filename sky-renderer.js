@@ -156,27 +156,129 @@ class SkyRenderer {
 		const maxOffset = this.getCloudMaxOffset();
 		const cloudHeight = cfg.height + cfg.thickness + maxOffset * 2;
 
-		/* Create cloud canvas - make it 2x width for seamless scrolling */
+		/* Create cloud canvas with depth encoded in red channel */
 		this.cloudCanvas = document.createElement("canvas");
 		this.cloudCanvas.width = width * 2;
 		this.cloudCanvas.height = cloudHeight;
 		const ctx = this.cloudCanvas.getContext("2d", { alpha: true });
 		ctx.imageSmoothingEnabled = false;
 
-		/* Render clouds to canvas */
-		this.renderCloudStrip(ctx, 0, width * 2, cloudHeight, maxOffset);
+		this.renderCloudDepthMap(ctx, 0, width * 2, cloudHeight, maxOffset);
 
-		/* Create PIXI texture from cloud canvas */
 		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, { scaleMode: PIXI.SCALE_MODES.NEAREST });
 		this.cloudTexture = new PIXI.Texture(baseTexture);
 
-		/* Create a TilingSprite for seamless scrolling */
-		this.cloudSprite = new PIXI.TilingSprite(this.cloudTexture, width, cloudHeight);
+		/* Create shader */
+		const cloudShader = PIXI.Shader.from(
+			/* Vertex */
+			`
+			attribute vec2 aVertexPosition;
+			attribute vec2 aTextureCoord;
+			uniform mat3 projectionMatrix;
+			uniform mat3 translationMatrix;
+			varying vec2 vTextureCoord;
+			
+			void main() {
+				vTextureCoord = aTextureCoord;
+				gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
+			}
+			`,
+			/* Fragment */
+			`
+			precision mediump float;
+			varying vec2 vTextureCoord;
+			uniform sampler2D uSampler;
+			uniform float uDayness;
+			
+			void main() {
+				vec4 texel = texture2D(uSampler, vTextureCoord);
+				
+				if (texel.a < 0.01) {
+					discard;
+				}
+				
+				float depth = texel.r; /* 0 = top/light, 1 = bottom/shadow */
+				
+				/* Night colors */
+				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
+				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
+				vec3 nightShadow = vec3(120.0, 128.0, 142.0) / 255.0;
+				
+				/* Day colors */
+				vec3 dayLight  = vec3(241.0, 242.0, 221.0) / 255.0;
+				vec3 dayMid    = vec3(224.0, 231.0, 202.0) / 255.0;
+				vec3 dayShadow = vec3(194.0, 205.0, 176.0) / 255.0;
+				
+				/* Interpolate night/day for each band */
+				vec3 light  = mix(nightLight,  dayLight,  uDayness);
+				vec3 mid    = mix(nightMid,    dayMid,    uDayness);
+				vec3 shadow = mix(nightShadow, dayShadow, uDayness);
+				
+				/* Pick color based on depth */
+				vec3 color;
+				if (depth < 0.18) {
+					color = light;
+				} else if (depth < 0.6) {
+					color = mid;
+				} else {
+					color = shadow;
+				}
+				
+				gl_FragColor = vec4(color, texel.a);
+			}
+			`,
+			{
+				uSampler: this.cloudTexture,
+				uDayness: 1.0
+			}
+		);
 
-		this.cloudSprite.x = this.config.offset.x;
-		this.cloudSprite.y = this.config.offset.y + this.horizonY() - cfg.height - maxOffset;
+		/* Create mesh with shader */
+		const geometry = new PIXI.Geometry()
+			.addAttribute('aVertexPosition', [0, 0, width, 0, width, cloudHeight, 0, cloudHeight], 2)
+			.addAttribute('aTextureCoord', [0, 0, 0.5, 0, 0.5, 1, 0, 1], 2)
+			.addIndex([0, 1, 2, 0, 2, 3]);
 
-		this.container.addChild(this.cloudSprite);
+		this.cloudMesh = new PIXI.Mesh(geometry, cloudShader);
+		this.cloudMesh.x = this.config.offset.x;
+		this.cloudMesh.y = this.config.offset.y + this.horizonY() - cfg.height - maxOffset;
+		this.cloudShader = cloudShader;
+
+		this.container.addChild(this.cloudMesh);
+	}
+
+	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
+		const cfg = this.config.clouds;
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		const baseY = maxOffset;
+
+		/* Main cloud layer - encode depth in red channel */
+		for (let x = startX; x < endX; x += 2) {
+			const top = baseY + this.getCloudTopOffset(x);
+
+			for (let y = top; y < height; y++) {
+				const d = (y - top) / Math.max(1, height - top);
+				const depthByte = Math.round(d * 255);
+				
+				ctx.fillStyle = `rgba(${depthByte}, 0, 0, 255)`;
+				ctx.fillRect(x, y, 2, 1);
+			}
+		}
+
+		/* Shadow overlay - darken by increasing depth value */
+		for (let x = startX; x < endX; x += 2) {
+			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
+
+			for (let y = top; y < height - cfg.thickness; y++) {
+				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
+				const darken = (1 - d) * 0.15;
+				if (darken > 0.03) {
+					/* Read existing, blend darker */
+					ctx.fillStyle = `rgba(255, 0, 0, ${darken})`;
+					ctx.fillRect(x, y, 2, 1);
+				}
+			}
+		}
 	}
 	
 	getCloudMaxOffset() {
@@ -236,19 +338,14 @@ class SkyRenderer {
 	}
 	
 	updateCloudUniforms(t) {
-		if (!this.cloudSprite) return;
+		if (!this.cloudShader) return;
 
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
+		this.cloudShader.uniforms.uDayness = dayness;
 
-		/* Scroll the tiling sprite */
-		const scrollX = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
-		this.cloudSprite.tilePosition.x = -scrollX;
-
-		/* Tint: white (0xFFFFFF) at day, darker blue-gray at night */
-		const tintR = Math.round(this.lerp(90, 255, dayness));
-		const tintG = Math.round(this.lerp(100, 255, dayness));
-		const tintB = Math.round(this.lerp(120, 255, dayness));
-		this.cloudSprite.tint = (tintR << 16) | (tintG << 8) | tintB;
+		/* Handle scrolling via texture coord offset or mesh position */
+		const scrollX = (this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width) % this.config.resolution.width;
+		this.cloudMesh.x = this.config.offset.x - scrollX;
 	}
 
 	getCloudTopOffset(x, speedMult = 1) {
