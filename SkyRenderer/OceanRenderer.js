@@ -190,20 +190,12 @@ window.OceanRenderer = class OceanRenderer {
 								float nx = dx / max(1.0, halfWidth);
 								float edge = 1.0 - nx;
 								
-								float breakup = sin(xAligned * 0.18 + y * 0.11 + uTime * 0.8) * 0.5
-								              + sin(xAligned * 0.11 + y * 0.035 + 2.1) * 0.35
-								              + 0.5;
-								
-								float breakThreshold = 1.0 - uTrailBreakup - edge * 0.28;
-								
-								if (breakup > breakThreshold) {
-									float alpha = uSunReflectionAlpha * uDetail
-									            * (1.0 - ty)
-									            * edge
-									            * above
-									            * uCelestialReflectionStrength;
-									col += sunColor * alpha;
-								}
+								float alpha = uSunReflectionAlpha * uDetail
+											* (1.0 - ty)
+											* edge
+											* above
+											* uCelestialReflectionStrength;
+								col += sunColor * alpha;
 							}
 						}
 					}
@@ -237,20 +229,12 @@ window.OceanRenderer = class OceanRenderer {
 								float nx = dx / max(1.0, halfWidth);
 								float edge = 1.0 - nx;
 								
-								float breakup = sin(xAligned * 0.16 + y * 0.09 + uTime * 0.6) * 0.5
-								              + sin(xAligned * 0.09 + y * 0.03 + 1.8) * 0.35
-								              + 0.5;
-								
-								float breakThreshold = 1.0 - uTrailBreakup - edge * 0.28;
-								
-								if (breakup > breakThreshold) {
-									float alpha = uMoonReflectionAlpha * uDetail
-									            * (1.0 - ty)
-									            * edge
-									            * above
-									            * uCelestialReflectionStrength;
-									col += moonColor * alpha;
-								}
+								float alpha = uMoonReflectionAlpha * uDetail
+											* (1.0 - ty)
+											* edge
+											* above
+											* uCelestialReflectionStrength;
+								col += moonColor * alpha;
 							}
 						}
 					}
