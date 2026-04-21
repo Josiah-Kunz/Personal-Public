@@ -275,7 +275,7 @@ window.SkyRenderer = class SkyRenderer {
 		/* Update cloud shader */
 		if (this.clouds) {
 			const dayness = this.getDayness(t);
-			this.clouds.update(this.elapsed, dayness);
+			this.clouds.update(this.elapsed, dayness, t);
 		}
 	}
 	

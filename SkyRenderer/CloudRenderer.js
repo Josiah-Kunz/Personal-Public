@@ -35,6 +35,7 @@ window.CloudRenderer = class CloudRenderer {
 			precision mediump float;
 			varying vec2 vTextureCoord;
 			uniform float uDayness;
+			uniform float uTime;
 			uniform float uScroll;
 			uniform float uDetail;
 			uniform float uMeshHeight;
@@ -87,13 +88,17 @@ window.CloudRenderer = class CloudRenderer {
 				if (localY >= top2 && localY < top1) {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
-					// Brighten back layer at night so it's visible
-					//vec3 backColor = mix(shadow, light, (1.0 - uDayness) * 0.8);
-					//color = backColor;
+					float nightFactor;
+					if (uTime < 0.25) {
+						nightFactor = 1.0 - smoothstep(0.208, 0.25, uTime);
+					} else if (uTime > 0.79) {
+						nightFactor = smoothstep(0.79, 0.875, uTime);
+					} else {
+						nightFactor = 0.0;
+					}
 					
-					float backA = mix(uBackAlphaNight, uBackAlphaDay, uDayness);
-					color = shadow;
-					
+					float backA = mix(uBackAlphaDay, uBackAlphaNight, nightFactor);
+					color = shadow;  // <-- add this!
 					alpha = (1.0 - d) * backA;
 				}
 				
@@ -120,6 +125,7 @@ window.CloudRenderer = class CloudRenderer {
 			`,
 			{
 				uDayness: 1.0,
+				uTime: 0.0,
 				uScroll: 0.0,
 				uDetail: cfg.detail,
 				uMeshHeight: meshHeight,
@@ -146,10 +152,11 @@ window.CloudRenderer = class CloudRenderer {
 		this.container.addChild(this.mesh);
 	}
 	
-	update(elapsed, dayness) {
+	update(elapsed, dayness, time) {
 		if (!this.shader) return;
 		
 		this.shader.uniforms.uDayness = dayness;
+		this.shader.uniforms.uTime = time;
 		this.shader.uniforms.uScroll = elapsed * this.config.driftSpeed * this.config.worldWidth;
 	}
 	
