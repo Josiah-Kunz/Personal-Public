@@ -8,6 +8,17 @@ window.SkyRenderer = class SkyRenderer {
 			resolution: { width: game.width, height: game.height, ...config.resolution },
 			timing: { fps: 30, overallSpeed: 1, ...config.timing },
 			scene: { horizonY: 245, ...config.scene },
+			
+			// Toggle each sub-renderer on/off
+			enabled: {
+				sky: true,
+				stars: true,
+				celestials: true,
+				clouds: true,
+				ocean: true,
+				...config.enabled
+			},
+			
 			arc: {
 				widthFactor: 0.42,
 				peakHeight: 150,
@@ -117,6 +128,7 @@ window.SkyRenderer = class SkyRenderer {
 	
 	init() {
 		const { width, height } = this.config.resolution;
+		const enabled = this.config.enabled;
 		
 		/* Main canvas */
 		this.canvas = document.createElement("canvas");
@@ -142,50 +154,60 @@ window.SkyRenderer = class SkyRenderer {
 		this.container = new PIXI.Container();
 		this.container.addChild(this.sprite);
 		
-		/* Initialize sub-renderers */
-		this.skyGradient = new SkyGradient(
-			this.config.sky,
-			this.config.stars,
-			this.config.resolution,
-			this.horizonY()
-		);
+		/* Initialize sub-renderers (only if enabled and class exists) */
+		if (enabled.sky && typeof SkyGradient !== 'undefined') {
+			this.skyGradient = new SkyGradient(
+				this.config.sky,
+				this.config.stars,
+				this.config.resolution,
+				this.horizonY()
+			);
+		}
 		
-		this.celestials = new CelestialRenderer(
-			this.config.celestials,
-			this.config.arc,
-			this.config.resolution,
-			this.horizonY()
-		);
+		if (enabled.celestials && typeof CelestialRenderer !== 'undefined') {
+			this.celestials = new CelestialRenderer(
+				this.config.celestials,
+				this.config.arc,
+				this.config.resolution,
+				this.horizonY()
+			);
+		}
 		
-		this.stars = new StarRenderer(
-			this.config.stars,
-			this.config.resolution,
-			this.horizonY()
-		);
+		if (enabled.stars && typeof StarRenderer !== 'undefined') {
+			this.stars = new StarRenderer(
+				this.config.stars,
+				this.config.resolution,
+				this.horizonY()
+			);
+		}
 		
-		this.ocean = new OceanRenderer(
-			this.config.water,
-			this.config.stars,
-			this.config.resolution,
-			this.horizonY()
-		);
+		if (enabled.ocean && typeof OceanRenderer !== 'undefined') {
+			this.ocean = new OceanRenderer(
+				this.config.water,
+				this.config.stars,
+				this.config.resolution,
+				this.horizonY()
+			);
+		}
 		
-		this.clouds = new CloudRenderer(
-			{
-				...this.config.clouds,
-				worldWidth: width,
-				offsetX: this.config.offset.x,
-				offsetY: this.config.offset.y
-			},
-			this.container,
-			this.horizonY()
-		);
+		if (enabled.clouds && typeof CloudRenderer !== 'undefined') {
+			this.clouds = new CloudRenderer(
+				{
+					...this.config.clouds,
+					worldWidth: width,
+					offsetX: this.config.offset.x,
+					offsetY: this.config.offset.y
+				},
+				this.container,
+				this.horizonY()
+			);
+		}
 		
 		/* Add to game */
 		this.game.containers.voidSprites.addChild(this.container);
 		
 		this.start();
-		console.log("SkyRenderer initialized!");
+		console.log("SkyRenderer initialized!", { enabled });
 	}
 	
 	getGameTimeNormalized() {
@@ -200,7 +222,7 @@ window.SkyRenderer = class SkyRenderer {
 	}
 	
 	needsStaticRedraw(t) {
-		if (!this.cachedPalette) return true;
+		if (!this.cachedPalette && this.skyGradient) return true;
 		const now = performance.now();
 		const timeDelta = now - this.lastStaticRedraw;
 		const gameTimeChanged = Math.abs(t - this.lastGameTime) > 0.001;
@@ -210,14 +232,24 @@ window.SkyRenderer = class SkyRenderer {
 	drawStaticLayer(t) {
 		const ctx = this.staticCtx;
 		
-		this.cachedPalette = this.skyGradient.draw(ctx, t);
-		this.skyGradient.drawAtmosphericHaze(ctx, t);
+		// Clear if no sky gradient
+		if (!this.skyGradient) {
+			ctx.fillStyle = '#000';
+			ctx.fillRect(0, 0, this.config.resolution.width, this.config.resolution.height);
+		} else {
+			this.cachedPalette = this.skyGradient.draw(ctx, t);
+			this.skyGradient.drawAtmosphericHaze(ctx, t);
+		}
 		
-		const { sun, moon } = this.celestials.draw(ctx, t, this.config.clouds.thickness);
-		this.cachedSun = sun;
-		this.cachedMoon = moon;
-		
-		this.skyGradient.drawHorizonGlow(ctx, sun, moon);
+		if (this.celestials) {
+			const { sun, moon } = this.celestials.draw(ctx, t, this.config.clouds.thickness);
+			this.cachedSun = sun;
+			this.cachedMoon = moon;
+			
+			if (this.skyGradient) {
+				this.skyGradient.drawHorizonGlow(ctx, sun, moon);
+			}
+		}
 		
 		this.lastStaticRedraw = performance.now();
 		this.lastGameTime = t;
@@ -228,20 +260,27 @@ window.SkyRenderer = class SkyRenderer {
 		
 		ctx.drawImage(this.staticCanvas, 0, 0);
 		
-		this.stars.draw(ctx, t, this.elapsed);
-		this.ocean.draw(
-			ctx,
-			t,
-			this.cachedPalette,
-			this.cachedSun,
-			this.cachedMoon,
-			this.config.celestials,
-			this.elapsed
-		);
+		if (this.stars) {
+			this.stars.draw(ctx, t, this.elapsed);
+		}
+		
+		if (this.ocean) {
+			this.ocean.draw(
+				ctx,
+				t,
+				this.cachedPalette || { top: {r:0,g:0,b:0}, upper: {r:0,g:0,b:0}, lower: {r:0,g:0,b:0} },
+				this.cachedSun,
+				this.cachedMoon,
+				this.config.celestials,
+				this.elapsed
+			);
+		}
 		
 		/* Update cloud shader */
-		const dayness = this.getDayness(t);
-		this.clouds.update(this.elapsed, dayness);
+		if (this.clouds) {
+			const dayness = this.getDayness(t);
+			this.clouds.update(this.elapsed, dayness);
+		}
 	}
 	
 	render(ts) {
