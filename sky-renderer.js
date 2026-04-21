@@ -279,6 +279,8 @@ class SkyRenderer {
 		const wholePixels = Math.floor(scrollPixels) % this.cloudCanvas.width;
 		const frac = scrollPixels - Math.floor(scrollPixels);
 		
+		console.log('scroll:', scrollPixels.toFixed(4), 'whole:', wholePixels, 'frac:', frac.toFixed(4));
+		
 		this.cloudShader.uniforms.uScrollPixels = wholePixels;
 		this.cloudShader.uniforms.uScrollFrac = frac;
 	}
