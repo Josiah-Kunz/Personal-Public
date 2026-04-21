@@ -165,7 +165,7 @@ class SkyRenderer {
 		this.renderCloudDepthMap(ctx, 0, width * 2, cloudHeight, maxOffset);
 
 		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, {
-			scaleMode: PIXI.SCALE_MODES.NEAREST,
+			scaleMode: PIXI.SCALE_MODES.LINEAR,
 			wrapMode: PIXI.WRAP_MODES.REPEAT
 		});
 		this.cloudTexture = new PIXI.Texture(baseTexture);
@@ -188,50 +188,22 @@ class SkyRenderer {
 			varying vec2 vTextureCoord;
 			uniform sampler2D uSampler;
 			uniform float uDayness;
-			uniform float uScrollPixels;
-			uniform float uScrollFrac;
+			uniform float uScroll;
 			uniform vec2 uTexSize;
 
 			void main() {
-				float texelSize = 1.0 / uTexSize.x;
-				
-				/* Base UV with whole pixel scroll */
 				vec2 uv = vTextureCoord;
-				uv.x += uScrollPixels * texelSize;
+				uv.x += uScroll / uTexSize.x;
 				
-				/* Sample current and next pixel */
-				vec4 texelCur = texture2D(uSampler, uv);
-				vec4 texelNext = texture2D(uSampler, uv + vec2(texelSize, 0.0));
+				/* LINEAR filtering interpolates the depth values smoothly */
+				vec4 texel = texture2D(uSampler, uv);
 				
-				float alpha = 0.0;
-				float depth = 0.0;
-				
-				bool curSolid = texelCur.a > 0.5;
-				bool nextSolid = texelNext.a > 0.5;
-				
-				if (curSolid && nextSolid) {
-					/* Fully inside cloud */
-					alpha = 1.0;
-					depth = texelCur.r;
-				}
-				else if (curSolid && !nextSolid) {
-					/* Trailing edge - current pixel fading out */
-					alpha = 1.0 - uScrollFrac;
-					depth = texelCur.r;
-				}
-				else if (!curSolid && nextSolid) {
-					/* Leading edge - next pixel fading in */
-					alpha = uScrollFrac;
-					depth = texelNext.r;
-				}
-				else {
-					/* Empty space */
+				if (texel.a < 0.01) {
 					discard;
 				}
 				
-				if (alpha < 0.01) {
-					discard;
-				}
+				/* Quantize depth to get crisp color bands */
+				float depth = texel.r;
 				
 				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
 				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
@@ -254,9 +226,8 @@ class SkyRenderer {
 					color = shadow;
 				}
 				
-				gl_FragColor = vec4(color, alpha);
-			}
-			`,
+				gl_FragColor = vec4(color, texel.a);
+			}`,
 			{
 				uSampler: this.cloudTexture,
 				uDayness: 1.0,
@@ -286,13 +257,7 @@ class SkyRenderer {
 		this.cloudShader.uniforms.uDayness = dayness;
 
 		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
-		const wholePixels = Math.floor(scrollPixels) % this.cloudCanvas.width;
-		const frac = scrollPixels - Math.floor(scrollPixels);
-		
-		console.log('scroll:', scrollPixels.toFixed(4), 'whole:', wholePixels, 'frac:', frac.toFixed(4));
-		
-		this.cloudShader.uniforms.uScrollPixels = wholePixels;
-		this.cloudShader.uniforms.uScrollFrac = frac;
+		this.cloudShader.uniforms.uScroll = scrollPixels;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
