@@ -196,7 +196,7 @@ window.OceanRenderer = class OceanRenderer {
 											* edge
 											* above
 											* uCelestialReflectionStrength;
-								col += sunColor * alpha;
+								col = mix(col, vec3(1.0, 0.85, 0.3), clamp(alpha * 0.5, 0.0, 0.8));
 							}
 						}
 					}
