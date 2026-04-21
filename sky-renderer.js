@@ -34,7 +34,7 @@ class SkyRenderer {
 				height: 15,
 				thickness: 2,
 				detail: 0.5,
-				driftSpeed: 5,
+				driftSpeed: 5e-2,
 				layerOffset: 31,
 				...config.clouds
 			},
@@ -186,26 +186,52 @@ class SkyRenderer {
 			`
 			precision mediump float;
 			varying vec2 vTextureCoord;
-			uniform sampler2D uSampler;
 			uniform float uDayness;
 			uniform float uScroll;
-			uniform vec2 uTexSize;
-
+			uniform float uDetail;
+			uniform float uCloudHeight;
+			uniform float uThickness;
+			uniform float uMeshHeight;
+			uniform float uLayerOffset;
+			
+			float getCloudTop(float x, float speedMult) {
+				float sx = x * speedMult;
+				float n1 = sin(sx * 0.022 + 0.5) * 8.0 * uDetail;
+				float n2 = sin(sx * 0.061 + 1.4) * 6.0 * uDetail;
+				float n3 = sin(sx * 0.18  + 1.3) * 4.0 * uDetail;
+				float n4 = sin(sx * 0.43  + 2.2) * 2.0 * uDetail;
+				float n5 = sin(sx * 0.93  + 0.4) * 1.5 * uDetail;
+				return floor(n1 + n2 + n3 + n4 + n5 + 0.5);
+			}
+			
 			void main() {
-				vec2 uv = vTextureCoord;
-				uv.x += uScroll;
+				float worldX = vTextureCoord.x * 2240.0 + uScroll;
+				float localY = vTextureCoord.y * uMeshHeight;
 				
-				vec4 texel = texture2D(uSampler, uv);
+				float maxOffset = ceil(21.5 * uDetail);
+				float baseY = maxOffset;
 				
-				if (texel.a < 0.01) discard;
+				/* Main cloud layer */
+				float top1 = baseY + getCloudTop(worldX, 1.0);
 				
-				float depth = texel.r;
+				/* Shadow layer */
+				float top2 = baseY + getCloudTop(worldX + uLayerOffset, 0.65) + 1.0;
 				
-				/* Fixed small edge width for anti-aliased thresholds */
-				float edgeWidth = 0.015;
+				/* Are we inside the cloud? */
+				if (localY < top1) {
+					discard;
+				}
 				
-				float t1 = smoothstep(0.18 - edgeWidth, 0.18 + edgeWidth, depth);
-				float t2 = smoothstep(0.6  - edgeWidth, 0.6  + edgeWidth, depth);
+				/* Depth for main layer */
+				float d = (localY - top1) / max(1.0, uMeshHeight - top1);
+				
+				/* Check if shadow layer applies */
+				bool inShadow = localY >= top2 && localY < (uMeshHeight - uThickness);
+				float shadowD = 0.0;
+				if (inShadow) {
+					shadowD = (localY - top2) / max(1.0, uMeshHeight - uThickness - top2);
+					d = d + (1.0 - shadowD) * 0.15;
+				}
 				
 				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
 				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
@@ -219,16 +245,26 @@ class SkyRenderer {
 				vec3 mid    = mix(nightMid,    dayMid,    uDayness);
 				vec3 shadow = mix(nightShadow, dayShadow, uDayness);
 				
-				vec3 color = light;
-				color = mix(color, mid, t1);
-				color = mix(color, shadow, t2);
+				vec3 color;
+				if (d < 0.18) {
+					color = light;
+				} else if (d < 0.6) {
+					color = mid;
+				} else {
+					color = shadow;
+				}
 				
-				gl_FragColor = vec4(color, texel.a);
-			}`,
+				gl_FragColor = vec4(color, 1.0);
+			}
+			`,
 			{
-				uSampler: this.cloudTexture,
 				uDayness: 1.0,
-				uTexSize: [this.cloudCanvas.width, this.cloudCanvas.height]
+				uScroll: 0.0,
+				uDetail: this.config.clouds.detail,
+				uCloudHeight: this.config.clouds.height,
+				uThickness: this.config.clouds.thickness,
+				uMeshHeight: cloudHeight,
+				uLayerOffset: this.config.clouds.layerOffset
 			}
 		);
 
@@ -251,10 +287,9 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 		this.cloudShader.uniforms.uDayness = dayness;
 
-		// Direct UV offset - driftSpeed controls how fast we traverse the texture
-		const scrollUV = this.elapsed * this.config.clouds.driftSpeed * 0.001;
-		
-		this.cloudShader.uniforms.uScroll = scrollUV;
+		// Scroll in world pixels
+		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		this.cloudShader.uniforms.uScroll = scrollPixels;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
