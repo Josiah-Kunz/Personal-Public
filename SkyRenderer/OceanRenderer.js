@@ -170,8 +170,8 @@ window.OceanRenderer = class OceanRenderer {
 						float segmentStep = uTrailSegmentHeight + uTrailGap;
 						
 						// Check if this y is on a segment
-						float segmentPhase = mod(y - startY, segmentStep);
-						if (y >= startY && y <= endY && segmentPhase < uTrailSegmentHeight) {
+						if (y >= startY && y <= endY) {
+    						float segmentFade = 1.0 - mod(y - startY, 2.0) * 0.15;  // subtle fade every 2px
 							float ty = (y - startY) / max(1.0, endY - startY);
 							float taperAmount = pow(ty, uTrailTaper);
 							float halfWidth = max(1.0, floor(
@@ -191,6 +191,7 @@ window.OceanRenderer = class OceanRenderer {
 								float edge = 1.0 - nx;
 								
 								float alpha = uSunReflectionAlpha * uDetail
+											* segmentFade
 											* (1.0 - ty)
 											* edge
 											* above
@@ -210,8 +211,8 @@ window.OceanRenderer = class OceanRenderer {
 						float endY = min(oceanHeight - 1.0, uReflectionLengthMoon);
 						float segmentStep = uTrailSegmentHeight + uTrailGap;
 						
-						float segmentPhase = mod(y - startY, segmentStep);
-						if (y >= startY && y <= endY && segmentPhase < uTrailSegmentHeight) {
+						if (y >= startY && y <= endY) {
+    						float segmentFade = 1.0 - mod(y - startY, 2.0) * 0.15;  // subtle fade every 2px
 							float ty = (y - startY) / max(1.0, endY - startY);
 							float taperAmount = pow(ty, uTrailTaper);
 							float halfWidth = max(1.0, floor(
@@ -230,6 +231,7 @@ window.OceanRenderer = class OceanRenderer {
 								float edge = 1.0 - nx;
 								
 								float alpha = uMoonReflectionAlpha * uDetail
+											* segmentFade
 											* (1.0 - ty)
 											* edge
 											* above
