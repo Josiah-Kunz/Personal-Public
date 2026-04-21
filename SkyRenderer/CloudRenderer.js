@@ -87,6 +87,7 @@ window.CloudRenderer = class CloudRenderer {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
 					color = shadow;
+					color = vec3(1.0, 0.0, 0.0);  // RED for debug
 					alpha = (1.0 - d) * uBackAlpha;
 				}
 				
