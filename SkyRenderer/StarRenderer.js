@@ -4,16 +4,19 @@ window.StarRenderer = class StarRenderer {
 		this.resolution = resolution;
 		this.horizonY = horizonY;
 		
-		this.stars = [];
-		this.sprites = new Map();
+		this.stars = null;  // Typed array for better cache locality
+		this.starCount = 0;
+		this.sprites = [];  // Array instead of Map (faster lookup by index)
+		this.spriteOffsets = [];
 		
 		this.buildSprites();
 		this.buildStars();
 	}
 	
 	buildSprites() {
-		this.sprites.clear();
 		const cfg = this.config;
+		this.sprites = [];
+		this.spriteOffsets = [];
 		
 		for (let r = cfg.minSize; r <= cfg.maxSize; r++) {
 			const size = r * 2 + 3;
@@ -21,66 +24,97 @@ window.StarRenderer = class StarRenderer {
 			canvas.width = size;
 			canvas.height = size;
 			const ctx = canvas.getContext("2d", { alpha: true });
-			ctx.imageSmoothingEnabled = false;
-			fillCircle(ctx, Math.floor(size / 2), Math.floor(size / 2), r, "#ffffff");
-			this.sprites.set(r, canvas);
+			fillCircle((size / 2) | 0, (size / 2) | 0, r, "#ffffff", ctx);
+			
+			this.sprites[r] = canvas;
+			this.spriteOffsets[r] = (size / 2) | 0;
 		}
 	}
 	
 	buildStars() {
-		this.stars = [];
 		const cfg = this.config;
+		const count = cfg.amount;
+		this.starCount = count;
 		
-		for (let i = 0; i < cfg.amount; i++) {
-			this.stars.push({
-				x: Math.floor(rand(0, this.resolution.width)),
-				y: Math.floor(rand(8, this.horizonY - 26)),
-				r: Math.random() > 0.85 ? cfg.maxSize : cfg.minSize,
-				base: rand(0.45, 1),
-				speed: rand(0.3, 0.9),
-				offset: rand(0, Math.PI * 2)
-			});
+		// Flat array: [x, y, r, base, speed, offset, x, y, r, ...]
+		// 6 values per star
+		this.stars = new Float32Array(count * 6);
+		
+		const width = this.resolution.width;
+		const maxY = this.horizonY - 26;
+		
+		for (let i = 0; i < count; i++) {
+			const idx = i * 6;
+			this.stars[idx]     = (Math.random() * width) | 0;           // x
+			this.stars[idx + 1] = (8 + Math.random() * (maxY - 8)) | 0;  // y
+			this.stars[idx + 2] = Math.random() > 0.85 ? cfg.maxSize : cfg.minSize; // r
+			this.stars[idx + 3] = 0.45 + Math.random() * 0.55;           // base
+			this.stars[idx + 4] = 0.3 + Math.random() * 0.6;             // speed
+			this.stars[idx + 5] = Math.random() * Math.PI * 2;           // offset
 		}
 	}
 	
-	getNightFactor(t) {
-		const cfg = this.config;
-		const nightA = 1 - this.smoothstep(cfg.fadeOutStart, cfg.fadeOutEnd, t);
-		const nightB = this.smoothstep(cfg.fadeInStart, cfg.fadeInEnd, t);
-		return Math.max(nightA, nightB);
-	}
-	
-	smoothstep(a, b, x) {
-		const t = clamp((x - a) / (b - a), 0, 1);
-		return t * t * (3 - 2 * t);
-	}
-	
 	draw(ctx, t, elapsed) {
-		const night = this.getNightFactor(t);
+		// Early exit
+		const cfg = this.config;
+		const fadeOut = cfg.fadeOutStart;
+		const fadeOutEnd = cfg.fadeOutEnd;
+		const fadeIn = cfg.fadeInStart;
+		const fadeInEnd = cfg.fadeInEnd;
+		
+		// Inline night factor calculation
+		let nightA = 0, nightB = 0;
+		
+		if (t < fadeOutEnd) {
+			const k = t <= fadeOut ? 0 : (t - fadeOut) / (fadeOutEnd - fadeOut);
+			nightA = 1 - k * k * (3 - 2 * k);
+		}
+		if (t > fadeIn) {
+			const k = t >= fadeInEnd ? 1 : (t - fadeIn) / (fadeInEnd - fadeIn);
+			nightB = k * k * (3 - 2 * k);
+		}
+		
+		const night = nightA > nightB ? nightA : nightB;
 		if (night <= 0.01) return;
 		
-		const cfg = this.config;
+		// Pre-calculate twinkle constants
+		const twinkleBase = 1 - cfg.twinkleAmount;
+		const twinkleRange = cfg.twinkleAmount * 0.24;
+		const twinkleOffset = cfg.twinkleAmount * 0.76;
+		const timeScale = elapsed * 0.001;
 		
-		for (const star of this.stars) {
-			const twinkle = 1 - cfg.twinkleAmount + cfg.twinkleAmount *
-				(0.76 + 0.24 * Math.sin(elapsed * 0.001 * star.speed + star.offset));
+		const stars = this.stars;
+		const count = this.starCount;
+		const sprites = this.sprites;
+		const offsets = this.spriteOffsets;
+		
+		for (let i = 0; i < count; i++) {
+			const idx = i * 6;
+			const x = stars[idx];
+			const y = stars[idx + 1];
+			const r = stars[idx + 2];
+			const base = stars[idx + 3];
+			const speed = stars[idx + 4];
+			const phase = stars[idx + 5];
 			
-			const alpha = clamp(star.base * twinkle * night, 0, 1);
-			const sprite = this.sprites.get(star.r);
+			const twinkle = twinkleBase + twinkleOffset + twinkleRange * Math.sin(timeScale * speed + phase);
+			const alpha = base * twinkle * night;
 			
-			ctx.globalAlpha = alpha;
-			ctx.drawImage(
-				sprite,
-				star.x - Math.floor(sprite.width / 2),
-				star.y - Math.floor(sprite.height / 2)
-			);
+			// Skip nearly invisible stars
+			if (alpha < 0.02) continue;
+			
+			const sprite = sprites[r];
+			const offset = offsets[r];
+			
+			ctx.globalAlpha = alpha > 1 ? 1 : alpha;
+			ctx.drawImage(sprite, x - offset, y - offset);
 		}
 		
 		ctx.globalAlpha = 1;
 	}
 	
 	destroy() {
-		this.sprites.clear();
-		this.stars = [];
+		this.sprites = [];
+		this.stars = null;
 	}
 }
