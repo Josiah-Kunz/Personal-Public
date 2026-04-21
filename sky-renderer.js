@@ -193,18 +193,35 @@ class SkyRenderer {
 			uniform vec2 uTexSize;
 
 			void main() {
+				/* Sample current pixel and neighbor */
 				vec2 uv = vTextureCoord;
 				uv.x += uScrollPixels / uTexSize.x;
 				
-				vec4 texelA = texture2D(uSampler, uv);
-				vec4 texelB = texture2D(uSampler, uv + vec2(1.0 / uTexSize.x, 0.0));
-				vec4 texel = mix(texelA, texelB, uScrollFrac);
+				vec4 texelCur = texture2D(uSampler, uv);
+				vec4 texelPrev = texture2D(uSampler, uv - vec2(1.0 / uTexSize.x, 0.0));
 				
-				if (texel.a < 0.01) {
-					discard;
+				/* Edge detection: if neighbor is transparent but we're not, we're a leading edge */
+				/* If we're transparent but neighbor isn't, we're a trailing edge */
+				float curAlpha = texelCur.a;
+				float prevAlpha = texelPrev.a;
+				
+				float alpha = curAlpha;
+				float depth = texelCur.r;
+				
+				/* Leading edge: fade in based on scroll frac */
+				if (curAlpha > 0.5 && prevAlpha < 0.5) {
+					alpha = uScrollFrac;
+					depth = texelCur.r;
+				}
+				/* Trailing edge: fade out based on scroll frac */
+				else if (curAlpha < 0.5 && prevAlpha > 0.5) {
+					alpha = 1.0 - uScrollFrac;
+					depth = texelPrev.r;
 				}
 				
-				float depth = texel.r;
+				if (alpha < 0.01) {
+					discard;
+				}
 				
 				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
 				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
@@ -227,7 +244,7 @@ class SkyRenderer {
 					color = shadow;
 				}
 				
-				gl_FragColor = vec4(color, texel.a);
+				gl_FragColor = vec4(color, alpha);
 			}
 			`,
 			{
