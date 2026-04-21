@@ -186,7 +186,8 @@ window.SkyRenderer = class SkyRenderer {
 				this.config.water,
 				this.config.stars,
 				this.config.resolution,
-				this.horizonY()
+				this.horizonY(),
+				this.container
 			);
 		}
 		
@@ -265,15 +266,7 @@ window.SkyRenderer = class SkyRenderer {
 		}
 		
 		if (this.ocean) {
-			this.ocean.draw(
-				ctx,
-				t,
-				this.cachedPalette || { top: {r:0,g:0,b:0}, upper: {r:0,g:0,b:0}, lower: {r:0,g:0,b:0} },
-				this.cachedSun,
-				this.cachedMoon,
-				this.config.celestials,
-				this.elapsed
-			);
+			this.ocean.draw(ctx, t, this.cachedPalette, this.cachedSun, this.cachedMoon, this.config.celestials, this.elapsed);
 		}
 		
 		/* Update cloud shader */
