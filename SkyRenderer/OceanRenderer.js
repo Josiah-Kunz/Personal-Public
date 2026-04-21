@@ -5,17 +5,17 @@ window.OceanRenderer = class OceanRenderer {
 		this.resolution = resolution;
 		this.horizonY = horizonY;
 		this.container = container;
-		
+
 		this.mesh = null;
 		this.shader = null;
-		
+
 		this.buildShader();
 	}
-	
+
 	buildShader() {
 		const oceanHeight = this.resolution.height - this.horizonY;
 		const width = this.resolution.width;
-		
+
 		const geometry = new PIXI.Geometry()
 			.addAttribute('aVertexPosition', [
 				0, 0,
@@ -30,16 +30,16 @@ window.OceanRenderer = class OceanRenderer {
 				0, 1
 			], 2)
 			.addIndex([0, 1, 2, 0, 2, 3]);
-		
+
 		const vertexShader = `
 			precision mediump float;
 			attribute vec2 aVertexPosition;
 			attribute vec2 aTextureCoord;
 			uniform mat3 projectionMatrix;
+			uniform vec2 uResolution;
+			
 			varying vec2 vUv;
 			varying vec2 vPixelCoord;
-			
-			uniform vec2 uResolution;
 			
 			void main() {
 				vUv = aTextureCoord;
@@ -47,185 +47,246 @@ window.OceanRenderer = class OceanRenderer {
 				gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
 			}
 		`;
-		
+
 		const fragmentShader = `
 			precision mediump float;
 			
 			varying vec2 vUv;
 			varying vec2 vPixelCoord;
 			
+			uniform vec2 uResolution;
 			uniform float uTime;
-			uniform float uDayness;
 			uniform float uNight;
 			uniform vec3 uSkyLower;
 			uniform vec3 uSkyUpper;
 			uniform float uSunX;
+			uniform float uSunY;
 			uniform float uSunVisible;
 			uniform float uMoonX;
+			uniform float uMoonY;
 			uniform float uMoonVisible;
 			uniform float uAmbientStrength;
 			uniform float uDetail;
-			uniform vec2 uResolution;
 			uniform float uDawnTint;
 			uniform float uDuskTint;
+			uniform float uHorizonY;
+			
+			// Config uniforms
+			uniform float uShimmerDepth;
+			uniform float uReflectionLengthSun;
+			uniform float uReflectionLengthMoon;
+			uniform float uTrailWidthSun;
+			uniform float uTrailWidthMoon;
+			uniform float uTrailWidthFarSun;
+			uniform float uTrailWidthFarMoon;
+			uniform float uTrailWobble;
+			uniform float uTrailSegmentHeight;
+			uniform float uTrailGap;
+			uniform float uTrailTaper;
+			uniform float uTrailBreakup;
+			uniform float uSunReflectionAlpha;
+			uniform float uMoonReflectionAlpha;
+			uniform float uCelestialReflectionStrength;
+			uniform float uSunRadius;
+			uniform float uMoonRadius;
 			
 			// Water colors (RGB 0-1)
-			const vec3 dayTop = vec3(0.298, 0.788, 0.847);
-			const vec3 dayMid = vec3(0.184, 0.624, 0.745);
-			const vec3 dayBot = vec3(0.122, 0.435, 0.580);
-			const vec3 nightTop = vec3(0.086, 0.192, 0.294);
-			const vec3 nightMid = vec3(0.063, 0.145, 0.243);
-			const vec3 nightBot = vec3(0.043, 0.098, 0.188);
+			const vec3 nightTop = vec3(0.086, 0.192, 0.294);    // #16314b
+			const vec3 nightMid = vec3(0.063, 0.145, 0.243);    // #10253f
+			const vec3 nightBot = vec3(0.043, 0.098, 0.188);    // #0b1930
+			const vec3 dayTop = vec3(0.298, 0.788, 0.847);      // #4cc9d8
+			const vec3 dayMid = vec3(0.184, 0.624, 0.745);      // #2f9fbe
+			const vec3 dayBot = vec3(0.122, 0.435, 0.580);      // #1f6f94
 			
-			const vec3 sunColor = vec3(1.0, 0.886, 0.431);
+			const vec3 sunColor = vec3(1.0, 0.886, 0.431);      // rgb(255, 226, 110)
 			const vec3 moonColor = vec3(1.0, 1.0, 1.0);
 			
-			// Hash for pseudo-random pixel noise
-			float hash(vec2 p) {
-				return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-			}
-			
 			void main() {
-				// Quantize to pixel grid for pixel-art look
 				vec2 pixel = floor(vPixelCoord);
-				float depth = pixel.y / uResolution.y;
-				float depthQuantized = floor(depth * 100.0) / 100.0;
+				float y = pixel.y;
+				float x = pixel.x;
 				
-				// === BASE GRADIENT (3-band system) ===
+				float oceanHeight = uResolution.y;
+				float depthT = y / max(1.0, oceanHeight - 1.0);
+				
+				// === BASE GRADIENT ===
 				float day = 1.0 - uNight;
 				
 				float topK = day * 0.85 + uDawnTint * 0.15 + uDuskTint * 0.10;
 				float midK = day * 0.8 + uDawnTint * 0.12 + uDuskTint * 0.08;
 				float botK = day * 0.75;
 				
-				vec3 waterTop = mix(nightTop, dayTop, topK);
-				vec3 waterMid = mix(nightMid, dayMid, midK);
-				vec3 waterBot = mix(nightBot, dayBot, botK);
+				vec3 baseTop = mix(nightTop, dayTop, topK);
+				vec3 baseMid = mix(nightMid, dayMid, midK);
+				vec3 baseBot = mix(nightBot, dayBot, botK);
 				
-				// Sky reflection into water
-				waterTop = mix(waterTop, uSkyLower, uAmbientStrength * 0.45);
-				waterMid = mix(waterMid, uSkyUpper, uAmbientStrength * 0.22);
+				// Mix with sky reflection
+				vec3 waterTop = mix(baseTop, uSkyLower, uAmbientStrength * 0.45);
+				vec3 waterMid = mix(baseMid, uSkyUpper, uAmbientStrength * 0.22);
+				vec3 waterBot = baseBot;
 				
-				// Depth gradient with hard band transition
 				vec3 col;
-				if (depthQuantized < 0.28) {
-					col = mix(waterTop, waterMid, depthQuantized / 0.28);
+				if (depthT < 0.28) {
+					col = mix(waterTop, waterMid, depthT / 0.28);
 				} else {
-					col = mix(waterMid, waterBot, (depthQuantized - 0.28) / 0.72);
+					col = mix(waterMid, waterBot, (depthT - 0.28) / 0.72);
 				}
 				
-				// === AMBIENT REFLECTION (near surface glow) ===
-				float ambientDepth = 16.0 * 1.4 / uResolution.y;
-				if (depth < ambientDepth) {
-					float ambientFade = 1.0 - depth / ambientDepth;
+				// === AMBIENT WATER REFLECTION ===
+				float ambientDepth = max(16.0, uShimmerDepth * 1.4);
+				if (y < ambientDepth) {
+					float t = y / ambientDepth;
+					float fade = 1.0 - t;
+					
 					vec3 topReflect = mix(uSkyLower, vec3(1.0), 0.06);
 					vec3 midReflect = mix(uSkyUpper, uSkyLower, 0.25);
-					vec3 ambientCol = depth < ambientDepth * 0.35 
-						? mix(topReflect, midReflect, depth / (ambientDepth * 0.35))
+					vec3 lineColor = t < 0.35 
+						? mix(topReflect, midReflect, t / 0.35)
 						: midReflect;
-					col = mix(col, ambientCol, 0.10 * ambientFade);
 					
-					// Sparse wave highlights
-					float wave = sin(pixel.x * 0.11 + pixel.y * 1.35 + uTime * 0.9) * 0.5
-					           + sin(pixel.x * 0.035 + uTime * 0.5 + 1.3) * 0.3 + 0.5;
-					float sparseMask = step(0.88, wave);
-					float pixelSparse = step(0.75, fract(pixel.x / 4.0));  // every 4th pixel
-					col += vec3(1.0) * 0.028 * ambientFade * sparseMask * pixelSparse;
+					col = mix(col, lineColor, 0.10 * fade);
+					
+					// Wave highlights - every 4 pixels, width 2
+					float pixelMod4 = mod(x, 4.0);
+					if (pixelMod4 < 2.0) {
+						float wave = sin(x * 0.11 + y * 1.35 + uTime * 0.9) * 0.5
+						           + sin(x * 0.035 + uTime * 0.5 + 1.3) * 0.3
+						           + 0.5;
+						if (wave > 0.88) {
+							col += vec3(1.0) * 0.028 * fade;
+						}
+					}
 				}
 				
 				// === SUN REFLECTION ===
-				if (uSunVisible > 0.01) {
-					float sunNormX = uSunX / uResolution.x;
+				if (uSunVisible > 0.0) {
+					float above = clamp((uHorizonY - uSunY + uSunRadius) / 180.0, 0.0, 1.0);
 					
-					// Wobble per scanline
-					float wobble = sin(pixel.y * 0.18 + uTime * 1.2) * 8.0
-					             + sin(pixel.y * 0.05 + 1.7) * 4.0;
-					float centerX = uSunX + wobble;
-					
-					// Width tapers with depth
-					float trailLength = 140.0 / uResolution.y;
-					float ty = min(depth / trailLength, 1.0);
-					float halfWidth = mix(12.0, 3.0, pow(ty, 0.7)) * uSunVisible;
-					
-					float dx = abs(pixel.x - centerX);
-					
-					if (dx < halfWidth && depth < trailLength) {
-						float edge = 1.0 - dx / halfWidth;
+					if (above > 0.0) {
+						float startY = 1.0;
+						float endY = min(oceanHeight - 1.0, uReflectionLengthSun);
+						float segmentStep = uTrailSegmentHeight + uTrailGap;
 						
-						// Breakup noise
-						float breakup = sin(pixel.x * 0.18 + pixel.y * 0.11 + uTime * 0.8) * 0.5
-						              + sin(pixel.x * 0.11 + pixel.y * 0.035 + 2.1) * 0.35 + 0.5;
-						float breakThreshold = 0.35 + edge * 0.28;
-						
-						// Segment gaps (every few pixels vertically)
-						float segmentMask = step(0.3, fract(pixel.y / 5.0));
-						
-						if (breakup > (1.0 - breakThreshold) && segmentMask > 0.5) {
-							float alpha = 0.5 * (1.0 - ty) * edge * uSunVisible;
-							col += sunColor * alpha;
+						// Check if this y is on a segment
+						float segmentPhase = mod(y - startY, segmentStep);
+						if (y >= startY && y <= endY && segmentPhase < uTrailSegmentHeight) {
+							float ty = (y - startY) / max(1.0, endY - startY);
+							float taperAmount = pow(ty, uTrailTaper);
+							float halfWidth = max(1.0, floor(
+								mix(uTrailWidthSun, uTrailWidthFarSun, taperAmount) * above + 0.5
+							));
+							
+							float wobble = sin(y * 0.18 + uTime * 1.2) * uTrailWobble
+							             + sin(y * 0.05 + 1.7) * uTrailWobble * 0.5;
+							float centerX = floor(uSunX + wobble + 0.5);
+							
+							// Every 2 pixels horizontally
+							float xAligned = floor(x / 2.0) * 2.0;
+							float dx = abs(xAligned - centerX);
+							
+							if (dx <= halfWidth) {
+								float nx = dx / max(1.0, halfWidth);
+								float edge = 1.0 - nx;
+								
+								float breakup = sin(xAligned * 0.18 + y * 0.11 + uTime * 0.8) * 0.5
+								              + sin(xAligned * 0.11 + y * 0.035 + 2.1) * 0.35
+								              + 0.5;
+								
+								float breakThreshold = 1.0 - uTrailBreakup - edge * 0.28;
+								
+								if (breakup > breakThreshold) {
+									float alpha = uSunReflectionAlpha * uDetail
+									            * (1.0 - ty)
+									            * edge
+									            * above
+									            * uCelestialReflectionStrength;
+									col += sunColor * alpha;
+								}
+							}
 						}
 					}
 				}
 				
 				// === MOON REFLECTION ===
-				if (uMoonVisible > 0.01) {
-					float wobble = sin(pixel.y * 0.15 + uTime * 1.0) * 6.0
-					             + sin(pixel.y * 0.04 + 1.5) * 3.0;
-					float centerX = uMoonX + wobble;
+				if (uMoonVisible > 0.0) {
+					float above = clamp((uHorizonY - uMoonY + uMoonRadius) / 160.0, 0.0, 1.0);
 					
-					float trailLength = 120.0 / uResolution.y;
-					float ty = min(depth / trailLength, 1.0);
-					float halfWidth = mix(8.0, 2.0, pow(ty, 0.7)) * uMoonVisible;
-					
-					float dx = abs(pixel.x - centerX);
-					
-					if (dx < halfWidth && depth < trailLength) {
-						float edge = 1.0 - dx / halfWidth;
+					if (above > 0.0) {
+						float startY = 1.0;
+						float endY = min(oceanHeight - 1.0, uReflectionLengthMoon);
+						float segmentStep = uTrailSegmentHeight + uTrailGap;
 						
-						float breakup = sin(pixel.x * 0.16 + pixel.y * 0.09 + uTime * 0.6) * 0.5
-						              + sin(pixel.x * 0.09 + pixel.y * 0.03 + 1.8) * 0.35 + 0.5;
-						float breakThreshold = 0.38 + edge * 0.25;
-						
-						float segmentMask = step(0.35, fract(pixel.y / 4.0));
-						
-						if (breakup > (1.0 - breakThreshold) && segmentMask > 0.5) {
-							float alpha = 0.3 * (1.0 - ty) * edge * uMoonVisible;
-							col += moonColor * alpha;
+						float segmentPhase = mod(y - startY, segmentStep);
+						if (y >= startY && y <= endY && segmentPhase < uTrailSegmentHeight) {
+							float ty = (y - startY) / max(1.0, endY - startY);
+							float taperAmount = pow(ty, uTrailTaper);
+							float halfWidth = max(1.0, floor(
+								mix(uTrailWidthMoon, uTrailWidthFarMoon, taperAmount) * above + 0.5
+							));
+							
+							float wobble = sin(y * 0.18 + uTime * 1.2) * uTrailWobble
+							             + sin(y * 0.05 + 1.7) * uTrailWobble * 0.5;
+							float centerX = floor(uMoonX + wobble + 0.5);
+							
+							float xAligned = floor(x / 2.0) * 2.0;
+							float dx = abs(xAligned - centerX);
+							
+							if (dx <= halfWidth) {
+								float nx = dx / max(1.0, halfWidth);
+								float edge = 1.0 - nx;
+								
+								float breakup = sin(xAligned * 0.16 + y * 0.09 + uTime * 0.6) * 0.5
+								              + sin(xAligned * 0.09 + y * 0.03 + 1.8) * 0.35
+								              + 0.5;
+								
+								float breakThreshold = 1.0 - uTrailBreakup - edge * 0.28;
+								
+								if (breakup > breakThreshold) {
+									float alpha = uMoonReflectionAlpha * uDetail
+									            * (1.0 - ty)
+									            * edge
+									            * above
+									            * uCelestialReflectionStrength;
+									col += moonColor * alpha;
+								}
+							}
 						}
 					}
 				}
 				
-				// === SHIMMER (sparse pixel sparkles) ===
-				float shimmerDepth = 45.0 * uDetail / uResolution.y;
-				if (depth < shimmerDepth) {
-					float shimmerFade = 1.0 - depth / shimmerDepth;
-					float wave = sin(pixel.x * 0.17 + pixel.y * 1.5 + uTime * 1.2 * uDetail) * 0.5 + 0.5;
-					float threshold = 0.94 - uDetail * 0.12;
+				// === WATER SHIMMER ===
+				float shimmerDepthPx = floor(uShimmerDepth * uDetail + 0.5);
+				if (y >= 2.0 && y < shimmerDepthPx) {
+					float fade = 1.0 - (y - 2.0) / max(1.0, shimmerDepthPx - 2.0);
 					
-					// Sparse: every 3rd pixel
-					float sparse = step(0.6, fract(pixel.x / 3.0));
-					
-					if (wave > threshold && sparse > 0.5) {
-						col += vec3(1.0) * 0.03 * shimmerFade;
+					// Every 3 pixels, width 2
+					float pixelMod3 = mod(x, 3.0);
+					if (pixelMod3 < 2.0) {
+						float wave = sin(x * 0.17 + y * 1.5 + uTime * 1.2 * uDetail) * 0.5 + 0.5;
+						float threshold = 0.94 - uDetail * 0.12;
+						
+						if (wave > threshold) {
+							col += vec3(1.0) * 0.03 * fade;
+						}
 					}
 				}
 				
 				// === SURFACE LINES ===
-				float lineMaxDepth = 28.0 * uDetail / uResolution.y;
-				float lineStartDepth = 5.0 / uResolution.y;
-				if (depth > lineStartDepth && depth < lineMaxDepth) {
+				float lineMaxY = floor(28.0 * uDetail + 0.5);
+				if (y >= 5.0 && y < lineMaxY) {
 					// Every 3rd scanline
-					float lineMask = step(0.6, fract(pixel.y / 3.0));
-					
-					if (lineMask > 0.5) {
-						float lineFade = 1.0 - (depth - lineStartDepth) / (lineMaxDepth - lineStartDepth);
-						float n = sin(pixel.x * 0.1 + pixel.y * 1.2 + uTime * 0.9 * uDetail) * 0.5 + 0.5;
+					float yMod3 = mod(y - 5.0, 3.0);
+					if (yMod3 < 1.0) {
+						float fade = 1.0 - y / max(1.0, lineMaxY);
 						
-						// Sparse: every 4th pixel
-						float sparse = step(0.7, fract(pixel.x / 4.0));
-						
-						if (n > 0.82 && sparse > 0.5) {
-							col += vec3(1.0) * 0.022 * lineFade;
+						// Every 4 pixels, width 2
+						float pixelMod4 = mod(x, 4.0);
+						if (pixelMod4 < 2.0) {
+							float n = sin(x * 0.1 + y * 1.2 + uTime * 0.9 * uDetail) * 0.5 + 0.5;
+							
+							if (n > 0.82) {
+								col += vec3(1.0) * 0.022 * fade;
+							}
 						}
 					}
 				}
@@ -233,39 +294,61 @@ window.OceanRenderer = class OceanRenderer {
 				gl_FragColor = vec4(col, 1.0);
 			}
 		`;
-		
+
+		const cfg = this.config;
+
 		const uniforms = {
+			uResolution: [width, oceanHeight],
 			uTime: 0,
-			uDayness: 0.5,
 			uNight: 0.0,
 			uSkyLower: [0.5, 0.5, 0.6],
 			uSkyUpper: [0.4, 0.4, 0.5],
-			uSunX: this.resolution.width * 0.5,
+			uSunX: width * 0.5,
+			uSunY: 0,
 			uSunVisible: 0.0,
-			uMoonX: this.resolution.width * 0.5,
+			uMoonX: width * 0.5,
+			uMoonY: 0,
 			uMoonVisible: 0.0,
-			uAmbientStrength: this.config.ambientReflectionStrength,
-			uDetail: this.config.detail,
-			uResolution: [this.resolution.width, this.resolution.height - this.horizonY],
+			uAmbientStrength: cfg.ambientReflectionStrength,
+			uDetail: cfg.detail,
 			uDawnTint: 0.0,
-			uDuskTint: 0.0
+			uDuskTint: 0.0,
+			uHorizonY: this.horizonY,
+
+			// Water config
+			uShimmerDepth: cfg.shimmerDepth,
+			uReflectionLengthSun: cfg.reflectionLengthSun,
+			uReflectionLengthMoon: cfg.reflectionLengthMoon,
+			uTrailWidthSun: cfg.trailWidthSun,
+			uTrailWidthMoon: cfg.trailWidthMoon,
+			uTrailWidthFarSun: cfg.trailWidthFarSun,
+			uTrailWidthFarMoon: cfg.trailWidthFarMoon,
+			uTrailWobble: cfg.trailWobble,
+			uTrailSegmentHeight: cfg.trailSegmentHeight,
+			uTrailGap: cfg.trailGap,
+			uTrailTaper: cfg.trailTaper,
+			uTrailBreakup: cfg.trailBreakup,
+			uSunReflectionAlpha: cfg.sunReflectionAlpha,
+			uMoonReflectionAlpha: cfg.moonReflectionAlpha,
+			uCelestialReflectionStrength: cfg.celestialReflectionStrength,
+			uSunRadius: 16,
+			uMoonRadius: 14
 		};
-		
+
 		this.shader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
 		this.mesh = new PIXI.Mesh(geometry, this.shader);
 		this.mesh.position.set(0, this.horizonY);
-		
+
 		this.container.addChild(this.mesh);
 	}
-	
-	update(t, elapsed, skyPalette, sun, moon) {
+
+	update(t, elapsed, skyPalette, sun, moon, celestialConfig) {
 		const u = this.shader.uniforms;
-		const width = this.resolution.width;
 		const horizonY = this.horizonY;
-		
+
 		u.uTime = elapsed * 0.001;
-		
-		// Night factor (matches CPU logic)
+
+		// Night factor
 		const cfg = this.starsConfig;
 		let nightA = 0, nightB = 0;
 		if (t < cfg.fadeOutEnd) {
@@ -277,7 +360,7 @@ window.OceanRenderer = class OceanRenderer {
 			nightB = k * k * (3 - 2 * k);
 		}
 		u.uNight = Math.max(nightA, nightB);
-		
+
 		// Dawn/dusk tints
 		let dawnTint = 0, duskTint = 0;
 		if (t > 0.18 && t < 0.55) {
@@ -292,32 +375,40 @@ window.OceanRenderer = class OceanRenderer {
 		}
 		u.uDawnTint = dawnTint;
 		u.uDuskTint = duskTint;
-		
+
 		// Sky colors
 		u.uSkyLower = [skyPalette.lower.r / 255, skyPalette.lower.g / 255, skyPalette.lower.b / 255];
 		u.uSkyUpper = [skyPalette.upper.r / 255, skyPalette.upper.g / 255, skyPalette.upper.b / 255];
-		
+
 		// Sun
-		if (sun && sun.y < horizonY + 90) {
+		if (sun) {
 			u.uSunX = sun.x;
-			u.uSunVisible = Math.min(1, Math.max(0, (horizonY - sun.y + 90) / 180));
+			u.uSunY = sun.y;
+			u.uSunVisible = sun.y < horizonY + 90 ? 1.0 : 0.0;
 		} else {
 			u.uSunVisible = 0;
 		}
-		
+
 		// Moon
-		if (moon && moon.y < horizonY + 80) {
+		if (moon) {
 			u.uMoonX = moon.x;
-			u.uMoonVisible = Math.min(1, Math.max(0, (horizonY - moon.y + 80) / 160));
+			u.uMoonY = moon.y;
+			u.uMoonVisible = moon.y < horizonY + 80 ? 1.0 : 0.0;
 		} else {
 			u.uMoonVisible = 0;
 		}
+
+		// Celestial config
+		if (celestialConfig) {
+			u.uSunRadius = celestialConfig.sunRadius;
+			u.uMoonRadius = celestialConfig.moonRadius;
+		}
 	}
-	
+
 	draw(ctx, t, skyPalette, sun, moon, celestialConfig, elapsed) {
-		this.update(t, elapsed, skyPalette, sun, moon);
+		this.update(t, elapsed, skyPalette, sun, moon, celestialConfig);
 	}
-	
+
 	destroy() {
 		if (this.mesh) {
 			this.container.removeChild(this.mesh);
