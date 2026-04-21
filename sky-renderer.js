@@ -1,6 +1,6 @@
 const skyURLs = [
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/refs/heads/main/SkyRenderer/utils.js",
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/7c4585dac64fa7c6dfbe2b1c2f8ba8e0e307b256/SkyRenderer/CloudRenderer.js",
+	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/414b2f4bd5e50478876a6c7c71e9a46a190636fc/SkyRenderer/CloudRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/07ff4baf9f4a57674e8a61fba33e7c606c2b3ba1/SkyRenderer/SkyGradient.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/bdbbe10deaccee7794602b98c79525a939f3dc65/SkyRenderer/CelestialRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/b1b17c5b59cd8b17544f0c6a46650760b37c8c86/SkyRenderer/StarRenderer.js",
