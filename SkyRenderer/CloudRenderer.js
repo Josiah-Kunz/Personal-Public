@@ -42,7 +42,8 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uWorldWidth;
 			uniform float uBackSpeed;
 			uniform float uBackVerticalOffset;
-			uniform float uBackAlpha;
+			uniform float uBackAlphaDay;
+			uniform float uBackAlphaNight;
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
@@ -87,10 +88,13 @@ window.CloudRenderer = class CloudRenderer {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
 					// Brighten back layer at night so it's visible
-					vec3 backColor = mix(shadow, light, (1.0 - uDayness) * 0.8);
+					//vec3 backColor = mix(shadow, light, (1.0 - uDayness) * 0.8);
+					//color = backColor;
 					
-					color = backColor;
-					alpha = (1.0 - d) * uBackAlpha;
+					float backA = mix(uBackAlphaNight, uBackAlphaDay, uDayness);
+					color = shadow;
+					
+					alpha = (1.0 - d) * uBackA;
 				}
 				
 				/* Front layer (on top, fully opaque) */
@@ -123,7 +127,8 @@ window.CloudRenderer = class CloudRenderer {
 				uWorldWidth: width,
 				uBackSpeed: cfg.backSpeed,
 				uBackVerticalOffset: cfg.backVerticalOffset || 4.0,
-				uBackAlpha: cfg.backAlpha || 0.1
+				uBackAlphaDay: cfg.backAlphaDay || 0.05,
+				uBackAlphaNight: cfg.backAlphaNight || 0.5,
 			}
 		);
 		
