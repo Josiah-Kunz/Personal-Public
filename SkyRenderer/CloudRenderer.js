@@ -132,6 +132,7 @@ window.CloudRenderer = class CloudRenderer {
 		
 		this.mesh = new PIXI.Mesh(geometry, this.shader);
 		this.mesh.blendMode = PIXI.BLEND_MODES.NORMAL;
+		this.mesh.state.blend = true;
 		this.mesh.x = cfg.offsetX || 0;
 		this.mesh.y = (cfg.offsetY || 0) + this.horizonY - cfg.height - maxOffset;
 		
