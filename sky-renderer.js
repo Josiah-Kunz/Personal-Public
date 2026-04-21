@@ -165,7 +165,7 @@ class SkyRenderer {
 		this.renderCloudDepthMap(ctx, 0, width * 2, cloudHeight, maxOffset);
 
 		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, {
-			scaleMode: PIXI.SCALE_MODES.LINEAR,
+			scaleMode: PIXI.SCALE_MODES.NEAREST,
 			wrapMode: PIXI.WRAP_MODES.REPEAT
 		});
 		this.cloudTexture = new PIXI.Texture(baseTexture);
@@ -176,11 +176,10 @@ class SkyRenderer {
 			attribute vec2 aTextureCoord;
 			uniform mat3 projectionMatrix;
 			uniform mat3 translationMatrix;
-			uniform float uScrollX;
 			varying vec2 vTextureCoord;
 			
 			void main() {
-				vTextureCoord = aTextureCoord + vec2(uScrollX, 0.0);
+				vTextureCoord = aTextureCoord;
 				gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
 			}
 			`,
@@ -189,9 +188,17 @@ class SkyRenderer {
 			varying vec2 vTextureCoord;
 			uniform sampler2D uSampler;
 			uniform float uDayness;
-			
+			uniform float uScrollPixels;
+			uniform float uScrollFrac;
+			uniform vec2 uTexSize;
+
 			void main() {
-				vec4 texel = texture2D(uSampler, vTextureCoord);
+				vec2 uv = vTextureCoord;
+				uv.x += uScrollPixels / uTexSize.x;
+				
+				vec4 texelA = texture2D(uSampler, uv);
+				vec4 texelB = texture2D(uSampler, uv + vec2(1.0 / uTexSize.x, 0.0));
+				vec4 texel = mix(texelA, texelB, uScrollFrac);
 				
 				if (texel.a < 0.01) {
 					discard;
@@ -226,7 +233,9 @@ class SkyRenderer {
 			{
 				uSampler: this.cloudTexture,
 				uDayness: 1.0,
-				uScrollX: 0.0
+				uScrollPixels: 0.0,
+				uScrollFrac: 0.0,
+				uTexSize: [this.cloudCanvas.width, this.cloudCanvas.height]
 			}
 		);
 
@@ -249,11 +258,12 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 		this.cloudShader.uniforms.uDayness = dayness;
 
-		/* Match original: elapsed * driftSpeed * screenWidth, then convert to UV */
-		const pixelScroll = this.elapsed * 0.0028 * this.config.resolution.width;
-		const uvScroll = pixelScroll / this.cloudCanvas.width;
+		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
+		const wholePixels = Math.floor(scrollPixels) % this.cloudCanvas.width;
+		const frac = scrollPixels - Math.floor(scrollPixels);
 		
-		this.cloudShader.uniforms.uScrollX = uvScroll;
+		this.cloudShader.uniforms.uScrollPixels = wholePixels;
+		this.cloudShader.uniforms.uScrollFrac = frac;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
