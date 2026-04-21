@@ -254,9 +254,10 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 		this.cloudShader.uniforms.uDayness = dayness;
 
-		const scrollNormalized = (this.elapsed * this.config.clouds.driftSpeed) % 1.0;
-		this.cloudShader.uniforms.uScroll = scrollNormalized;
-		console.log('uScroll:', scrollNormalized, 'elapsed:', this.elapsed);
+		// Direct UV offset - driftSpeed controls how fast we traverse the texture
+		const scrollUV = this.elapsed * this.config.clouds.driftSpeed * 0.001;
+		
+		this.cloudShader.uniforms.uScroll = scrollUV;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
