@@ -201,8 +201,8 @@ class SkyRenderer {
 				
 				float depth = texel.r;
 				
-				/* Anti-aliased thresholds - smooth edges, crisp bands */
-				float edgeWidth = clamp(fwidth(depth), 0.001, 0.02);
+				/* Fixed small edge width for anti-aliased thresholds */
+				float edgeWidth = 0.015;
 				
 				float t1 = smoothstep(0.18 - edgeWidth, 0.18 + edgeWidth, depth);
 				float t2 = smoothstep(0.6  - edgeWidth, 0.6  + edgeWidth, depth);
