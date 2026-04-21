@@ -34,7 +34,7 @@ class SkyRenderer {
 				height: 15,
 				thickness: 2,
 				detail: 0.5,
-				driftSpeed: 5e-6,
+				driftSpeed: 5e-7,
 				layerOffset: 31,
 				...config.clouds
 			},
