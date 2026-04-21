@@ -256,6 +256,7 @@ class SkyRenderer {
 
 		const scrollNormalized = (this.elapsed * this.config.clouds.driftSpeed) % 1.0;
 		this.cloudShader.uniforms.uScroll = scrollNormalized;
+		console.log('uScroll:', scrollNormalized, 'elapsed:', this.elapsed);
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
