@@ -34,7 +34,7 @@ class SkyRenderer {
 				height: 15,
 				thickness: 2,
 				detail: 0.5,
-				driftSpeed: 5e-2,
+				driftSpeed: 1e-6,
 				layerOffset: 31,
 				...config.clouds
 			},
@@ -101,8 +101,6 @@ class SkyRenderer {
 		this.sprite = null;
 
 		/* Cloud system */
-		this.cloudCanvas = null;
-		this.cloudTexture = null;
 		this.cloudSprite = null;
 		this.cloudShader = null;
 		this.cloudContainer = null;
@@ -149,26 +147,11 @@ class SkyRenderer {
 	}
 
 	/* ===== CLOUD SYSTEM ===== */
-
 	buildCloudSystem() {
 		const cfg = this.config.clouds;
 		const width = this.config.resolution.width;
-		const maxOffset = this.getCloudMaxOffset();
+		const maxOffset = Math.ceil(21.5 * cfg.detail);
 		const cloudHeight = cfg.height + cfg.thickness + maxOffset * 2;
-
-		this.cloudCanvas = document.createElement("canvas");
-		this.cloudCanvas.width = width * 2;
-		this.cloudCanvas.height = cloudHeight;
-		const ctx = this.cloudCanvas.getContext("2d", { alpha: true });
-		ctx.imageSmoothingEnabled = false;
-
-		this.renderCloudDepthMap(ctx, 0, width * 2, cloudHeight, maxOffset);
-
-		const baseTexture = new PIXI.BaseTexture(this.cloudCanvas, {
-			scaleMode: PIXI.SCALE_MODES.LINEAR,
-			wrapMode: PIXI.WRAP_MODES.REPEAT
-		});
-		this.cloudTexture = new PIXI.Texture(baseTexture);
 
 		const cloudShader = PIXI.Shader.from(
 			`
@@ -193,6 +176,7 @@ class SkyRenderer {
 			uniform float uThickness;
 			uniform float uMeshHeight;
 			uniform float uLayerOffset;
+			uniform float uWorldWidth;
 			
 			float getCloudTop(float x, float speedMult) {
 				float sx = x * speedMult;
@@ -205,7 +189,7 @@ class SkyRenderer {
 			}
 			
 			void main() {
-				float worldX = vTextureCoord.x * 2240.0 + uScroll;
+				float worldX = vTextureCoord.x * uWorldWidth + uScroll;
 				float localY = vTextureCoord.y * uMeshHeight;
 				
 				float maxOffset = ceil(21.5 * uDetail);
@@ -227,9 +211,8 @@ class SkyRenderer {
 				
 				/* Check if shadow layer applies */
 				bool inShadow = localY >= top2 && localY < (uMeshHeight - uThickness);
-				float shadowD = 0.0;
 				if (inShadow) {
-					shadowD = (localY - top2) / max(1.0, uMeshHeight - uThickness - top2);
+					float shadowD = (localY - top2) / max(1.0, uMeshHeight - uThickness - top2);
 					d = d + (1.0 - shadowD) * 0.15;
 				}
 				
@@ -260,17 +243,18 @@ class SkyRenderer {
 			{
 				uDayness: 1.0,
 				uScroll: 0.0,
-				uDetail: this.config.clouds.detail,
-				uCloudHeight: this.config.clouds.height,
-				uThickness: this.config.clouds.thickness,
+				uDetail: cfg.detail,
+				uCloudHeight: cfg.height,
+				uThickness: cfg.thickness,
 				uMeshHeight: cloudHeight,
-				uLayerOffset: this.config.clouds.layerOffset
+				uLayerOffset: cfg.layerOffset,
+				uWorldWidth: width
 			}
 		);
 
 		const geometry = new PIXI.Geometry()
 			.addAttribute('aVertexPosition', [0, 0, width, 0, width, cloudHeight, 0, cloudHeight], 2)
-			.addAttribute('aTextureCoord', [0, 0, 0.5, 0, 0.5, 1, 0, 1], 2)
+			.addAttribute('aTextureCoord', [0, 0, 1, 0, 1, 1, 0, 1], 2)
 			.addIndex([0, 1, 2, 0, 2, 3]);
 
 		this.cloudMesh = new PIXI.Mesh(geometry, cloudShader);
@@ -287,66 +271,8 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 		this.cloudShader.uniforms.uDayness = dayness;
 
-		// Scroll in world pixels
 		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
 		this.cloudShader.uniforms.uScroll = scrollPixels;
-	}
-
-	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
-		const cfg = this.config.clouds;
-		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		const baseY = maxOffset;
-
-		/* Main cloud layer - encode depth in red channel */
-		for (let x = startX; x < endX; x += 2) {
-			const top = baseY + this.getCloudTopOffset(x);
-
-			for (let y = top; y < height; y++) {
-				const d = (y - top) / Math.max(1, height - top);
-				const depthByte = Math.round(d * 255);
-				
-				ctx.fillStyle = `rgba(${depthByte}, 0, 0, 255)`;
-				ctx.fillRect(x, y, 2, 1);
-			}
-		}
-
-		/* Shadow overlay - darken by increasing depth value */
-		for (let x = startX; x < endX; x += 2) {
-			const top = baseY + this.getCloudTopOffset(x + cfg.layerOffset, 0.65) + 1;
-
-			for (let y = top; y < height - cfg.thickness; y++) {
-				const d = (y - top) / Math.max(1, height - cfg.thickness - top);
-				const darken = (1 - d) * 0.15;
-				if (darken > 0.03) {
-					/* Read existing, blend darker */
-					ctx.fillStyle = `rgba(255, 0, 0, ${darken})`;
-					ctx.fillRect(x, y, 2, 1);
-				}
-			}
-		}
-	}
-	
-	getCloudMaxOffset() {
-		const cfg = this.config.clouds;
-		/* Sum of all amplitudes from getCloudTopOffset */
-		return Math.ceil(
-			8 * cfg.detail +
-			6 * cfg.detail +
-			4 * cfg.detail +
-			2 * cfg.detail +
-			1.5 * cfg.detail
-		);
-	}
-
-	getCloudTopOffset(x, speedMult = 1) {
-		const cfg = this.config.clouds; 
-		const sx = x * speedMult;
-		const n1 = Math.sin(sx * 0.022 + 0.5) * 8 * cfg.detail;
-		const n2 = Math.sin(sx * 0.061 + 1.4) * 6 * cfg.detail;
-		const n3 = Math.sin(sx * 0.18 + 1.3) * 4 * cfg.detail;
-		const n4 = Math.sin(sx * 0.43 + 2.2) * 2 * cfg.detail;
-		const n5 = Math.sin(sx * 0.93 + 0.4) * 1.5 * cfg.detail;
-		return Math.round(n1 + n2 + n3 + n4 + n5);
 	}
 
 	destroy() {
@@ -358,10 +284,6 @@ class SkyRenderer {
 		if (this.cloudMesh) {
 			this.cloudMesh.destroy();
 			this.cloudMesh = null;
-		}
-		if (this.cloudTexture) {
-			this.cloudTexture.destroy(true);
-			this.cloudTexture = null;
 		}
 		if (this.texture) {
 			this.texture.destroy(true);
@@ -381,7 +303,6 @@ class SkyRenderer {
 		this.ctx = null;
 		this.staticCanvas = null;
 		this.staticCtx = null;
-		this.cloudCanvas = null;
 		this.stars = [];
 	}
 
