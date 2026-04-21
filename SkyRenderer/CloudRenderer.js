@@ -109,7 +109,7 @@ window.CloudRenderer = class CloudRenderer {
 					discard;
 				}
 				
-				gl_FragColor = vec4(color, alpha);
+				gl_FragColor = vec4(color * alpha, alpha);
 			}
 			`,
 			{
@@ -131,7 +131,7 @@ window.CloudRenderer = class CloudRenderer {
 			.addIndex([0, 1, 2, 0, 2, 3]);
 		
 		this.mesh = new PIXI.Mesh(geometry, this.shader);
-		this.mesh.blendMode = PIXI.BLEND_MODES.NORMAL;
+		this.mesh.blendMode = PIXI.BLEND_MODES.NORMAL_NPM;
 		this.mesh.state.blend = true;
 		this.mesh.x = cfg.offsetX || 0;
 		this.mesh.y = (cfg.offsetY || 0) + this.horizonY - cfg.height - maxOffset;
