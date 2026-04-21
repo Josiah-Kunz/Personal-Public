@@ -86,7 +86,10 @@ window.CloudRenderer = class CloudRenderer {
 				if (localY >= top2 && localY < top1) {
 					float d = (localY - top2) / max(1.0, uMeshHeight - top2);
 					
-					color = shadow;
+					// Brighten back layer at night so it's visible
+					vec3 backColor = mix(shadow, light, (1.0 - uDayness) * 0.4);
+					
+					color = backColor;
 					alpha = (1.0 - d) * uBackAlpha;
 				}
 				
