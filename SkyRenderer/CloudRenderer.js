@@ -94,7 +94,7 @@ window.CloudRenderer = class CloudRenderer {
 					float backA = mix(uBackAlphaNight, uBackAlphaDay, uDayness);
 					color = shadow;
 					
-					alpha = (1.0 - d) * uBackA;
+					alpha = (1.0 - d) * backA;
 				}
 				
 				/* Front layer (on top, fully opaque) */
