@@ -34,7 +34,7 @@ class SkyRenderer {
 				height: 15,
 				thickness: 2,
 				detail: 0.5,
-				driftSpeed: 5e-7,
+				driftSpeed: 5e-4,
 				layerOffset: 31,
 				...config.clouds
 			},
@@ -193,7 +193,7 @@ class SkyRenderer {
 
 			void main() {
 				vec2 uv = vTextureCoord;
-				uv.x += uScroll / uTexSize.x;
+				uv.x += uScroll;
 				
 				/* LINEAR filtering interpolates the depth values smoothly */
 				vec4 texel = texture2D(uSampler, uv);
@@ -254,9 +254,8 @@ class SkyRenderer {
 		const dayness = this.clamp(Math.sin(t * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5, 0, 1);
 		this.cloudShader.uniforms.uDayness = dayness;
 
-		const scrollPixels = this.elapsed * this.config.clouds.driftSpeed * this.config.resolution.width;
-		console.log('uScroll:', scrollPixels, 'elapsed:', this.elapsed);
-		this.cloudShader.uniforms.uScroll = scrollPixels;
+		const scrollNormalized = (this.elapsed * this.config.clouds.driftSpeed) % 1.0;
+		this.cloudShader.uniforms.uScroll = scrollNormalized;
 	}
 
 	renderCloudDepthMap(ctx, startX, endX, height, maxOffset) {
