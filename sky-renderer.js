@@ -195,15 +195,17 @@ class SkyRenderer {
 				vec2 uv = vTextureCoord;
 				uv.x += uScroll;
 				
-				/* LINEAR filtering interpolates the depth values smoothly */
 				vec4 texel = texture2D(uSampler, uv);
 				
-				if (texel.a < 0.01) {
-					discard;
-				}
+				if (texel.a < 0.01) discard;
 				
-				/* Quantize depth to get crisp color bands */
 				float depth = texel.r;
+				
+				/* Anti-aliased thresholds - smooth edges, crisp bands */
+				float edgeWidth = clamp(fwidth(depth), 0.001, 0.02);
+				
+				float t1 = smoothstep(0.18 - edgeWidth, 0.18 + edgeWidth, depth);
+				float t2 = smoothstep(0.6  - edgeWidth, 0.6  + edgeWidth, depth);
 				
 				vec3 nightLight  = vec3(196.0, 208.0, 220.0) / 255.0;
 				vec3 nightMid    = vec3(166.0, 176.0, 190.0) / 255.0;
@@ -217,14 +219,9 @@ class SkyRenderer {
 				vec3 mid    = mix(nightMid,    dayMid,    uDayness);
 				vec3 shadow = mix(nightShadow, dayShadow, uDayness);
 				
-				vec3 color;
-				if (depth < 0.18) {
-					color = light;
-				} else if (depth < 0.6) {
-					color = mid;
-				} else {
-					color = shadow;
-				}
+				vec3 color = light;
+				color = mix(color, mid, t1);
+				color = mix(color, shadow, t2);
 				
 				gl_FragColor = vec4(color, texel.a);
 			}`,
