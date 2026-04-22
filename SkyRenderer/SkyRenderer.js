@@ -97,9 +97,9 @@ window.SkyRenderer = class SkyRenderer {
 				...config.sky
 			},
 			pan: {
-				triggerY: 464,         // Y position that initially triggers pan
-				panAmount: 64,         // How much to pan up
-				panSpeed: 10,          // Lerp speed
+				triggerY: 464,         	// Y position that initially triggers pan
+				panAmount: 64,         	// How much to pan up
+				panDuration: 500,		// in ms
 			},
 		};
 		
@@ -230,10 +230,8 @@ window.SkyRenderer = class SkyRenderer {
 			this.panController = new PanController(
 				this.game,
 				{
-					...this.config.panController,
+					...this.config.pan,
 				},
-				this.container,
-				this.horizonY()
 			);
 		}
 		

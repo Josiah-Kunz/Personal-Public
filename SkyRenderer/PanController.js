@@ -12,11 +12,12 @@ window.PanController = class PanController {
         this.config = {
             triggerY: 464,
             panAmount: 64,
-            panSpeed: 10,
+            panDuration: 500,  // milliseconds
             ...config
         };
 
         this.state = PanController.State.NORMAL;
+        this.animationId = null;
 
         this.init();
     }
@@ -32,65 +33,74 @@ window.PanController = class PanController {
 
     update() {
         const State = PanController.State;
-        const playerY = this.game.player.y;
-        const inZone = playerY <= this.config.triggerY;
+        const inZone = this.game.player.y <= this.config.triggerY;
 
         switch (this.state) {
             case State.NORMAL:
                 if (inZone) {
                     this.state = State.TRANSITIONING_UP;
-                    this.game.trigger(`lookat=%player.x%,%player.y%-${this.config.panAmount},1,${this.config.panSpeed}`);
-                    this.pollPanning();
+                    this.panTo(-this.config.panAmount, () => {
+                        this.state = State.PANNED_UP;
+                    });
                 }
                 break;
 
             case State.PANNED_UP:
                 if (!inZone) {
                     this.state = State.TRANSITIONING_DOWN;
-                    this.game.trigger(`lookat=%player.x%,%player.y%,1,${this.config.panSpeed}`);
-                    this.pollPanning();
+                    this.panTo(0, () => {
+                        this.state = State.NORMAL;
+                    });
                 }
                 break;
 
-            // Ignore input during transitions
             case State.TRANSITIONING_UP:
             case State.TRANSITIONING_DOWN:
                 break;
         }
     }
 
-    pollPanning() {
-        if (this.destroyed) return;
-        
-        const State = PanController.State;
-        const curOffset = this.game.camera.offset.y;
-
-        let done = false;
-        let target = 0;
-
-        if (this.state === State.TRANSITIONING_UP) {
-            target = -this.config.panAmount;
-            done = curOffset <= target;
-        } else if (this.state === State.TRANSITIONING_DOWN) {
-            target = 0;
-            done = curOffset >= target;
+    panTo(targetY, onComplete) {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
 
-        if (done) {
-            this.game.camera.offset.y = target;
-            this.state = this.state === State.TRANSITIONING_UP
-                ? State.PANNED_UP
-                : State.NORMAL;
-        } else {
-            requestAnimationFrame(() => this.pollPanning());
-        }
+        const camera = this.game.camera;
+        const startY = camera.offset.y;
+        const startTime = performance.now();
+        const duration = this.config.panDuration;
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const t = Math.min(elapsed / duration, 1);
+
+            // Ease out quad
+            const eased = 1 - (1 - t) * (1 - t);
+
+            camera.offset.y = startY + (targetY - startY) * eased;
+            camera.targetX = -1;
+
+            if (t < 1) {
+                this.animationId = requestAnimationFrame(animate);
+            } else {
+                camera.offset.y = targetY;
+                this.animationId = null;
+                if (onComplete) onComplete();
+            }
+        };
+
+        this.animationId = requestAnimationFrame(animate);
     }
 
     destroy() {
-        this.destroyed = true;
-        if (this.state !== PanController.State.NORMAL) {
-            this.state = PanController.State.NORMAL;
-            this.game.trigger(`lookat=%player.x%,%player.y%,1,${this.config.panSpeed}`);
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
+
+        this.game.camera.offset.y = 0;
+        this.game.camera.targetX = -1;
+        this.state = PanController.State.NORMAL;
     }
 }
