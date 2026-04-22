@@ -50,10 +50,6 @@ window.PanController = class PanController {
             this.transitioning = curOffset !== 0;
             console.log(`${this.transitioning} = ${curOffset} !== ${0}`);
         }
-        requestAnimationFrame(() => {this.pollPanning;});
-    }
-
-    destroy() {
-        // Cleanup here
+        requestAnimationFrame(() => {this.pollPanning();});
     }
 }
