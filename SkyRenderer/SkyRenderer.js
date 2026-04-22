@@ -21,17 +21,19 @@ window.SkyRenderer = class SkyRenderer {
 			
 			arc: {
 				widthFactor: 0.42,
-				peakHeight: 150,
+				peakHeight: 100,
 				centerYOffset: 18,
 				sunriseDeg: 4,
 				sunsetDeg: 176,
 				phasePadding: 0.06,
 				visibilityBelowHorizon: 40,
+				sunHours: [5, 19],    // 5am to 7pm
+				moonHours: [18, 6],   // 6pm to 6am (wraps midnight)
 				...config.arc
 			},
 			celestials: {
-				sunRadius: 16,
-				moonRadius: 14,
+				sunRadius: 19,
+				moonRadius: 17,
 				sunGlowRadius: 46,
 				moonGlowRadius: 34,
 				sunGlowAlpha: 0.18,
@@ -221,7 +223,14 @@ window.SkyRenderer = class SkyRenderer {
 		console.log("SkyRenderer initialized!", { enabled });
 	}
 
-	debug(enabled, timeScale = 10) {
+	debug(enabled=null, timeScale = 10) {
+		
+		// By default, we toggle the enabled state
+		if (enabled === null) {
+			const currentlyEnabled = this.timeScale !== 1;
+			enabled = !currentlyEnabled;
+		}
+		
 		if (enabled) {
 			this.timeScale = timeScale;
 			this.debugTime = this.getGameTimeNormalized();

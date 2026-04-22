@@ -97,29 +97,40 @@ window.CelestialRenderer = class CelestialRenderer {
 			y: (centerY - Math.sin(angle) * radiusY + 0.5) | 0
 		};
 	}
-	
+
 	getState(t) {
-		const pad = this.arcConfig.phasePadding;
-		const sunStart = 0.25 - pad;
-		const sunEnd = 0.75 + pad;
+		const cfg = this.arcConfig;
+
+		const sunStart = cfg.sunHours[0] / 24;
+		const sunEnd = cfg.sunHours[1] / 24;
 		const sunRange = sunEnd - sunStart;
-		
-		const moonStartA = 0.75 - pad;
-		const moonRange = (1.0 - moonStartA) + (0.25 + pad);
-		
+
+		const moonStart = cfg.moonHours[0] / 24;
+		const moonEnd = cfg.moonHours[1] / 24;
+		const moonWraps = moonEnd < moonStart;
+		const moonRange = moonWraps ? (1.0 - moonStart) + moonEnd : moonEnd - moonStart;
+
 		let sun = null;
 		let moon = null;
-		
+
+		// Sun
 		if (t >= sunStart && t <= sunEnd) {
 			sun = this.getArcPoint((t - sunStart) / sunRange);
 		}
-		
-		if (t >= moonStartA) {
-			moon = this.getArcPoint((t - moonStartA) / moonRange);
-		} else if (t <= 0.25 + pad) {
-			moon = this.getArcPoint((t + (1.0 - moonStartA)) / moonRange);
+
+		// Moon (handles midnight wrap)
+		if (moonWraps) {
+			if (t >= moonStart) {
+				moon = this.getArcPoint((t - moonStart) / moonRange);
+			} else if (t <= moonEnd) {
+				moon = this.getArcPoint((t + (1.0 - moonStart)) / moonRange);
+			}
+		} else {
+			if (t >= moonStart && t <= moonEnd) {
+				moon = this.getArcPoint((t - moonStart) / moonRange);
+			}
 		}
-		
+
 		return { sun, moon };
 	}
 	
