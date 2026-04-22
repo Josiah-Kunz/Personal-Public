@@ -38,17 +38,25 @@ window.PanController = class PanController {
             this.pollPanning();
         }
     }
-    
-    pollPanning(){
+
+    pollPanning() {
         if (!this.transitioning) return;
+
         const curOffset = this.game.camera.offset.y;
+
+        let done;
         if (this.pannedUp) {
-            this.transitioning = curOffset <= -this.config.panAmount;
-            if (!this.transitioning) this.game.camera.offset.y = -this.config.panAmount; 
+            done = curOffset <= -this.config.panAmount;
         } else {
-            this.transitioning = curOffset !== 0;
-            if (!this.transitioning) this.game.camera.offset.y = 0;
+            done = curOffset >= 0;
         }
-        requestAnimationFrame(() => {this.pollPanning();});
+
+        if (done) {
+            this.transitioning = false;
+            // Snap to exact target in case of overshoot
+            this.game.camera.offset.y = this.pannedUp ? -this.config.panAmount : 0;
+        } else {
+            requestAnimationFrame(() => this.pollPanning());
+        }
     }
 }
