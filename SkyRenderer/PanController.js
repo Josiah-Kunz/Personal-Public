@@ -11,6 +11,7 @@ window.PanController = class PanController {
         };
 
         this.animationId = null;
+        this.currentTarget = null;
 
         this.init();
     }
@@ -40,6 +41,12 @@ window.PanController = class PanController {
     }
 
     panTo(targetY, onComplete) {
+        // Skip if already animating to this target
+        if (this.currentTarget === targetY && this.animationId) {
+            return;
+        }
+        this.currentTarget = targetY;
+
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
@@ -47,6 +54,15 @@ window.PanController = class PanController {
 
         const camera = this.game.camera;
         const startY = camera.offset.y;
+
+        // Skip if already there
+        if (Math.abs(startY - targetY) < 0.5) {
+            camera.offset.y = targetY;
+            camera.targetX = -1;
+            if (onComplete) onComplete();
+            return;
+        }
+
         const startTime = performance.now();
         const duration = this.config.panDuration;
 
@@ -62,6 +78,7 @@ window.PanController = class PanController {
             } else {
                 camera.offset.y = targetY;
                 this.animationId = null;
+                this.currentTarget = null;
                 if (onComplete) onComplete();
             }
         };
