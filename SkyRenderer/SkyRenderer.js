@@ -97,9 +97,10 @@ window.SkyRenderer = class SkyRenderer {
 				...config.sky
 			},
 			pan: {
-				triggerY: 464,         	// Y position that initially triggers pan
-				panAmount: 64,         	// How much to pan up
-				panDuration: 500,		// in ms
+				triggerYUp: 464,	// pan up when player goes above this
+				triggerYDown: 480,	// pan down when player goes below this
+				panAmount: 64,		// How much to pan up
+				panDuration: 500,	// in ms
 			},
 		};
 		

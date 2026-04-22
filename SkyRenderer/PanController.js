@@ -10,9 +10,10 @@ window.PanController = class PanController {
         this.game = game;
 
         this.config = {
-            triggerY: 464,
-            panAmount: 64,
-            panDuration: 500,  // milliseconds
+            triggerYUp: 464,    // pan up when player goes above this
+            triggerYDown: 480,  // pan down when player goes below this
+            panAmount: 64,      // px
+            panDuration: 500,   // milliseconds
             ...config
         };
 
@@ -33,11 +34,11 @@ window.PanController = class PanController {
 
     update() {
         const State = PanController.State;
-        const inZone = this.game.player.y <= this.config.triggerY;
+        const playerY = this.game.player.y;
 
         switch (this.state) {
             case State.NORMAL:
-                if (inZone) {
+                if (playerY <= this.config.triggerYUp) {
                     this.state = State.TRANSITIONING_UP;
                     this.panTo(-this.config.panAmount, () => {
                         this.state = State.PANNED_UP;
@@ -46,7 +47,7 @@ window.PanController = class PanController {
                 break;
 
             case State.PANNED_UP:
-                if (!inZone) {
+                if (playerY > this.config.triggerYDown) {
                     this.state = State.TRANSITIONING_DOWN;
                     this.panTo(0, () => {
                         this.state = State.NORMAL;
