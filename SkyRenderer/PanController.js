@@ -1,22 +1,27 @@
 window.PanController = class PanController {
+    static State = {
+        NORMAL: 0,
+        TRANSITIONING_UP: 1,
+        PANNED_UP: 2,
+        TRANSITIONING_DOWN: 3
+    };
+
     constructor(game, config = {}) {
         this.game = game;
 
         this.config = {
-            triggerY: 464,         // Y position that initially triggers pan
-            panAmount: 64,         // How much to pan up
-            panSpeed: 10,          // Lerp speed
+            triggerY: 464,
+            panAmount: 64,
+            panSpeed: 10,
             ...config
         };
+
+        this.state = PanController.State.NORMAL;
 
         this.init();
     }
 
     init() {
-        this.pannedUp = false;
-        this.transitioning = false;
-
-        // Alias player.nextPathStep to check if we're in the pan zone
         const player = this.game.player;
         const originalNextPathStep = player.nextPathStep.bind(player);
         player.nextPathStep = (...args) => {
@@ -26,37 +31,66 @@ window.PanController = class PanController {
     }
 
     update() {
-        if (this.pannedUp && this.game.player.y > this.config.triggerY && !this.transitioning){
-            this.pannedUp = false;
-            this.transitioning = true;
-            this.game.trigger(`lookat=%player.x%,%player.y%,1,${this.config.panSpeed}`);
-            this.pollPanning();
-        } else if (!this.pannedUp && this.game.player.y <= this.config.triggerY && !this.transitioning) {
-            this.pannedUp = true;
-            this.transitioning = true;
-            this.game.trigger(`lookat=%player.x%,%player.y%-${this.config.panAmount},1,${this.config.panSpeed}`);
-            this.pollPanning();
+        const State = PanController.State;
+        const playerY = this.game.player.y;
+        const inZone = playerY <= this.config.triggerY;
+
+        switch (this.state) {
+            case State.NORMAL:
+                if (inZone) {
+                    this.state = State.TRANSITIONING_UP;
+                    this.game.trigger(`lookat=%player.x%,%player.y%-${this.config.panAmount},1,${this.config.panSpeed}`);
+                    this.pollPanning();
+                }
+                break;
+
+            case State.PANNED_UP:
+                if (!inZone) {
+                    this.state = State.TRANSITIONING_DOWN;
+                    this.game.trigger(`lookat=%player.x%,%player.y%,1,${this.config.panSpeed}`);
+                    this.pollPanning();
+                }
+                break;
+
+            // Ignore input during transitions
+            case State.TRANSITIONING_UP:
+            case State.TRANSITIONING_DOWN:
+                break;
         }
     }
 
     pollPanning() {
-        if (!this.transitioning) return;
-
+        if (this.destroyed) return;
+        
+        const State = PanController.State;
         const curOffset = this.game.camera.offset.y;
 
-        let done;
-        if (this.pannedUp) {
-            done = curOffset <= -this.config.panAmount;
-        } else {
-            done = curOffset >= 0;
+        let done = false;
+        let target = 0;
+
+        if (this.state === State.TRANSITIONING_UP) {
+            target = -this.config.panAmount;
+            done = curOffset <= target;
+        } else if (this.state === State.TRANSITIONING_DOWN) {
+            target = 0;
+            done = curOffset >= target;
         }
 
         if (done) {
-            this.transitioning = false;
-            // Snap to exact target in case of overshoot
-            this.game.camera.offset.y = this.pannedUp ? -this.config.panAmount : 0;
+            this.game.camera.offset.y = target;
+            this.state = this.state === State.TRANSITIONING_UP
+                ? State.PANNED_UP
+                : State.NORMAL;
         } else {
             requestAnimationFrame(() => this.pollPanning());
+        }
+    }
+
+    destroy() {
+        this.destroyed = true;
+        if (this.state !== PanController.State.NORMAL) {
+            this.state = PanController.State.NORMAL;
+            this.game.trigger(`lookat=%player.x%,%player.y%,1,${this.config.panSpeed}`);
         }
     }
 }
