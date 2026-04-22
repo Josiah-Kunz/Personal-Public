@@ -54,9 +54,7 @@ window.PanController = class PanController {
             const elapsed = now - startTime;
             const t = Math.min(elapsed / duration, 1);
 
-            const eased = 1 - (1 - t) * (1 - t);
-
-            camera.offset.y = startY + (targetY - startY) * eased;
+            camera.offset.y = startY + (targetY - startY) * t;
             camera.targetX = -1;
 
             if (t < 1) {
