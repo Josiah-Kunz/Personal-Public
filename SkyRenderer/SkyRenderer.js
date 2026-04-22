@@ -129,6 +129,7 @@ window.SkyRenderer = class SkyRenderer {
 		
 		/* Debugging */
 		this.timeScale = 1;
+		this.debugTime = null;
 		
 		this.init();
 	}
@@ -241,7 +242,7 @@ window.SkyRenderer = class SkyRenderer {
 	}
 
 	getGameTimeNormalized() {
-		if (this.debugTime !== null) {
+		if (!this.debugTime) {
 			this.debugTime = (this.debugTime + this.timeScale * 0.0001) % 1;
 			return this.debugTime;
 		}
