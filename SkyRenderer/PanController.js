@@ -17,9 +17,9 @@ window.PanController = class PanController {
 
     init() {
         const player = this.game.player;
-        const originalNextPathStep = player.nextPathStep.bind(player);
-        player.nextPathStep = (...args) => {
-            originalNextPathStep(...args);
+        const originalSetSpritePosition = player.setSpritePosition.bind(player);
+        player.setSpritePosition = (...args) => {
+            originalSetSpritePosition(...args);
             this.update();
         };
     }
