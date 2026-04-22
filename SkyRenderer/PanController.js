@@ -4,7 +4,7 @@ window.PanController = class PanController {
 
         this.config = {
             zoneTop: 464,
-            zoneBottom: 544,
+            zoneBottom: 592,
             panAmount: 96,
             panDuration: 100,
             ...config

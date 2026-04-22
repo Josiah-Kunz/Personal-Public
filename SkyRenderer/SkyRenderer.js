@@ -96,12 +96,6 @@ window.SkyRenderer = class SkyRenderer {
 				nightWarmth: 0.0,
 				...config.sky
 			},
-			pan: {
-				triggerYUp: 464,	// pan up when player goes above this
-				triggerYDown: 544,	// pan down when player goes below this
-				panAmount: 96,		// How much to pan up
-				panDuration: 750,	// in ms
-			},
 		};
 		
 		this.running = false;
