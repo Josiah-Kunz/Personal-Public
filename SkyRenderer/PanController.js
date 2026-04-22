@@ -11,9 +11,9 @@ window.PanController = class PanController {
 
         this.config = {
             triggerYUp: 464,    // pan up when player goes above this
-            triggerYDown: 480,  // pan down when player goes below this
-            panAmount: 64,      // px
-            panDuration: 500,   // milliseconds
+            triggerYDown: 544,  // pan down when player goes below this
+            panAmount: 96,      // px
+            panDuration: 750,   // milliseconds
             ...config
         };
 
