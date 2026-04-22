@@ -68,6 +68,10 @@ g4bl.out
 # ===================
 *\.DS_Store
 
+# Rider generated files
+# ==============
+**.idea
+
 # Other annoying files
 # ====================
 *\.swp
