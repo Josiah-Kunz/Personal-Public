@@ -16,11 +16,12 @@ window.SkyRenderer = class SkyRenderer {
 				celestials: true,
 				clouds: true,
 				ocean: true,
+				panController: true,
 				...config.enabled
 			},
 			
 			arc: {
-				widthFactor: 0.42,
+				widthFactor: 0.35,
 				peakHeight: 100,
 				centerYOffset: 18,
 				sunriseDeg: 4,
@@ -94,7 +95,12 @@ window.SkyRenderer = class SkyRenderer {
 				nightDarkness: 1.15,
 				nightWarmth: 0.0,
 				...config.sky
-			}
+			},
+			pan: {
+				triggerY: 464,         // Y position that initially triggers pan
+				panAmount: 64,         // How much to pan up
+				panSpeed: 10,          // Lerp speed
+			},
 		};
 		
 		this.running = false;
@@ -126,6 +132,9 @@ window.SkyRenderer = class SkyRenderer {
 		this.celestials = null;
 		this.skyGradient = null;
 		this.ocean = null;
+		
+		/* Logic controllers (non-visual) */
+		this.panController = null;
 		
 		/* Debugging */
 		this.timeScale = 1;
@@ -211,6 +220,17 @@ window.SkyRenderer = class SkyRenderer {
 					worldWidth: width,
 					offsetX: this.config.offset.x,
 					offsetY: this.config.offset.y
+				},
+				this.container,
+				this.horizonY()
+			);
+		}
+
+		if (enabled.panController && typeof PanController !== 'undefined') {
+			this.panController = new PanController(
+				this.game,
+				{
+					...this.config.panController,
 				},
 				this.container,
 				this.horizonY()
