@@ -41,13 +41,14 @@ window.PanController = class PanController {
     }
     
     pollPanning(){
-        if (!this.transitioning) return true;
+        if (!this.transitioning) return;
         const curOffset = this.game.camera.offset.y;
         if (this.pannedUp) {
             this.transitioning = curOffset !== -this.config.panAmount;
-            
+            console.log(`${this.transitioning} = ${curOffset} !== ${-this.config.panAmount}`);
         } else {
             this.transitioning = curOffset !== 0;
+            console.log(`${this.transitioning} = ${curOffset} !== ${0}`);
         }
         requestAnimationFrame(() => {this.pollPanning;});
     }
