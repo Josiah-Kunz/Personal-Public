@@ -26,7 +26,6 @@ window.PanController = class PanController {
     }
 
     update() {
-        console.log("Updating step!");
         if (this.pannedUp && this.game.player.y > this.config.triggerY && !this.transitioning){
             this.pannedUp = false;
             this.transitioning = true;
@@ -44,11 +43,11 @@ window.PanController = class PanController {
         if (!this.transitioning) return;
         const curOffset = this.game.camera.offset.y;
         if (this.pannedUp) {
-            this.transitioning = curOffset !== -this.config.panAmount;
-            console.log(`${this.transitioning} = ${curOffset} !== ${-this.config.panAmount}`);
+            this.transitioning = curOffset <= -this.config.panAmount;
+            if (!this.transitioning) this.game.camera.offset.y = -this.config.panAmount; 
         } else {
             this.transitioning = curOffset !== 0;
-            console.log(`${this.transitioning} = ${curOffset} !== ${0}`);
+            if (!this.transitioning) this.game.camera.offset.y = 0;
         }
         requestAnimationFrame(() => {this.pollPanning();});
     }
