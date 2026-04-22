@@ -125,6 +125,9 @@ window.SkyRenderer = class SkyRenderer {
 		this.skyGradient = null;
 		this.ocean = null;
 		
+		/* Debugging */
+		this.timeScale = 1;
+		
 		this.init();
 	}
 	
@@ -217,8 +220,23 @@ window.SkyRenderer = class SkyRenderer {
 		this.start();
 		console.log("SkyRenderer initialized!", { enabled });
 	}
-	
+
+	debug(enabled, timeScale = 10) {
+		if (enabled) {
+			this.timeScale = timeScale;
+			this.debugTime = this.getGameTimeNormalized();
+		} else {
+			this.timeScale = 1;
+			this.debugTime = null;
+		}
+	}
+
 	getGameTimeNormalized() {
+		if (this.debugTime !== null) {
+			this.debugTime = (this.debugTime + this.timeScale * 0.0001) % 1;
+			return this.debugTime;
+		}
+
 		const hour = this.game.time.hour || 0;
 		const minute = this.game.time.minute || 0;
 		const second = this.game.time.second || 0;
