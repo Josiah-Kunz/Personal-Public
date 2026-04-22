@@ -1,23 +1,15 @@
 window.PanController = class PanController {
-    static State = {
-        NORMAL: 0,
-        TRANSITIONING_UP: 1,
-        PANNED_UP: 2,
-        TRANSITIONING_DOWN: 3
-    };
-
     constructor(game, config = {}) {
         this.game = game;
 
         this.config = {
-            triggerYUp: 464,    // pan up when player goes above this
-            triggerYDown: 544,  // pan down when player goes below this
-            panAmount: 96,      // px
-            panDuration: 750,   // milliseconds
+            zoneTop: 464,
+            zoneBottom: 544,
+            panAmount: 96,
+            panDuration: 100,
             ...config
         };
 
-        this.state = PanController.State.NORMAL;
         this.animationId = null;
 
         this.init();
@@ -33,31 +25,17 @@ window.PanController = class PanController {
     }
 
     update() {
-        const State = PanController.State;
         const playerY = this.game.player.y;
+        const { zoneTop, zoneBottom, panAmount } = this.config;
 
-        switch (this.state) {
-            case State.NORMAL:
-                if (playerY <= this.config.triggerYUp) {
-                    this.state = State.TRANSITIONING_UP;
-                    this.panTo(-this.config.panAmount, () => {
-                        this.state = State.PANNED_UP;
-                    });
-                }
-                break;
-
-            case State.PANNED_UP:
-                if (playerY > this.config.triggerYDown) {
-                    this.state = State.TRANSITIONING_DOWN;
-                    this.panTo(0, () => {
-                        this.state = State.NORMAL;
-                    });
-                }
-                break;
-
-            case State.TRANSITIONING_UP:
-            case State.TRANSITIONING_DOWN:
-                break;
+        if (playerY <= zoneBottom) {
+            // In zone or above - interpolate
+            const clampedY = Math.max(zoneTop, playerY);
+            const t = 1 - (clampedY - zoneTop) / (zoneBottom - zoneTop);
+            this.panTo(-panAmount * t);
+        } else {
+            // Below zone
+            this.panTo(0);
         }
     }
 
@@ -76,7 +54,6 @@ window.PanController = class PanController {
             const elapsed = now - startTime;
             const t = Math.min(elapsed / duration, 1);
 
-            // Ease out quad
             const eased = 1 - (1 - t) * (1 - t);
 
             camera.offset.y = startY + (targetY - startY) * eased;
@@ -102,6 +79,5 @@ window.PanController = class PanController {
 
         this.game.camera.offset.y = 0;
         this.game.camera.targetX = -1;
-        this.state = PanController.State.NORMAL;
     }
 }
