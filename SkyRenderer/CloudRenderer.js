@@ -125,6 +125,20 @@ window.CloudRenderer = class CloudRenderer {
 				}
 				
 				gl_FragColor = vec4(color * alpha, alpha);
+				
+				/* Fog lines at horizon */
+				float fogY1 = baseY + uFogLine1Offset;
+				float fogY2 = baseY + uFogLine2Offset;
+				
+				if (localY >= fogY1 && localY < fogY1 + 1.0 && alpha < 0.01) {
+					color = mix(shadow, light, 0.5);  // blend between shadow and light
+					alpha = uFogLine1Alpha;
+				}
+				
+				if (localY >= fogY2 && localY < fogY2 + 1.0 && alpha < 0.01) {
+					color = mix(shadow, light, 0.5);
+					alpha = uFogLine2Alpha;
+				}
 			}
 			`,
 			{
@@ -143,6 +157,10 @@ window.CloudRenderer = class CloudRenderer {
 				uBackFadeEndMorning: (cfg.backFadeEndMorning || 4) / 24,
 				uBackFadeStartEvening: (cfg.backFadeStartEvening || 19) / 24,
 				uBackFadeEndEvening: (cfg.backFadeEndEvening || 21) / 24,
+				uFogLine1Offset: cfg.fogLine1Offset || 0,
+				uFogLine1Alpha: cfg.fogLine1Alpha || 0.3,
+				uFogLine2Offset: cfg.fogLine2Offset || 2,
+				uFogLine2Alpha: cfg.fogLine2Alpha || 0.15,
 			}
 		);
 		

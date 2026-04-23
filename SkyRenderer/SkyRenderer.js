@@ -58,10 +58,14 @@ window.SkyRenderer = class SkyRenderer {
 				backFadeEndMorning: 4,
 				backFadeStartEvening: 19,
 				backFadeEndEvening: 21,
+				fogLine1Offset: 0,
+				fogLine1Alpha: 0.3,
+				fogLine2Offset: 2,
+				fogLine2Alpha: 0.15,
 				...config.clouds
 			},
 			stars: {
-				amount: 40,
+				amount: 80,
 				twinkleAmount: 30,
 				minSize: 1,
 				maxSize: 2,
@@ -74,7 +78,7 @@ window.SkyRenderer = class SkyRenderer {
 			water: {
 				detail: 0.28,
 				shimmerDepth: 30,
-				ambientReflectionStrength: 0.45,
+				ambientReflectionStrength: 0.6,
 				celestialReflectionStrength: 1.4,
 				reflectionLengthSun: 120,
 				reflectionLengthMoon: 105,
