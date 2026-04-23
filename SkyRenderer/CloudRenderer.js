@@ -52,7 +52,7 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uFogLine1Offset;Alpha;
 			uniform float uFogLine2Offset;
 			uniform float uFogLine2Alpha;
-			uniform float uFogLine1
+			uniform float uFogLine1;
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
