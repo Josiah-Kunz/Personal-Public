@@ -49,6 +49,10 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uBackFadeEndMorning;
 			uniform float uBackFadeStartEvening;
 			uniform float uBackFadeEndEvening;
+			uniform float uFogLine1Offset;Alpha;
+			uniform float uFogLine2Offset;
+			uniform float uFogLine2Alpha;
+			uniform float uFogLine1
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
@@ -120,25 +124,25 @@ window.CloudRenderer = class CloudRenderer {
 					alpha = 1.0;
 				}
 				
+				/* Fog lines at horizon (only where no clouds) */
+				if (alpha < 0.01) {
+					float fogY1 = baseY + uFogLine1Offset;
+					float fogY2 = baseY + uFogLine2Offset;
+					
+					if (localY >= fogY1 && localY < fogY1 + 1.0) {
+						color = mix(shadow, light, 0.5);
+						alpha = uFogLine1Alpha;
+					} else if (localY >= fogY2 && localY < fogY2 + 1.0) {
+						color = mix(shadow, light, 0.5);
+						alpha = uFogLine2Alpha;
+					}
+				}
+				
 				if (alpha < 0.01) {
 					discard;
 				}
 				
 				gl_FragColor = vec4(color * alpha, alpha);
-				
-				/* Fog lines at horizon */
-				float fogY1 = baseY + uFogLine1Offset;
-				float fogY2 = baseY + uFogLine2Offset;
-				
-				if (localY >= fogY1 && localY < fogY1 + 1.0 && alpha < 0.01) {
-					color = mix(shadow, light, 0.5);  // blend between shadow and light
-					alpha = uFogLine1Alpha;
-				}
-				
-				if (localY >= fogY2 && localY < fogY2 + 1.0 && alpha < 0.01) {
-					color = mix(shadow, light, 0.5);
-					alpha = uFogLine2Alpha;
-				}
 			}
 			`,
 			{
