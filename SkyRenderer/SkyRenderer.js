@@ -14,7 +14,7 @@ window.SkyRenderer = class SkyRenderer {
 				sky: true,
 				stars: true,
 				celestials: true,
-				clouds: false,
+				clouds: true,
 				ocean: true,
 				panController: true,
 				...config.enabled
@@ -200,18 +200,7 @@ window.SkyRenderer = class SkyRenderer {
 				this.horizonY()
 			);
 		}
-		
-		if (enabled.ocean && typeof OceanRenderer !== 'undefined') {
-			this.ocean = new OceanRenderer(
-				this.config.water,
-				this.config.stars,
-				this.config.resolution,
-				this.horizonY(),
-				this.container,
-				this.config.offset
-			);
-		}
-		
+
 		if (enabled.clouds && typeof CloudRenderer !== 'undefined') {
 			this.clouds = new CloudRenderer(
 				{
@@ -222,6 +211,17 @@ window.SkyRenderer = class SkyRenderer {
 				},
 				this.container,
 				this.horizonY()
+			);
+		}
+		
+		if (enabled.ocean && typeof OceanRenderer !== 'undefined') {
+			this.ocean = new OceanRenderer(
+				this.config.water,
+				this.config.stars,
+				this.config.resolution,
+				this.horizonY(),
+				this.container,
+				this.config.offset
 			);
 		}
 
