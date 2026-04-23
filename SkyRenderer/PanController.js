@@ -6,7 +6,7 @@ window.PanController = class PanController {
         this.config = {
             zoneTop: 464,
             zoneBottom: 592,
-            panAmount: 96,
+            panAmount: 112,
             ...config
         };
 
@@ -22,6 +22,8 @@ window.PanController = class PanController {
             originalSetSpritePosition(...args);
             this.update();
         };
+        // First time!
+        this.update();
     }
 
     update() {
