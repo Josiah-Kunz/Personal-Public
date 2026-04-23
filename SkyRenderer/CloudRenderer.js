@@ -49,10 +49,10 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uBackFadeEndMorning;
 			uniform float uBackFadeStartEvening;
 			uniform float uBackFadeEndEvening;
-			uniform float uFogLine1Offset;Alpha;
+			uniform float uFogLine1Offset;
+			uniform float uFogLine1Alpha;
 			uniform float uFogLine2Offset;
 			uniform float uFogLine2Alpha;
-			uniform float uFogLine1;
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
