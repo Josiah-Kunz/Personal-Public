@@ -144,22 +144,6 @@ window.OceanRenderer = class OceanRenderer {
 					col = mix(waterMid, waterBot, (depthT - 0.28) / 0.72);
 				}
 				
-				// === FOG LINES AT TOP ===
-				vec3 fogColor = mix(nightFog, dayFog, day);
-				
-				if (y < uFogLine1Y + 1.0 && y >= uFogLine1Y) {
-					col = mix(col, fogColor, uFogLine1Alpha);
-				} else if (y < uFogLine2Y + 1.0 && y >= uFogLine2Y) {
-					col = mix(col, fogColor, uFogLine2Alpha);
-				}
-				
-				// === FOG LINES AT TOP ===
-                if (y < 1.0) {
-                    col = vec3(1.0, 0.0, 0.0);  // bright red line 1
-                } else if (y >= 2.0 && y < 3.0) {
-                    col = vec3(0.0, 1.0, 0.0);  // bright green line 2
-                }
-				
 				// === AMBIENT WATER REFLECTION ===
 				float ambientDepth = max(16.0, uShimmerDepth * 1.4);
 				if (y < ambientDepth) {
@@ -305,6 +289,22 @@ window.OceanRenderer = class OceanRenderer {
 					}
 				}
 				
+				// === FOG LINES AT TOP ===
+				vec3 fogColor = mix(nightFog, dayFog, day);
+				
+				if (y < uFogLine1Y + 1.0 && y >= uFogLine1Y) {
+					col = mix(col, fogColor, uFogLine1Alpha);
+				} else if (y < uFogLine2Y + 1.0 && y >= uFogLine2Y) {
+					col = mix(col, fogColor, uFogLine2Alpha);
+				}
+				
+				// === FOG LINES AT TOP ===
+                if (y < 1.0) {
+                    col = vec3(1.0, 0.0, 0.0);  // bright red
+                } else if (y >= 2.0 && y < 3.0) {
+                    col = vec3(0.0, 1.0, 0.0);  // bright green
+                }
+                
 				gl_FragColor = vec4(col, 1.0);
 			}
 		`;
