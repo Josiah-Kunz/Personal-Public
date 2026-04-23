@@ -4,10 +4,10 @@ window.SkyRenderer = class SkyRenderer {
 		this.map = game.map;
 		
 		this.config = {
-			offset: { x: 0, y: 0, ...config.offset },
-			resolution: { width: game.width, height: game.height, ...config.resolution },
+			offset: { x: 0, y: 112, ...config.offset },
+			resolution: { width: game.width, height: game.height-112, ...config.resolution },
 			timing: { fps: 30, overallSpeed: 1, ...config.timing },
-			scene: { horizonY: 245, ...config.scene },
+			scene: { horizonY: 245-112, ...config.scene },
 			
 			// Toggle each sub-renderer on/off
 			enabled: {
