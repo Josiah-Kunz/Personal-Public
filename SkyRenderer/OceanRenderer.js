@@ -153,6 +153,13 @@ window.OceanRenderer = class OceanRenderer {
 					col = mix(col, fogColor, uFogLine2Alpha);
 				}
 				
+				// === FOG LINES AT TOP ===
+                if (y < 1.0) {
+                    col = vec3(1.0, 0.0, 0.0);  // bright red line 1
+                } else if (y >= 2.0 && y < 3.0) {
+                    col = vec3(0.0, 1.0, 0.0);  // bright green line 2
+                }
+				
 				// === AMBIENT WATER REFLECTION ===
 				float ambientDepth = max(16.0, uShimmerDepth * 1.4);
 				if (y < ambientDepth) {
