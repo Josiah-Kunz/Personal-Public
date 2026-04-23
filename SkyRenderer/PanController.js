@@ -85,5 +85,5 @@ window.PanController = class PanController {
         };
 
         requestAnimationFrame(animate);
-    }
+    } 
 }
