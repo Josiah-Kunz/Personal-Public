@@ -297,13 +297,6 @@ window.OceanRenderer = class OceanRenderer {
 				} else if (y < uFogLine2Y + 1.0 && y >= uFogLine2Y) {
 					col = mix(col, fogColor, uFogLine2Alpha);
 				}
-				
-				// === FOG LINES AT TOP ===
-                if (y < 1.0) {
-                    col = vec3(1.0, 0.0, 0.0);  // bright red
-                } else if (y >= 2.0 && y < 3.0) {
-                    col = vec3(0.0, 1.0, 0.0);  // bright green
-                }
                 
 				gl_FragColor = vec4(col, 1.0);
 			}
