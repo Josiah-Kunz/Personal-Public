@@ -1,4 +1,7 @@
 window.PanController = class PanController {
+    
+    static GAME_BASE_HEIGHT = 288;
+    
     constructor(game, config = {}) {
         this.game = game;
 
@@ -6,11 +9,11 @@ window.PanController = class PanController {
             zoneTop: 464,
             zoneBottom: 592,
             panAmount: 96,
-            panDuration: 100,
+            heightWhenPanned: 356,
+            destroyDuration: 200,
             ...config
         };
 
-        this.animationId = null;
         this.currentTarget = null;
 
         this.init();
@@ -40,59 +43,41 @@ window.PanController = class PanController {
         }
     }
 
-    panTo(targetY, onComplete) {
-        // Skip if already animating to this target
-        if (this.currentTarget === targetY && this.animationId) {
-            return;
-        }
+    panTo(targetY) {
+        if (this.currentTarget === targetY) return;
         this.currentTarget = targetY;
 
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
-        }
-
         const camera = this.game.camera;
-        const startY = camera.offset.y;
+        camera.offset.y = targetY;
+        camera.targetX = -1;
 
-        // Skip if already there
-        if (Math.abs(startY - targetY) < 0.5) {
-            camera.offset.y = targetY;
-            camera.targetX = -1;
-            if (onComplete) onComplete();
-            return;
-        }
+        const panRatio = Math.abs(targetY) / this.config.panAmount;
+        const h0 = PanController.GAME_BASE_HEIGHT;
+        const dh = this.config.heightWhenPanned - h0;
+        this.game.height = h0 + Math.round(dh * panRatio);
+    }
 
+    destroy() {
+        const camera = this.game.camera;
+        const startOffsetY = camera.offset.y;
+        const startHeight = this.game.height;
+        const targetHeight = PanController.GAME_BASE_HEIGHT;
+        const duration = 200;
         const startTime = performance.now();
-        const duration = this.config.panDuration;
 
         const animate = (now) => {
             const elapsed = now - startTime;
             const t = Math.min(elapsed / duration, 1);
 
-            camera.offset.y = startY + (targetY - startY) * t;
+            camera.offset.y = startOffsetY * (1 - t);
             camera.targetX = -1;
+            this.game.height = Math.round(startHeight + (targetHeight - startHeight) * t);
 
             if (t < 1) {
-                this.animationId = requestAnimationFrame(animate);
-            } else {
-                camera.offset.y = targetY;
-                this.animationId = null;
-                this.currentTarget = null;
-                if (onComplete) onComplete();
+                requestAnimationFrame(animate);
             }
         };
 
-        this.animationId = requestAnimationFrame(animate);
-    }
-
-    destroy() {
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
-        }
-
-        this.game.camera.offset.y = 0;
-        this.game.camera.targetX = -1;
+        requestAnimationFrame(animate);
     }
 }
