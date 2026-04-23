@@ -4,7 +4,7 @@ const skyURLs = [
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/07ff4baf9f4a57674e8a61fba33e7c606c2b3ba1/SkyRenderer/SkyGradient.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/094d100ff277a26992787584b8468ce31b8a270b/SkyRenderer/CelestialRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/b1b17c5b59cd8b17544f0c6a46650760b37c8c86/SkyRenderer/StarRenderer.js",
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/6b467f3cdae6cd1bf4849ba4fc606f225b007b50/SkyRenderer/OceanRenderer.js",
+	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/ef76e843cabe1433b464259d8fa2b6f0accc8dc0/SkyRenderer/OceanRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/a2dbc3887dda2f7a42d7318dbf7924d61511f003/SkyRenderer/PanController.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/979ac5b0ec63afebbd79432e5144c7c48331211a/SkyRenderer/SkyRenderer.js",
 ];
