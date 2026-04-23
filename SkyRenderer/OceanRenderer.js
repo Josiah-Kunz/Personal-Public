@@ -170,6 +170,15 @@ window.OceanRenderer = class OceanRenderer {
 					}
 				}
 				
+				// === FOG LINES AT TOP ===
+				vec3 fogColor = mix(nightFog, dayFog, day);
+				
+				if (y < uFogLine1Y + 1.0 && y >= uFogLine1Y) {
+					col = mix(col, fogColor, uFogLine1Alpha);
+				} else if (y < uFogLine2Y + 1.0 && y >= uFogLine2Y) {
+					col = mix(col, fogColor, uFogLine2Alpha);
+				}
+				
 				// === SUN REFLECTION ===
 				if (uSunVisible > 0.0) {
 					float above = clamp((uHorizonY - uSunY + uSunRadius) / 180.0, 0.0, 1.0);
@@ -287,15 +296,6 @@ window.OceanRenderer = class OceanRenderer {
 							}
 						}
 					}
-				}
-				
-				// === FOG LINES AT TOP ===
-				vec3 fogColor = mix(nightFog, dayFog, day);
-				
-				if (y < uFogLine1Y + 1.0 && y >= uFogLine1Y) {
-					col = mix(col, fogColor, uFogLine1Alpha);
-				} else if (y < uFogLine2Y + 1.0 && y >= uFogLine2Y) {
-					col = mix(col, fogColor, uFogLine2Alpha);
 				}
                 
 				gl_FragColor = vec4(col, 1.0);
