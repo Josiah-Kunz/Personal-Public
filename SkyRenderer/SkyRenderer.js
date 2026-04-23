@@ -14,7 +14,7 @@ window.SkyRenderer = class SkyRenderer {
 				sky: true,
 				stars: true,
 				celestials: true,
-				clouds: true,
+				clouds: false,
 				ocean: true,
 				panController: true,
 				...config.enabled
@@ -307,37 +307,23 @@ window.SkyRenderer = class SkyRenderer {
 		this.lastStaticRedraw = performance.now();
 		this.lastGameTime = t;
 	}
-
+	
 	drawAnimatedLayer(t) {
 		const ctx = this.ctx;
-
+		
 		ctx.drawImage(this.staticCanvas, 0, 0);
-
+		
 		if (this.stars) {
 			this.stars.draw(ctx, t, this.elapsed);
 		}
-
+		
 		if (this.ocean) {
 			this.ocean.draw(ctx, t, this.cachedPalette, this.cachedSun, this.cachedMoon, this.config.celestials, this.elapsed);
 		}
-
-		// Fog lines at horizon (drawn on canvas, so clouds render on top)
-		const horizonY = this.horizonY();
-		const dayness = this.getDayness(t);
-
-		// Day: light cloud color, Night: darker
-		const r = Math.round(194 + (241 - 194) * dayness);
-		const g = Math.round(176 + (242 - 176) * dayness);
-		const b = Math.round(190 + (221 - 190) * dayness);
-
-		ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.3)`;
-		ctx.fillRect(0, horizonY, this.config.resolution.width, 1);
-
-		ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
-		ctx.fillRect(0, horizonY + 2, this.config.resolution.width, 1);
-
+		
 		/* Update cloud shader */
 		if (this.clouds) {
+			const dayness = this.getDayness(t);
 			this.clouds.update(this.elapsed, dayness, t);
 		}
 	}
