@@ -54,7 +54,13 @@ window.PanController = class PanController {
         const panRatio = Math.abs(targetY) / this.config.panAmount;
         const h0 = PanController.GAME_BASE_HEIGHT;
         const dh = this.config.heightWhenPanned - h0;
-        this.game.height = h0 + Math.round(dh * panRatio);
+        this.setScreenSize(h0 + Math.round(dh * panRatio));
+    }
+    
+    setScreenSize(height){
+        this.game.widgets.list.game.canSave = false;
+        this.game.height = height;
+        this.game.setZoom(this.game.settings.zoom);
     }
 
     destroy() {
@@ -62,7 +68,7 @@ window.PanController = class PanController {
         const startOffsetY = camera.offset.y;
         const startHeight = this.game.height;
         const targetHeight = PanController.GAME_BASE_HEIGHT;
-        const duration = 200;
+        const duration = this.config.destroyDuration;
         const startTime = performance.now();
 
         const animate = (now) => {
@@ -71,7 +77,7 @@ window.PanController = class PanController {
 
             camera.offset.y = startOffsetY * (1 - t);
             camera.targetX = -1;
-            this.game.height = Math.round(startHeight + (targetHeight - startHeight) * t);
+            this.setScreenSize(Math.round(startHeight + (targetHeight - startHeight) * t)); 
 
             if (t < 1) {
                 requestAnimationFrame(animate);
