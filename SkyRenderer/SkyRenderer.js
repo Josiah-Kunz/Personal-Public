@@ -58,10 +58,6 @@ window.SkyRenderer = class SkyRenderer {
 				backFadeEndMorning: 4,
 				backFadeStartEvening: 19,
 				backFadeEndEvening: 21,
-				fogLine1Offset: 0,
-				fogLine1Alpha: 0.3,
-				fogLine2Offset: 2,
-				fogLine2Alpha: 0.15,
 				...config.clouds
 			},
 			stars: {
@@ -93,6 +89,10 @@ window.SkyRenderer = class SkyRenderer {
 				trailBreakup: 2.22,
 				sunReflectionAlpha: 3.00,
 				moonReflectionAlpha: 0.84,
+				fogLine1Y: 0,
+				fogLine1Alpha: 0.3,
+				fogLine2Y: 2,
+				fogLine2Alpha: 0.15,
 				...config.water
 			},
 			sky: {

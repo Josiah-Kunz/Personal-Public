@@ -1,38 +1,38 @@
 window.OceanRenderer = class OceanRenderer {
-	constructor(config, starsConfig, resolution, horizonY, container, offset = {x: 0, y: 0}) {
-		this.config = config;
-		this.starsConfig = starsConfig;
-		this.resolution = resolution;
-		this.horizonY = horizonY;
-		this.container = container;
-		this.offset = offset;
+    constructor(config, starsConfig, resolution, horizonY, container, offset = {x: 0, y: 0}) {
+        this.config = config;
+        this.starsConfig = starsConfig;
+        this.resolution = resolution;
+        this.horizonY = horizonY;
+        this.container = container;
+        this.offset = offset;
 
-		this.mesh = null;
-		this.shader = null;
+        this.mesh = null;
+        this.shader = null;
 
-		this.buildShader();
-	}
+        this.buildShader();
+    }
 
-	buildShader() {
-		const oceanHeight = this.resolution.height - this.horizonY;
-		const width = this.resolution.width;
+    buildShader() {
+        const oceanHeight = this.resolution.height - this.horizonY;
+        const width = this.resolution.width;
 
-		const geometry = new PIXI.Geometry()
-			.addAttribute('aVertexPosition', [
-				0, 0,
-				width, 0,
-				width, oceanHeight,
-				0, oceanHeight
-			], 2)
-			.addAttribute('aTextureCoord', [
-				0, 0,
-				1, 0,
-				1, 1,
-				0, 1
-			], 2)
-			.addIndex([0, 1, 2, 0, 2, 3]);
+        const geometry = new PIXI.Geometry()
+            .addAttribute('aVertexPosition', [
+                0, 0,
+                width, 0,
+                width, oceanHeight,
+                0, oceanHeight
+            ], 2)
+            .addAttribute('aTextureCoord', [
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 1
+            ], 2)
+            .addIndex([0, 1, 2, 0, 2, 3]);
 
-		const vertexShader = `
+        const vertexShader = `
 			precision mediump float;
 			attribute vec2 aVertexPosition;
 			attribute vec2 aTextureCoord;
@@ -50,7 +50,7 @@ window.OceanRenderer = class OceanRenderer {
 			}
 		`;
 
-		const fragmentShader = `
+        const fragmentShader = `
 			precision mediump float;
 			
 			varying vec2 vUv;
@@ -92,6 +92,12 @@ window.OceanRenderer = class OceanRenderer {
 			uniform float uSunRadius;
 			uniform float uMoonRadius;
 			
+			// Fog line uniforms
+			uniform float uFogLine1Y;
+			uniform float uFogLine1Alpha;
+			uniform float uFogLine2Y;
+			uniform float uFogLine2Alpha;
+			
 			// Water colors (RGB 0-1)
 			const vec3 nightTop = vec3(0.086, 0.192, 0.294);    // #16314b
 			const vec3 nightMid = vec3(0.063, 0.145, 0.243);    // #10253f
@@ -102,6 +108,10 @@ window.OceanRenderer = class OceanRenderer {
 			
 			const vec3 sunColor = vec3(1.0, 0.886, 0.431);      // rgb(255, 226, 110)
 			const vec3 moonColor = vec3(1.0, 1.0, 1.0);
+			
+			// Fog colors (matching cloud colors)
+			const vec3 nightFog = vec3(0.561, 0.502, 0.557);    // mix of shadow/light
+			const vec3 dayFog = vec3(0.853, 0.859, 0.780);      // mix of shadow/light
 			
 			void main() {
 				vec2 pixel = floor(vPixelCoord);
@@ -132,6 +142,15 @@ window.OceanRenderer = class OceanRenderer {
 					col = mix(waterTop, waterMid, depthT / 0.28);
 				} else {
 					col = mix(waterMid, waterBot, (depthT - 0.28) / 0.72);
+				}
+				
+				// === FOG LINES AT TOP ===
+				vec3 fogColor = mix(nightFog, dayFog, day);
+				
+				if (y < uFogLine1Y + 1.0 && y >= uFogLine1Y) {
+					col = mix(col, fogColor, uFogLine1Alpha);
+				} else if (y < uFogLine2Y + 1.0 && y >= uFogLine2Y) {
+					col = mix(col, fogColor, uFogLine2Alpha);
 				}
 				
 				// === AMBIENT WATER REFLECTION ===
@@ -283,126 +302,132 @@ window.OceanRenderer = class OceanRenderer {
 			}
 		`;
 
-		const cfg = this.config;
+        const cfg = this.config;
 
-		const uniforms = {
-			uResolution: [width, oceanHeight],
-			uTime: 0,
-			uNight: 0.0,
-			uSkyLower: [0.5, 0.5, 0.6],
-			uSkyUpper: [0.4, 0.4, 0.5],
-			uSunX: width * 0.5,
-			uSunY: 0,
-			uSunVisible: 0.0,
-			uMoonX: width * 0.5,
-			uMoonY: 0,
-			uMoonVisible: 0.0,
-			uAmbientStrength: cfg.ambientReflectionStrength,
-			uDetail: cfg.detail,
-			uDawnTint: 0.0,
-			uDuskTint: 0.0,
-			uHorizonY: this.horizonY,
+        const uniforms = {
+            uResolution: [width, oceanHeight],
+            uTime: 0,
+            uNight: 0.0,
+            uSkyLower: [0.5, 0.5, 0.6],
+            uSkyUpper: [0.4, 0.4, 0.5],
+            uSunX: width * 0.5,
+            uSunY: 0,
+            uSunVisible: 0.0,
+            uMoonX: width * 0.5,
+            uMoonY: 0,
+            uMoonVisible: 0.0,
+            uAmbientStrength: cfg.ambientReflectionStrength,
+            uDetail: cfg.detail,
+            uDawnTint: 0.0,
+            uDuskTint: 0.0,
+            uHorizonY: this.horizonY,
 
-			// Water config
-			uShimmerDepth: cfg.shimmerDepth,
-			uReflectionLengthSun: cfg.reflectionLengthSun,
-			uReflectionLengthMoon: cfg.reflectionLengthMoon,
-			uTrailWidthSun: cfg.trailWidthSun,
-			uTrailWidthMoon: cfg.trailWidthMoon,
-			uTrailWidthFarSun: cfg.trailWidthFarSun,
-			uTrailWidthFarMoon: cfg.trailWidthFarMoon,
-			uTrailWobble: cfg.trailWobble,
-			uTrailSegmentHeight: cfg.trailSegmentHeight,
-			uTrailGap: cfg.trailGap,
-			uTrailTaper: cfg.trailTaper,
-			uTrailBreakup: cfg.trailBreakup,
-			uSunReflectionAlpha: cfg.sunReflectionAlpha,
-			uMoonReflectionAlpha: cfg.moonReflectionAlpha,
-			uCelestialReflectionStrength: cfg.celestialReflectionStrength,
-			uSunRadius: 16,
-			uMoonRadius: 14
-		};
+            // Water config
+            uShimmerDepth: cfg.shimmerDepth,
+            uReflectionLengthSun: cfg.reflectionLengthSun,
+            uReflectionLengthMoon: cfg.reflectionLengthMoon,
+            uTrailWidthSun: cfg.trailWidthSun,
+            uTrailWidthMoon: cfg.trailWidthMoon,
+            uTrailWidthFarSun: cfg.trailWidthFarSun,
+            uTrailWidthFarMoon: cfg.trailWidthFarMoon,
+            uTrailWobble: cfg.trailWobble,
+            uTrailSegmentHeight: cfg.trailSegmentHeight,
+            uTrailGap: cfg.trailGap,
+            uTrailTaper: cfg.trailTaper,
+            uTrailBreakup: cfg.trailBreakup,
+            uSunReflectionAlpha: cfg.sunReflectionAlpha,
+            uMoonReflectionAlpha: cfg.moonReflectionAlpha,
+            uCelestialReflectionStrength: cfg.celestialReflectionStrength,
+            uSunRadius: 16,
+            uMoonRadius: 14,
 
-		this.shader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
-		this.mesh = new PIXI.Mesh(geometry, this.shader);
-		this.mesh.position.set(this.offset.x, this.offset.y + this.horizonY);
+            // Fog lines
+            uFogLine1Y: cfg.fogLine1Y ?? 0,
+            uFogLine1Alpha: cfg.fogLine1Alpha ?? 0.3,
+            uFogLine2Y: cfg.fogLine2Y ?? 2,
+            uFogLine2Alpha: cfg.fogLine2Alpha ?? 0.15,
+        };
 
-		this.container.addChild(this.mesh);
-	}
+        this.shader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
+        this.mesh = new PIXI.Mesh(geometry, this.shader);
+        this.mesh.position.set(this.offset.x, this.offset.y + this.horizonY);
 
-	update(t, elapsed, skyPalette, sun, moon, celestialConfig) {
-		const u = this.shader.uniforms;
-		const horizonY = this.horizonY;
+        this.container.addChild(this.mesh);
+    }
 
-		u.uTime = elapsed * 0.001;
+    update(t, elapsed, skyPalette, sun, moon, celestialConfig) {
+        const u = this.shader.uniforms;
+        const horizonY = this.horizonY;
 
-		// Night factor
-		const cfg = this.starsConfig;
-		let nightA = 0, nightB = 0;
-		if (t < cfg.fadeOutEnd) {
-			const k = t <= cfg.fadeOutStart ? 0 : (t - cfg.fadeOutStart) / (cfg.fadeOutEnd - cfg.fadeOutStart);
-			nightA = 1 - k * k * (3 - 2 * k);
-		}
-		if (t > cfg.fadeInStart) {
-			const k = t >= cfg.fadeInEnd ? 1 : (t - cfg.fadeInStart) / (cfg.fadeInEnd - cfg.fadeInStart);
-			nightB = k * k * (3 - 2 * k);
-		}
-		u.uNight = Math.max(nightA, nightB);
+        u.uTime = elapsed * 0.001;
 
-		// Dawn/dusk tints
-		let dawnTint = 0, duskTint = 0;
-		if (t > 0.18 && t < 0.55) {
-			const d1 = Math.min(1, Math.max(0, (t - 0.18) / 0.12));
-			const d2 = Math.min(1, Math.max(0, (t - 0.45) / 0.10));
-			dawnTint = (d1 * d1 * (3 - 2 * d1)) * (1 - d2 * d2 * (3 - 2 * d2));
-		}
-		if (t > 0.55 && t < 0.95) {
-			const d1 = Math.min(1, Math.max(0, (t - 0.55) / 0.13));
-			const d2 = Math.min(1, Math.max(0, (t - 0.82) / 0.13));
-			duskTint = (d1 * d1 * (3 - 2 * d1)) * (1 - d2 * d2 * (3 - 2 * d2));
-		}
-		u.uDawnTint = dawnTint;
-		u.uDuskTint = duskTint;
+        // Night factor
+        const cfg = this.starsConfig;
+        let nightA = 0, nightB = 0;
+        if (t < cfg.fadeOutEnd) {
+            const k = t <= cfg.fadeOutStart ? 0 : (t - cfg.fadeOutStart) / (cfg.fadeOutEnd - cfg.fadeOutStart);
+            nightA = 1 - k * k * (3 - 2 * k);
+        }
+        if (t > cfg.fadeInStart) {
+            const k = t >= cfg.fadeInEnd ? 1 : (t - cfg.fadeInStart) / (cfg.fadeInEnd - cfg.fadeInStart);
+            nightB = k * k * (3 - 2 * k);
+        }
+        u.uNight = Math.max(nightA, nightB);
 
-		// Sky colors
-		u.uSkyLower = [skyPalette.lower.r / 255, skyPalette.lower.g / 255, skyPalette.lower.b / 255];
-		u.uSkyUpper = [skyPalette.upper.r / 255, skyPalette.upper.g / 255, skyPalette.upper.b / 255];
+        // Dawn/dusk tints
+        let dawnTint = 0, duskTint = 0;
+        if (t > 0.18 && t < 0.55) {
+            const d1 = Math.min(1, Math.max(0, (t - 0.18) / 0.12));
+            const d2 = Math.min(1, Math.max(0, (t - 0.45) / 0.10));
+            dawnTint = (d1 * d1 * (3 - 2 * d1)) * (1 - d2 * d2 * (3 - 2 * d2));
+        }
+        if (t > 0.55 && t < 0.95) {
+            const d1 = Math.min(1, Math.max(0, (t - 0.55) / 0.13));
+            const d2 = Math.min(1, Math.max(0, (t - 0.82) / 0.13));
+            duskTint = (d1 * d1 * (3 - 2 * d1)) * (1 - d2 * d2 * (3 - 2 * d2));
+        }
+        u.uDawnTint = dawnTint;
+        u.uDuskTint = duskTint;
 
-		// Sun
-		if (sun) {
-			u.uSunX = sun.x;
-			u.uSunY = sun.y;
-			u.uSunVisible = sun.y < horizonY + 90 ? 1.0 : 0.0;
-		} else {
-			u.uSunVisible = 0;
-		}
+        // Sky colors
+        u.uSkyLower = [skyPalette.lower.r / 255, skyPalette.lower.g / 255, skyPalette.lower.b / 255];
+        u.uSkyUpper = [skyPalette.upper.r / 255, skyPalette.upper.g / 255, skyPalette.upper.b / 255];
 
-		// Moon
-		if (moon) {
-			u.uMoonX = moon.x;
-			u.uMoonY = moon.y;
-			u.uMoonVisible = moon.y < horizonY + 80 ? 1.0 : 0.0;
-		} else {
-			u.uMoonVisible = 0;
-		}
+        // Sun
+        if (sun) {
+            u.uSunX = sun.x;
+            u.uSunY = sun.y;
+            u.uSunVisible = sun.y < horizonY + 90 ? 1.0 : 0.0;
+        } else {
+            u.uSunVisible = 0;
+        }
 
-		// Celestial config
-		if (celestialConfig) {
-			u.uSunRadius = celestialConfig.sunRadius;
-			u.uMoonRadius = celestialConfig.moonRadius;
-		}
-	}
+        // Moon
+        if (moon) {
+            u.uMoonX = moon.x;
+            u.uMoonY = moon.y;
+            u.uMoonVisible = moon.y < horizonY + 80 ? 1.0 : 0.0;
+        } else {
+            u.uMoonVisible = 0;
+        }
 
-	draw(ctx, t, skyPalette, sun, moon, celestialConfig, elapsed) {
-		this.update(t, elapsed, skyPalette, sun, moon, celestialConfig);
-	}
+        // Celestial config
+        if (celestialConfig) {
+            u.uSunRadius = celestialConfig.sunRadius;
+            u.uMoonRadius = celestialConfig.moonRadius;
+        }
+    }
 
-	destroy() {
-		if (this.mesh) {
-			this.container.removeChild(this.mesh);
-			this.mesh.destroy();
-			this.mesh = null;
-		}
-		this.shader = null;
-	}
+    draw(ctx, t, skyPalette, sun, moon, celestialConfig, elapsed) {
+        this.update(t, elapsed, skyPalette, sun, moon, celestialConfig);
+    }
+
+    destroy() {
+        if (this.mesh) {
+            this.container.removeChild(this.mesh);
+            this.mesh.destroy();
+            this.mesh = null;
+        }
+        this.shader = null;
+    }
 }

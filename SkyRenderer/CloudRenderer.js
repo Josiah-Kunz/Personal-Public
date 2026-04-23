@@ -3,19 +3,19 @@ window.CloudRenderer = class CloudRenderer {
 		this.config = config;
 		this.container = container;
 		this.horizonY = horizonY;
-		
+
 		this.mesh = null;
 		this.shader = null;
-		
+
 		this.build();
 	}
-	
+
 	build() {
 		const cfg = this.config;
 		const width = cfg.worldWidth;
 		const maxOffset = Math.ceil(21.5 * cfg.detail);
 		const meshHeight = cfg.height + cfg.thickness + maxOffset * 2;
-		
+
 		this.shader = PIXI.Shader.from(
 			/* Vertex shader */
 			`
@@ -49,10 +49,6 @@ window.CloudRenderer = class CloudRenderer {
 			uniform float uBackFadeEndMorning;
 			uniform float uBackFadeStartEvening;
 			uniform float uBackFadeEndEvening;
-			uniform float uFogLine1Offset;
-			uniform float uFogLine1Alpha;
-			uniform float uFogLine2Offset;
-			uniform float uFogLine2Alpha;
 			
 			float getCloudTop(float x, float seed) {
 				float n1 = sin(x * 0.022 + 0.5 + seed) * 8.0 * uDetail;
@@ -106,7 +102,7 @@ window.CloudRenderer = class CloudRenderer {
 					}
 					
 					float backA = mix(uBackAlphaDay, uBackAlphaNight, nightFactor);
-					color = shadow;  // <-- add this!
+					color = shadow;
 					alpha = (1.0 - d) * backA;
 				}
 				
@@ -122,20 +118,6 @@ window.CloudRenderer = class CloudRenderer {
 						color = shadow;
 					}
 					alpha = 1.0;
-				}
-				
-				/* Fog lines at horizon (only where no clouds) */
-				if (alpha < 0.01) {
-					float fogY1 = baseY + uFogLine1Offset;
-					float fogY2 = baseY + uFogLine2Offset;
-					
-					if (localY >= fogY1 && localY < fogY1 + 1.0) {
-						color = mix(shadow, light, 0.5);
-						alpha = uFogLine1Alpha;
-					} else if (localY >= fogY2 && localY < fogY2 + 1.0) {
-						color = mix(shadow, light, 0.5);
-						alpha = uFogLine2Alpha;
-					}
 				}
 				
 				if (alpha < 0.01) {
@@ -161,35 +143,31 @@ window.CloudRenderer = class CloudRenderer {
 				uBackFadeEndMorning: (cfg.backFadeEndMorning || 4) / 24,
 				uBackFadeStartEvening: (cfg.backFadeStartEvening || 19) / 24,
 				uBackFadeEndEvening: (cfg.backFadeEndEvening || 21) / 24,
-				uFogLine1Offset: cfg.fogLine1Offset || 0,
-				uFogLine1Alpha: cfg.fogLine1Alpha || 0.3,
-				uFogLine2Offset: cfg.fogLine2Offset || 2,
-				uFogLine2Alpha: cfg.fogLine2Alpha || 0.15,
 			}
 		);
-		
+
 		const geometry = new PIXI.Geometry()
 			.addAttribute('aVertexPosition', [0, 0, width, 0, width, meshHeight, 0, meshHeight], 2)
 			.addAttribute('aTextureCoord', [0, 0, 1, 0, 1, 1, 0, 1], 2)
 			.addIndex([0, 1, 2, 0, 2, 3]);
-		
+
 		this.mesh = new PIXI.Mesh(geometry, this.shader);
 		this.mesh.blendMode = PIXI.BLEND_MODES.NORMAL_NPM;
 		this.mesh.state.blend = true;
 		this.mesh.x = cfg.offsetX || 0;
 		this.mesh.y = (cfg.offsetY || 0) + this.horizonY - cfg.height - maxOffset;
-		
+
 		this.container.addChild(this.mesh);
 	}
-	
+
 	update(elapsed, dayness, time) {
 		if (!this.shader) return;
-		
+
 		this.shader.uniforms.uDayness = dayness;
 		this.shader.uniforms.uTime = time;
 		this.shader.uniforms.uScroll = elapsed * this.config.driftSpeed * this.config.worldWidth;
 	}
-	
+
 	destroy() {
 		if (this.mesh) {
 			this.mesh.destroy();
