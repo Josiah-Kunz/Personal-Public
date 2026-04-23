@@ -1,12 +1,12 @@
 const skyURLs = [
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/refs/heads/main/SkyRenderer/utils.js",
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/8a897d541bc0dcdc58dd3207c5916f2f380bb972/SkyRenderer/CloudRenderer.js",
+	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/25f353f2c26144e0d76d53e2290b9997cdd426c4/SkyRenderer/CloudRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/07ff4baf9f4a57674e8a61fba33e7c606c2b3ba1/SkyRenderer/SkyGradient.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/094d100ff277a26992787584b8468ce31b8a270b/SkyRenderer/CelestialRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/b1b17c5b59cd8b17544f0c6a46650760b37c8c86/SkyRenderer/StarRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/8b5677f606fd8a45f3b17a4d75b472eb8ead7e5e/SkyRenderer/OceanRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/a2dbc3887dda2f7a42d7318dbf7924d61511f003/SkyRenderer/PanController.js",
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/44dd1af5d74155bc3944bf1a4f9e871edd4a4c51/SkyRenderer/SkyRenderer.js",
+	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/25f353f2c26144e0d76d53e2290b9997cdd426c4/SkyRenderer/SkyRenderer.js",
 ];
  
 if (game.skyRenderer?.map !== game.map) {
