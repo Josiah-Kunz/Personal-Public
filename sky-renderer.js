@@ -32,8 +32,8 @@ if (game.skyRenderer?.map !== game.map) {
 			
 			// Create the renderer, after scripts are loaded
 			game.skyRenderer = new SkyRenderer(game, {
-				offset: { x: 1024, y: 0 },
-				resolution: { width: 1456, height: 1072 }
+				offset: { x: 1008, y: 0 },
+				resolution: { width: 1424, height: 1072 }
 			});
 		});
 		
@@ -41,8 +41,8 @@ if (game.skyRenderer?.map !== game.map) {
 		// Scripts already cached, can create immediately
 		eval(game.map.__skyScripts);
 		game.skyRenderer = new SkyRenderer(game, {
-			offset: { x: 1024, y: 0 },
-			resolution: { width: 1456, height: 1072 }
+			offset: { x: 1008, y: 0 },
+			resolution: { width: 1424, height: 1072 }
 		});
 	}
 }
