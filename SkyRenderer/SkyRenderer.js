@@ -1,7 +1,7 @@
 window.SkyRenderer = class SkyRenderer {
 	constructor(game, config = {}) {
 		this.game = game;
-		this.map = game.map;
+		this.mapID = game.map.id;
 		
 		this.config = {
 			offset: { x: 0, y: 0, ...config.offset },
@@ -327,8 +327,14 @@ window.SkyRenderer = class SkyRenderer {
 			this.clouds.update(this.elapsed, dayness, t);
 		}
 	}
-	
+
+	/**
+	 * The main update loop.
+	 * @param ts
+	 */
 	render(ts) {
+		
+		this.#checkMapChanged();
 		if (!this.running) return;
 		
 		if (!this.lastTime) this.lastTime = ts;
@@ -355,6 +361,10 @@ window.SkyRenderer = class SkyRenderer {
 		this.texture.update();
 		
 		this.animationId = requestAnimationFrame(ts => this.render(ts));
+	}
+	
+	#checkMapChanged(){
+		if (this.mapID !== this.game.map?.id) this.destroy();
 	}
 	
 	start() {
