@@ -6,7 +6,7 @@ const skyURLs = [
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/b1b17c5b59cd8b17544f0c6a46650760b37c8c86/SkyRenderer/StarRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/c7e594e3f77aee64b456b76166fcec2592c6284f/SkyRenderer/OceanRenderer.js",
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/a2dbc3887dda2f7a42d7318dbf7924d61511f003/SkyRenderer/PanController.js",
-	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/862b34c3916b73c68f6b67e3c56aacf440d4fa92/SkyRenderer/SkyRenderer.js",
+	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/7772a7b62e8249621bfcf434543b7776428062d9/SkyRenderer/SkyRenderer.js",
 ];
  
 if (game.skyRenderer?.map !== game.map) {
