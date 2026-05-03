@@ -393,6 +393,10 @@ window.SkyRenderer = class SkyRenderer {
 			this.stars.destroy();
 			this.stars = null;
 		}
+		if (this.ocean) {
+			this.ocean.destroy();
+			this.ocean = null;
+		}
 		if (this.container && this.container.parent) {
 			this.container.parent.removeChild(this.container);
 		}
@@ -407,6 +411,11 @@ window.SkyRenderer = class SkyRenderer {
 		if (this.container) {
 			this.container.destroy();
 			this.container = null;
+		}
+		
+		if (this.panController){
+			this.panController.destroy();
+			this.panController = null;
 		}
 		
 		this.canvas = null;
