@@ -424,6 +424,8 @@ window.SkyRenderer = class SkyRenderer {
 		this.staticCtx = null;
 		this.celestials = null;
 		this.skyGradient = null;
-		this.ocean = null;
+
+		this.game.skyRenderer = null;
+		
 	}
 }
