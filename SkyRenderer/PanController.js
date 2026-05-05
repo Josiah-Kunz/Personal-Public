@@ -40,6 +40,7 @@ window.PanController = class PanController {
     }
 
     panTo(targetY) {
+        if (this.destroyed) return;
         if (this.currentTarget === targetY) return;
         this.currentTarget = targetY;
 
@@ -49,6 +50,7 @@ window.PanController = class PanController {
     }
 
     destroy() {
+        this.destroyed = true;
         this.game.camera.offset.y = 0;
         this.game.camera.targetX = -1;
     }
