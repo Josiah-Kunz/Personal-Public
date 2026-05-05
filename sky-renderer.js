@@ -9,10 +9,11 @@ const skyURLs = [
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/ae2a0e63cbae9579a932be39f3de41e4848b727c/SkyRenderer/SkyRenderer.js",
 ];
  
-if (game.skyRenderer?.mapID !== game.map.id) {
+if (game.map && game.skyRenderer?.mapID !== game.map.id) {
 	
 	if (game.skyRenderer) game.skyRenderer.destroy();
 	
+	/* Check if we've loaded the scripts once */
 	if (game.map.id != game.map.__skyCachedId) {
 		game.map.__skyScripts = "";
 		game.map.__skyCachedId = game.map.id;
@@ -38,7 +39,7 @@ if (game.skyRenderer?.mapID !== game.map.id) {
 		});
 		
 	} else if (game.map.__skyScripts && !game.map.__skyLoading) {
-		// Scripts already cached, can create immediately
+		/* Scripts already cached, can create immediately */
 		eval(game.map.__skyScripts);
 		game.skyRenderer = new SkyRenderer(game, {
 			offset: { x: 1008, y: 0 },
