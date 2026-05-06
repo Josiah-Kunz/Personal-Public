@@ -50,7 +50,10 @@ if (game.shimmerMap !== game.map.id) {
 	game.lastShimmerTime = performance.now();
 
 	function updateShimmer() {
-		if (game.shimmerMap !== game.map.id) return;
+		if (game.shimmerMap !== game.map.id) {
+			game.shimmerMap = null;
+			return;
+		}
 
 		const currentTime = performance.now();
 		const dt = (currentTime - game.lastShimmerTime) / 1000;
