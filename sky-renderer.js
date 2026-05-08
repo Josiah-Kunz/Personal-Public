@@ -9,6 +9,7 @@ const skyURLs = [
 	"https://raw.githubusercontent.com/Josiah-Kunz/Personal-Public/45a6b2806c98e9396970569530ef3d7550a58375/SkyRenderer/SkyRenderer.js",
 ];
  
+/* First time or changing maps */
 if (game.map && game.skyRenderer?.mapID !== game.map.id) {
 	
 	if (game.skyRenderer) game.skyRenderer.destroy();
@@ -46,4 +47,7 @@ if (game.map && game.skyRenderer?.mapID !== game.map.id) {
 			resolution: { width: 1488, height: 1072 }
 		});
 	}
+/* Removed from container (e.g., by going into battle) */
+} else if (game.skyRenderer?.container && !game.skyRenderer?.container.parent) {
+	game.containers.background.addChild(game.skyRenderer.container);
 }
