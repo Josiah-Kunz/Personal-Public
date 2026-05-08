@@ -235,7 +235,7 @@ window.SkyRenderer = class SkyRenderer {
 		}
 		
 		/* Add to game */
-		this.game.containers.voidSprites.addChild(this.container);
+		this.game.containers.background.addChild(this.container);
 		
 		this.start();
 		console.log("SkyRenderer initialized!", { enabled });
